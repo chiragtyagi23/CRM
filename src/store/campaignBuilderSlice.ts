@@ -115,6 +115,9 @@ const slice = createSlice({
   name: 'campaignBuilder',
   initialState,
   reducers: {
+    resetBuilder() {
+      return initialState
+    },
     setActiveSection(state, action: PayloadAction<TemplateSectionKey>) {
       state.activeSection = action.payload
     },
@@ -225,7 +228,7 @@ const slice = createSlice({
     hydrateFromCampaignRow(
       state,
       action: PayloadAction<{
-        id: string
+        id: string | number
         title: string
         address: string | null
         regNo: string | null
@@ -234,7 +237,7 @@ const slice = createSlice({
         templateKey?: 'luxury-template' | 'affordable-template'
       }>,
     ) {
-      state.selectedCampaignId = action.payload.id
+      state.selectedCampaignId = String(action.payload.id)
       state.campaignName = action.payload.title
       state.projectLocation = action.payload.address ?? ''
       state.reraNo = action.payload.regNo ?? ''
@@ -247,7 +250,9 @@ const slice = createSlice({
     hydrateFromCampaignFull(state, action: PayloadAction<any>) {
       const c = action.payload && typeof action.payload === 'object' ? action.payload : {}
 
-      state.selectedCampaignId = typeof c.id === 'string' ? c.id : state.selectedCampaignId
+      if (typeof c.id === 'string' || typeof c.id === 'number') {
+        state.selectedCampaignId = String(c.id)
+      }
       state.templateKey =
         c.templateKey === 'affordable-template' || c.templateKey === 'luxury-template' ? c.templateKey : state.templateKey
 

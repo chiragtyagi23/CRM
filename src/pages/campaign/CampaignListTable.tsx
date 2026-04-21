@@ -54,7 +54,7 @@ export function CampaignListTable({
                         }
                         onClick={() => onSelectCampaign(c)}
                       >
-                        {selectedCampaignId === c.id ? 'Editing' : 'Edit'}
+                        {selectedCampaignId === c.id ? 'Cancel' : 'Edit'}
                       </button>
 
                       <a

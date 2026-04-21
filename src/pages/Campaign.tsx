@@ -44,6 +44,12 @@ export function Campaign() {
   const [saveState, setSaveState] = useState<
     { type: 'idle' } | { type: 'saving' } | { type: 'error'; message: string } | { type: 'saved' }
   >({ type: 'idle' })
+  const [flash, setFlash] = useState<null | { message: string }>(null)
+
+  const showFlash = (message: string) => {
+    setFlash({ message })
+    window.setTimeout(() => setFlash(null), 1400)
+  }
 
   useEffect(() => {
     apiGet<CampaignListResponse>('/api/campaigns')
@@ -62,6 +68,8 @@ export function Campaign() {
     if (saveState.type === 'saving') return
     setSaveState({ type: 'saving' })
     try {
+      const updating = Boolean(builder.selectedCampaignId)
+      const prevSelectedId = builder.selectedCampaignId ? String(builder.selectedCampaignId) : null
       // if (selectedCampaignId) {
       //   const updated = await apiSend<ExistingCampaign>(`/api/campaigns/${selectedCampaignId}`, 'PATCH', {
       //     title: campaignName,
@@ -222,15 +230,32 @@ export function Campaign() {
           },
         }
 
-        const created = builder.selectedCampaignId
+        const saved = updating
           ? await apiSend<ExistingCampaign>(`/api/campaigns/${builder.selectedCampaignId}/full`, 'PUT', payload)
           : await apiSend<ExistingCampaign>('/api/campaigns/full', 'POST', payload)
 
-        // Keep editing the same campaign after save.
-        dispatch(campaignBuilderActions.setSelectedCampaignId(created.id))
-        dispatch(campaignBuilderActions.setSelectedCampaignId(created.id))
-        setCampaigns((prev) => [created, ...prev])
+        const savedId = String((saved as unknown as { id: unknown }).id)
+
+        if (updating) {
+          // Keep editing the same campaign after save.
+          dispatch(campaignBuilderActions.setSelectedCampaignId(savedId))
+        } else {
+          // After creating, go back to "new campaign" mode.
+          dispatch(campaignBuilderActions.resetBuilder())
+          dispatch(campaignBuilderActions.setTemplateKey(templateKey))
+        }
+
+        setCampaigns((prev) => {
+          if (updating && prevSelectedId) {
+            const replaced = prev.map((c) => (String((c as any).id) === prevSelectedId ? (saved as any) : c))
+            // If it wasn't in the list (edge case), still add it.
+            return replaced.some((c) => String((c as any).id) === prevSelectedId) ? replaced : [saved as any, ...replaced]
+          }
+          // New create: prepend.
+          return [saved as any, ...prev]
+        })
       
+      showFlash(updating ? 'Your dashboard is updated successfully.' : 'Campaign created successfully.')
 
       // if (!selectedCampaignId) {
       //   // Full create already saved everything.
@@ -403,6 +428,11 @@ export function Campaign() {
 
   return (
     <section className="mx-auto box-border w-full max-w-[1280px] py-2 pb-6">
+      {flash ? (
+        <div className="fixed right-4 top-4 z-9999 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] font-semibold text-emerald-900 shadow-[0_12px_28px_rgba(16,185,129,0.18)]">
+          {flash.message}
+        </div>
+      ) : null}
       <header className="flex flex-col gap-3 py-2 pb-4 min-[760px]:flex-row min-[760px]:items-start min-[760px]:justify-between">
         <div>
           <h2 className="m-0 text-[28px] font-bold tracking-[-0.03em] text-gray-900">Campaigns</h2>
@@ -515,6 +545,13 @@ export function Campaign() {
           loadingCampaigns={loadingCampaigns}
           selectedCampaignId={builder.selectedCampaignId}
           onSelectCampaign={async (c) => {
+            // Toggle Edit <-> Cancel
+            if (builder.selectedCampaignId && String(builder.selectedCampaignId) === String((c as any).id)) {
+              dispatch(campaignBuilderActions.resetBuilder())
+              setTemplateModalOpen(false)
+              setSaveState({ type: 'idle' })
+              return
+            }
             dispatch(campaignBuilderActions.hydrateFromCampaignRow(c))
             setLoadingSelectedCampaign(true)
             try {
