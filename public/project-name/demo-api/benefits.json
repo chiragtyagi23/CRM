@@ -1,0 +1,42 @@
+{
+  "sectionLabel": "Benefits",
+  "title": { "before": "Why Invest in ", "italic": "Project Name", "after": "" },
+  "backgroundImages": [
+    {
+      "src": "/benefits/weinx1-wall-4503091.jpg",
+      "alt": "Textured wall detail in warm neutral tones"
+    },
+    {
+      "src": "/benefits/wal_172619-skyscrapers-9596809.jpg",
+      "alt": "Skyscrapers and urban skyline at dusk"
+    }
+  ],
+  "items": [
+    {
+      "num": "01",
+      "title": "Flexible Payment Plans",
+      "text": "Construction-linked, subvention, and flexi-pay options available with leading banks at competitive rates."
+    },
+    {
+      "num": "02",
+      "title": "High Appreciation Zone",
+      "text": "Kharghar has seen 22–28% capital appreciation in the past 3 years driven by the upcoming NMIA airport."
+    },
+    {
+      "num": "03",
+      "title": "30-Year Trusted Developer",
+      "text": "Project Name has delivered 25+ projects totalling 20 million sq.ft. across Mumbai and Navi Mumbai."
+    },
+    {
+      "num": "04",
+      "title": "MahaRERA Registered & Compliant",
+      "text": "Full RERA compliance with transparent disclosures, escrow accounts, and on-time delivery commitment."
+    }
+  ],
+  "stats": [
+    { "value": "25+", "label": "Projects Delivered" },
+    { "value": "20M", "label": "Sq.ft. Completed" },
+    { "value": "28%", "label": "Area Appreciation" },
+    { "value": "4.8★", "label": "Google Rating" }
+  ]
+}

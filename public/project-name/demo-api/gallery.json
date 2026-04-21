@@ -1,0 +1,87 @@
+{
+  "sectionLabel": "Project Images",
+  "title": { "before": "A Glimpse of ", "italic": "Project Name", "after": "" },
+  "cells": [
+    {
+      "images": [
+        {
+          "src": "/kitchen/lilitile-kitchen-9288111.jpg",
+          "alt": "Modern kitchen with white cabinetry, gold hardware, and patterned floor tiles"
+        },
+        {
+          "src": "/kitchen/clickerhappy-kitchen-2165756.jpg",
+          "alt": "Kitchen interior with clean lines and natural light"
+        },
+        {
+          "src": "/kitchen/23555986-kitchen-8428528.jpg",
+          "alt": "Contemporary kitchen layout and finishes"
+        },
+        {
+          "src": "/kitchen/sunriseforever-kitchen-4043098.jpg",
+          "alt": "Kitchen with dark grey cabinets and wood accents"
+        }
+      ],
+      "tag": "Kitchen",
+      "feature": true
+    },
+    {
+      "images": [
+        {
+          "src": "/living-room/mussellistefano-sitting-room-2037945.jpg",
+          "alt": "Spacious living room opening to a pool and sea view"
+        },
+        {
+          "src": "/living-room/newhouse-furniture-998265.jpg",
+          "alt": "Living room with curated furniture and soft daylight"
+        },
+        {
+          "src": "/living-room/pexels-living-room-1835923.jpg",
+          "alt": "Bright living area with comfortable seating"
+        },
+        {
+          "src": "/living-room/engin_akyurt-armchair-2873069.jpg",
+          "alt": "Armchair and living room corner detail"
+        }
+      ],
+      "tag": "Living Room",
+      "feature": false
+    },
+    {
+      "images": [
+        {
+          "src": "/kitchen/sunriseforever-kitchen-4043098.jpg",
+          "alt": "Contemporary kitchen and dining with dark grey cabinets and wood accents"
+        },
+        {
+          "src": "/dining-room/3d-rendering-scandinavian-vintage-modern-kitchen-with-dining-area.jpg",
+          "alt": "Kitchen and dining area in a warm, open plan"
+        },
+        {
+          "src": "/dining-room/jessebridgewater-kitchen-2400367.jpg",
+          "alt": "Dining space adjacent to the kitchen"
+        },
+        {
+          "src": "/dining-room/3d-rendering-dining-set-modern-luxury-dining-room.jpg",
+          "alt": "Modern dining room with table and lighting"
+        }
+      ],
+      "tag": "Kitchen & Dining",
+      "feature": false
+    },
+    {
+      "images": [
+        {
+          "src": "/interior/10302144-room-5061355.jpg",
+          "alt": "Bright interior room with refined finishes"
+        },
+        {
+          "src": "/interior/4787421-interior-2685521.jpg",
+          "alt": "Interior living space with refined furnishings and natural light"
+        }
+      ],
+      "tag": "Interior",
+      "feature": false,
+      "wideBottom": true
+    }
+  ]
+}

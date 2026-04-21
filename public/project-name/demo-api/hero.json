@@ -1,0 +1,34 @@
+{
+  "backgroundImages": [
+    {
+      "src": "/banners/publicdomainpictures-architecture-219807_1920.jpg",
+      "alt": "Modern high-rise architecture against the sky"
+    },
+    {
+      "src": "/banners/djedj-architecture-5585737.jpg",
+      "alt": "Contemporary building facade and glass lines"
+    },
+    {
+      "src": "/banners/pana68-skyscraper-9226515.jpg",
+      "alt": "Tall residential tower reaching into the sky"
+    },
+    {
+      "src": "/banners/wal_172619-city-4861938.jpg",
+      "alt": "City skyline with urban towers at dusk"
+    }
+  ],
+  "eyebrow": "New Launch · Sector 18, Kharghar",
+  "titleLine1": "Project",
+  "titleLine2Italic": "Name",
+  "locationLine": "Sector 18, Kharghar, Navi Mumbai — 410 210",
+  "metaCells": [
+    { "value": "3–5", "label": "BHK Config" },
+    { "value": "950–3800", "label": "Sq.ft. Carpet" },
+    { "value": "36", "label": "Total Floors" },
+    { "value": "Dec'27", "label": "Possession" }
+  ],
+  "primaryCta": { "label": "Book Site Visit", "targetSectionId": "enquiry" },
+  "secondaryCta": { "label": "View Floor Plans", "targetSectionId": "residences" },
+  "badge": "Ready Dec 2027",
+  "mainVisual": { "art": "P", "fontSize": "14rem", "opacity": 0.08 }
+}

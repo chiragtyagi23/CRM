@@ -1,0 +1,25 @@
+{
+  "sectionLabel": "Property Location",
+  "title": { "before": "Social ", "italic": "Infrastructure", "after": "" },
+  "body": "Sector 18, Kharghar, Navi Mumbai — flanked by the Kharghar Hills, CIDCO garden, and moments from key arterials.",
+  "landmarks": [
+    { "top": "15%", "left": "22%", "line1": "Kharghar Hills", "line2": "National Park" },
+    { "top": "20%", "left": "58%", "line1": "Kharghar", "line2": "Railway Station" },
+    { "top": "50%", "left": "18%", "line1": "CIDCO", "line2": "Garden" },
+    { "top": "65%", "left": "62%", "line1": "Seawoods Grand", "line2": "Central Mall" },
+    { "top": "78%", "left": "35%", "line1": "CBD Belapur", "line2": "Business Hub" }
+  ],
+  "pinLabel": "Project Name",
+  "distances": [
+    { "label": "Railway Station", "value": "5 min" },
+    { "label": "Seawoods Mall", "value": "12 min" },
+    { "label": "Navi Mumbai Airport", "value": "18 min" },
+    { "label": "CBD Belapur", "value": "10 min" },
+    { "label": "Hiranandani Hospital", "value": "8 min" }
+  ],
+  "legend": [
+    { "label": "Project Site", "variant": "project" },
+    { "label": "Roads", "variant": "roads" },
+    { "label": "Green Zones", "variant": "green" }
+  ]
+}

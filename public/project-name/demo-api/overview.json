@@ -1,0 +1,26 @@
+{
+  "sectionLabel": "Project Overview",
+  "title": { "before": "Everything You Need to ", "italic": "Know", "after": "" },
+  "body": "A landmark 36-floor luxury residential tower by Project Name — redefining skyline living in Navi Mumbai with bay-facing residences, world-class amenities, and 30+ years of developer legacy.",
+  "facts": [
+    { "key": "Project Name", "value": "Project Name Residences" },
+    { "key": "Developer", "value": "Project Name" },
+    { "key": "Location", "value": "Sector 18, Kharghar, Navi Mumbai" },
+    { "key": "BHK Type", "value": "3, 4 & 5 BHK" },
+    { "key": "Carpet Area Range", "value": "950 – 3,800 Sq.ft." },
+    { "key": "Total Floors", "value": "G + 36 Floors" },
+    { "key": "Floor-to-Floor Height", "value": "3.15 Metres (10.3 ft)", "tone": "brown" },
+    { "key": "Total Units", "value": "248 Residences" },
+    { "key": "Possession", "value": "December 2027", "tone": "green" },
+    { "key": "Price (Starting)", "value": "₹ 2.8 Crore* onwards", "tone": "brown" }
+  ],
+  "certificationsTitle": "Project Certifications & Registration",
+  "certifications": [
+    { "label": "MahaRERA No.", "value": "P51700078765" },
+    { "label": "RERA Type", "value": "Residential" },
+    { "label": "RERA Registration Date", "value": "14 Jan 2024" },
+    { "label": "Project Status", "value": "Under Construction", "tone": "green" },
+    { "label": "Completion Date (CBT)", "value": "31 Dec 2027" },
+    { "label": "Extension Allowed", "value": "Upto 1 Year" }
+  ]
+}

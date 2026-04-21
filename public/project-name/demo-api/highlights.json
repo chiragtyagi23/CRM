@@ -1,0 +1,42 @@
+{
+  "sectionLabel": "Project Highlights",
+  "title": { "before": "What Makes ", "italic": "Project Name", "after": " Extraordinary" },
+  "items": [
+    {
+      "num": "01",
+      "icon": "◎",
+      "title": "180° Panoramic Bay Views",
+      "text": "Every residence is oriented to capture sweeping views of the Thane Creek, mangroves, and the Kharghar Hills."
+    },
+    {
+      "num": "02",
+      "icon": "⊞",
+      "title": "Private Lift Lobbies",
+      "text": "Dedicated lift foyers for select floors ensure complete privacy and security for residents."
+    },
+    {
+      "num": "03",
+      "icon": "✦",
+      "title": "Double-Height Grand Lobby",
+      "text": "A dramatic 7-metre entrance lobby finished in imported marble creates a lasting first impression."
+    },
+    {
+      "num": "04",
+      "icon": "◇",
+      "title": "Vastu-Compliant Layouts",
+      "text": "All floor plans are designed in accordance with Vastu Shastra principles for harmony and well-being."
+    },
+    {
+      "num": "05",
+      "icon": "≋",
+      "title": "3.15m Floor-to-Floor Height",
+      "text": "Generous ceiling heights create an airy, spacious feeling throughout every room in every residence."
+    },
+    {
+      "num": "06",
+      "icon": "⊕",
+      "title": "Green-Certified Building",
+      "text": "Designed to meet IGBC Gold standards with solar energy, rainwater harvesting, and EV infrastructure."
+    }
+  ]
+}

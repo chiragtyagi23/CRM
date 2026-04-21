@@ -1,0 +1,49 @@
+{
+  "popup": {
+    "title": "Enquire now",
+    "subtitle": "Get a callback with pricing, floor plans, and pre-launch offers — we reply within 24 hours.",
+    "backgroundImage": "/banners/publicdomainpictures-architecture-219807_1920.jpg"
+  },
+  "left": {
+    "sectionLabel": "Enquiry",
+    "title": { "before": "Start Your ", "italic": "Journey", "after": "" },
+    "lead": "Our relationship managers will reach out within 24 hours with personalised details, pricing, and exclusive pre-launch offers.",
+    "contacts": [
+      { "icon": "☎", "text": "+91 98205 00000" },
+      { "icon": "✉", "text": "sales@projectname.com" },
+      { "icon": "⌖", "text": "Sector 18, Kharghar, Navi Mumbai" },
+      { "icon": "⏱", "text": "Mon – Sat: 10 am – 7 pm" }
+    ]
+  },
+  "right": {
+    "formTitle": "Request a Callback",
+    "formSub": "Fill in your details and we'll get back to you shortly.",
+    "nameField": { "label": "Full Name *", "placeholder": "Arjun Mehta", "id": "enq-name", "name": "name" },
+    "phoneField": { "label": "Mobile Number *", "placeholder": "+91 98765 43210", "id": "enq-phone", "name": "phone" },
+    "bhkField": {
+      "label": "BHK Configuration",
+      "id": "enq-bhk",
+      "name": "bhk",
+      "options": [
+        { "value": "", "label": "Select Type" },
+        { "value": "3", "label": "3 BHK (950 – 1,280 Sq.ft.)" },
+        { "value": "4", "label": "4 BHK (1,750 – 2,250 Sq.ft.)" },
+        { "value": "5", "label": "5 BHK (3,200 – 3,800 Sq.ft.)" }
+      ]
+    },
+    "budgetField": {
+      "label": "Budget Range",
+      "id": "enq-budget",
+      "name": "budget",
+      "options": [
+        { "value": "", "label": "Select Range" },
+        { "value": "2-4", "label": "₹ 2 – 4 Crore" },
+        { "value": "4-6", "label": "₹ 4 – 6 Crore" },
+        { "value": "6+", "label": "₹ 6 Crore & Above" }
+      ]
+    },
+    "submitLabel": "Submit Enquiry →",
+    "disclaimerLine1": "By submitting, you consent to be contacted by the Project Name sales team.",
+    "disclaimerLine2": "MahaRERA No. P51700078765 · *Prices subject to change · T&C Apply"
+  }
+}

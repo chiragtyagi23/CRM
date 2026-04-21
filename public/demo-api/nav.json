@@ -1,0 +1,15 @@
+{
+  "logo": {
+    "textMain": "PropCRM",
+    "textSecondary": "Real Estate Lead Management"
+  },
+  "activeItemId": "dashboard",
+  "menuItems": [
+    { "id": "dashboard", "label": "Dashboard", "link": "#dashboard", "icon": "grid" },
+    { "id": "leads", "label": "Leads", "link": "#leads", "icon": "user" },
+    { "id": "capture", "label": "Capture Lead", "link": "#capture-lead", "icon": "userPlus" },
+    { "id": "visits", "label": "Site Visits", "link": "#site-visits", "icon": "pin" },
+    { "id": "reports", "label": "Reports", "link": "#reports", "icon": "chart" },
+    { "id": "campaign", "label": "Campaign", "link": "#campaign", "icon": "chart" }
+  ]
+}

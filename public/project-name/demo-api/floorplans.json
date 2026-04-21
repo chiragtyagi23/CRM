@@ -1,0 +1,60 @@
+{
+  "sectionLabel": "Size & Floor Plans",
+  "title": { "before": "Choose Your ", "italic": "Residence", "after": "" },
+  "blueprintImage": "/blueprints/cocoparisienne-blueprint-354233.jpg",
+  "defaultTabId": "bhk3",
+  "tabs": [
+    { "id": "bhk3", "label": "3 BHK" },
+    { "id": "bhk4", "label": "4 BHK" },
+    { "id": "bhk5", "label": "5 BHK" }
+  ],
+  "panels": {
+    "bhk3": {
+      "columns": ["Configuration", "Carpet Area", "Floor Range", "Price"],
+      "rows": [
+        ["3 BHK — Type A", "950 Sq.ft.", "4th – 15th", "₹ 2.80 Cr*"],
+        ["3 BHK — Type B", "1,050 Sq.ft.", "4th – 15th", "₹ 3.10 Cr*"],
+        ["3 BHK — Type C (Bay View)", "1,150 Sq.ft.", "16th – 28th", "₹ 3.55 Cr*"],
+        ["3 BHK + Study", "1,280 Sq.ft.", "16th – 28th", "₹ 3.90 Cr*"]
+      ],
+      "floorPlanImages": [
+        "/floor-plan/3Bhk-type-A.jpg",
+        "/floor-plan/3Bhk-type-B.jpg",
+        "/floor-plan/3Bhk-type-C.jpg",
+        "/floor-plan/3Bhk-type-D.jpg"
+      ],
+      "priceLabel": "Starting Price",
+      "price": "₹ 2.80 Crore*",
+      "priceNote": "All Government Taxes Extra As Applicable · *T&C Apply",
+      "planTag": "3 BHK",
+      "planInnerModifier": ""
+    },
+    "bhk4": {
+      "columns": ["Configuration", "Carpet Area", "Floor Range", "Price"],
+      "rows": [
+        ["4 BHK — Standard", "1,750 Sq.ft.", "10th – 22nd", "₹ 4.20 Cr*"],
+        ["4 BHK — Bay View", "1,920 Sq.ft.", "10th – 22nd", "₹ 4.75 Cr*"],
+        ["4 BHK + Staff Room", "2,050 Sq.ft.", "23rd – 32nd", "₹ 5.30 Cr*"],
+        ["4 BHK Luxury", "2,250 Sq.ft.", "23rd – 32nd", "₹ 5.95 Cr*"]
+      ],
+      "priceLabel": "Starting Price",
+      "price": "₹ 4.20 Crore*",
+      "priceNote": "All Government Taxes Extra As Applicable · *T&C Apply",
+      "planTag": "4 BHK",
+      "planInnerModifier": "75"
+    },
+    "bhk5": {
+      "columns": ["Configuration", "Carpet Area", "Floor Range", "Price"],
+      "rows": [
+        ["5 BHK Penthouse A", "3,200 Sq.ft.", "33rd – 35th", "₹ 7.50 Cr*"],
+        ["5 BHK Penthouse B", "3,600 Sq.ft.", "33rd – 35th", "₹ 8.40 Cr*"],
+        ["5 BHK Sky Villa (Duplex)", "3,800 Sq.ft.", "35th – 36th", "₹ 9.80 Cr*"]
+      ],
+      "priceLabel": "Starting Price",
+      "price": "₹ 7.50 Crore*",
+      "priceNote": "Exclusive private pool · *T&C Apply",
+      "planTag": "5 BHK Penthouse",
+      "planInnerModifier": "80"
+    }
+  }
+}

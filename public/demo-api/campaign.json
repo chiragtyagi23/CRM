@@ -1,0 +1,21 @@
+{
+  "title": "Add Campaign (Luxury Template)",
+  "subtitle": "Edit the microsite content as JSON. Download the updated files and replace the corresponding JSON inside your template folder.",
+  "sections": [
+    { "key": "nav", "label": "Navigation", "path": "/project-name/demo-api/nav.json" },
+    { "key": "hero", "label": "Hero", "path": "/project-name/demo-api/hero.json" },
+    { "key": "marquee", "label": "Marquee", "path": "/project-name/demo-api/marquee.json" },
+    { "key": "overview", "label": "Overview", "path": "/project-name/demo-api/overview.json" },
+    { "key": "gallery", "label": "Gallery", "path": "/project-name/demo-api/gallery.json" },
+    { "key": "videos", "label": "Videos", "path": "/project-name/demo-api/videos.json" },
+    { "key": "reels", "label": "Reels", "path": "/project-name/demo-api/reels.json" },
+    { "key": "floorplans", "label": "Floor Plans", "path": "/project-name/demo-api/floorplans.json" },
+    { "key": "amenities", "label": "Amenities", "path": "/project-name/demo-api/amenities.json" },
+    { "key": "highlights", "label": "Highlights", "path": "/project-name/demo-api/highlights.json" },
+    { "key": "benefits", "label": "Benefits", "path": "/project-name/demo-api/benefits.json" },
+    { "key": "location", "label": "Location", "path": "/project-name/demo-api/location.json" },
+    { "key": "enquiry", "label": "Enquiry", "path": "/project-name/demo-api/enquiry.json" },
+    { "key": "footer", "label": "Footer", "path": "/project-name/demo-api/footer.json" }
+  ]
+}
+

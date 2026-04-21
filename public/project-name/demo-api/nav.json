@@ -1,0 +1,17 @@
+{
+  "logo": {
+    "textMain": "Project",
+    "textSecondary": "Name"
+  },
+  "menuItems": [
+    { "label": "OVERVIEW", "link": "#overview" },
+    { "label": "RESIDENCES", "link": "#residences" },
+    { "label": "AMENITIES", "link": "#amenities" },
+    { "label": "LOCATION", "link": "#location" },
+    { "label": "GALLERY", "link": "#gallery" }
+  ],
+  "cta": {
+    "label": "ENQUIRE NOW",
+    "link": "#enquiry"
+  }
+}

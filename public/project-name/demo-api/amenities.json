@@ -1,0 +1,16 @@
+{
+  "sectionLabel": "Amenities",
+  "title": { "before": "45+ World-Class ", "italic": "Amenities", "after": "" },
+  "items": [
+    { "icon": "∞", "name": "Infinity Pool", "desc": "Sky-level, temperature controlled, bay views" },
+    { "icon": "◈", "name": "Fitness Centre", "desc": "Technogym equipment, yoga & meditation studio" },
+    { "icon": "✦", "name": "Clubhouse", "desc": "4,000 sq.ft. social & banquet space" },
+    { "icon": "⊕", "name": "Landscaped Gardens", "desc": "Themed trails, reflexology path, seating zones" },
+    { "icon": "◇", "name": "Spa & Salon", "desc": "Steam, sauna, therapy rooms, wellness lounge" },
+    { "icon": "○", "name": "Children's Zone", "desc": "Safe play areas, activity rooms, amphitheatre" },
+    { "icon": "◻", "name": "Sports Courts", "desc": "Squash, badminton, table tennis, multi-court" },
+    { "icon": "⋆", "name": "Sky Lounge", "desc": "Exclusive residents' deck at 35th floor" },
+    { "icon": "≋", "name": "Co-Working Hub", "desc": "High-speed internet, breakout spaces" },
+    { "icon": "⊛", "name": "EV Charging", "desc": "Dedicated EV bays with smart chargers" }
+  ]
+}
