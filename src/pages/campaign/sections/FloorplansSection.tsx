@@ -5,13 +5,13 @@ import { SectionCard } from '../ui/SectionCard'
 import { UploadTile } from '../ui/UploadTile'
 import { inputClassName } from '../ui/classNames'
 
-const FLOOR_TABS: FloorTabKey[] = ['bhk3', 'bhk4', 'bhk5']
-
 export function FloorplansSection({
   floorBlueprintImage,
   setFloorBlueprintImage,
   floorDefaultTab,
   setFloorDefaultTab,
+  floorTabs,
+  setFloorTabs,
   floorRows,
   setFloorRows,
   floorPlanImages,
@@ -21,35 +21,75 @@ export function FloorplansSection({
   setFloorBlueprintImage: Dispatch<SetStateAction<string>>
   floorDefaultTab: FloorTabKey
   setFloorDefaultTab: Dispatch<SetStateAction<FloorTabKey>>
-  floorRows: Record<FloorTabKey, FloorRow[]>
-  setFloorRows: Dispatch<SetStateAction<Record<FloorTabKey, FloorRow[]>>>
-  floorPlanImages: Record<FloorTabKey, BannerImage[]>
-  setFloorPlanImages: Dispatch<SetStateAction<Record<FloorTabKey, BannerImage[]>>>
+  floorTabs: { id: FloorTabKey; label: string }[]
+  setFloorTabs: Dispatch<SetStateAction<{ id: FloorTabKey; label: string }[]>>
+  floorRows: Record<string, FloorRow[]>
+  setFloorRows: Dispatch<SetStateAction<Record<string, FloorRow[]>>>
+  floorPlanImages: Record<string, BannerImage[]>
+  setFloorPlanImages: Dispatch<SetStateAction<Record<string, BannerImage[]>>>
 }) {
   return (
-    <SectionCard title="Floor plans" subtitle="BHK tabs and type-wise images (3BHK/4BHK/5BHK).">
+    <SectionCard title="Floor plans *" subtitle="BHK tabs and type-wise images (add 1BHK/2BHK/3BHK/...).">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm font-semibold text-gray-900">BHK tabs</div>
+            <button
+              type="button"
+              className="h-9 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50"
+              onClick={() =>
+                setFloorTabs((prev) => {
+                  const nextId = `bhk${prev.length + 1}`
+                  return [...prev, { id: nextId, label: `${prev.length + 1} BHK` }]
+                })
+              }
+            >
+              Add tab
+            </button>
+          </div>
+          <div className="mt-3 grid grid-cols-1 gap-2">
+            {floorTabs.map((t) => (
+              <div key={t.id} className="grid grid-cols-[1fr_110px] gap-2 items-center">
+                <input
+                  className={inputClassName()}
+                  value={t.label}
+                  onChange={(e) => setFloorTabs((prev) => prev.map((x) => (x.id === t.id ? { ...x, label: e.target.value } : x)))}
+                  placeholder="e.g. 2 BHK"
+                />
+                <button
+                  type="button"
+                  className="h-9 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50"
+                  onClick={() =>
+                    setFloorTabs((prev) => (prev.length <= 1 ? prev : prev.filter((x) => x.id !== t.id)))
+                  }
+                  disabled={floorTabs.length <= 1}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+
           <div className="text-sm font-semibold text-gray-900">Blueprint image URL</div>
           <div className="mt-3">
             <input className={inputClassName()} value={floorBlueprintImage} onChange={(e) => setFloorBlueprintImage(e.target.value)} placeholder="/blueprints/..." />
           </div>
           <div className="mt-4 flex gap-2">
-            {FLOOR_TABS.map((tab) => (
+            {floorTabs.map((tab) => (
               <button
-                key={tab}
+                key={tab.id}
                 type="button"
-                className={floorDefaultTab === tab ? 'h-9 px-3 rounded-lg bg-violet-600 text-white text-xs font-semibold' : 'h-9 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50'}
-                onClick={() => setFloorDefaultTab(tab)}
+                className={floorDefaultTab === tab.id ? 'h-9 px-3 rounded-lg bg-violet-600 text-white text-xs font-semibold' : 'h-9 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50'}
+                onClick={() => setFloorDefaultTab(tab.id)}
               >
-                {tab === 'bhk3' ? '3 BHK' : tab === 'bhk4' ? '4 BHK' : '5 BHK'}
+                {tab.label || tab.id}
               </button>
             ))}
           </div>
           <div className="mt-4 rounded-xl border border-gray-200 bg-white p-3">
             <div className="font-semibold text-gray-900">Rows (Configuration / Carpet / Floor / Price)</div>
             <div className="mt-3 grid grid-cols-1 gap-3">
-              {floorRows[floorDefaultTab].map((row, idx) => (
+              {(floorRows[floorDefaultTab] ?? []).map((row, idx) => (
                 <div key={idx} className="grid grid-cols-1 md:grid-cols-4 gap-2">
                   <input
                     className={inputClassName()}
@@ -58,7 +98,7 @@ export function FloorplansSection({
                     onChange={(e) =>
                       setFloorRows((p) => ({
                         ...p,
-                        [floorDefaultTab]: p[floorDefaultTab].map((r, i) => (i === idx ? { ...r, configuration: e.target.value } : r)),
+                        [floorDefaultTab]: (p[floorDefaultTab] ?? []).map((r, i) => (i === idx ? { ...r, configuration: e.target.value } : r)),
                       }))
                     }
                   />
@@ -69,7 +109,7 @@ export function FloorplansSection({
                     onChange={(e) =>
                       setFloorRows((p) => ({
                         ...p,
-                        [floorDefaultTab]: p[floorDefaultTab].map((r, i) => (i === idx ? { ...r, carpetArea: e.target.value } : r)),
+                        [floorDefaultTab]: (p[floorDefaultTab] ?? []).map((r, i) => (i === idx ? { ...r, carpetArea: e.target.value } : r)),
                       }))
                     }
                   />
@@ -80,7 +120,7 @@ export function FloorplansSection({
                     onChange={(e) =>
                       setFloorRows((p) => ({
                         ...p,
-                        [floorDefaultTab]: p[floorDefaultTab].map((r, i) => (i === idx ? { ...r, floorRange: e.target.value } : r)),
+                        [floorDefaultTab]: (p[floorDefaultTab] ?? []).map((r, i) => (i === idx ? { ...r, floorRange: e.target.value } : r)),
                       }))
                     }
                   />
@@ -91,7 +131,7 @@ export function FloorplansSection({
                     onChange={(e) =>
                       setFloorRows((p) => ({
                         ...p,
-                        [floorDefaultTab]: p[floorDefaultTab].map((r, i) => (i === idx ? { ...r, price: e.target.value } : r)),
+                        [floorDefaultTab]: (p[floorDefaultTab] ?? []).map((r, i) => (i === idx ? { ...r, price: e.target.value } : r)),
                       }))
                     }
                   />
@@ -103,7 +143,7 @@ export function FloorplansSection({
                 onClick={() =>
                   setFloorRows((p) => ({
                     ...p,
-                    [floorDefaultTab]: [...p[floorDefaultTab], { configuration: '', carpetArea: '', floorRange: '', price: '' }],
+                    [floorDefaultTab]: [...(p[floorDefaultTab] ?? []), { configuration: '', carpetArea: '', floorRange: '', price: '' }],
                   }))
                 }
               >
@@ -121,7 +161,7 @@ export function FloorplansSection({
               onClick={() =>
                 setFloorPlanImages((p) => ({
                   ...p,
-                  [floorDefaultTab]: [...p[floorDefaultTab], { src: '', alt: '' }],
+                  [floorDefaultTab]: [...(p[floorDefaultTab] ?? []), { src: '', alt: '' }],
                 }))
               }
             >
@@ -131,26 +171,27 @@ export function FloorplansSection({
           <div className="mt-1 text-xs text-gray-500">Upload or paste image URL. You can remove images.</div>
 
           <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-            {floorPlanImages[floorDefaultTab].map((img, idx) => (
+            {(floorPlanImages[floorDefaultTab] ?? []).map((img, idx) => (
               <UploadTile
                 key={idx}
                 label={`Floor plan ${idx + 1}`}
                 hint="Paste image URL or use Upload."
                 aspect="wide"
+                uploadMode="defer"
                 value={img}
                 onChange={(next) =>
                   setFloorPlanImages((p) => ({
                     ...p,
-                    [floorDefaultTab]: p[floorDefaultTab].map((it, i) => (i === idx ? next : it)),
+                    [floorDefaultTab]: (p[floorDefaultTab] ?? []).map((it, i) => (i === idx ? next : it)),
                   }))
                 }
                 onRemove={
-                  floorPlanImages[floorDefaultTab].length <= 1
+                  (floorPlanImages[floorDefaultTab] ?? []).length <= 1
                     ? undefined
                     : () =>
                         setFloorPlanImages((p) => ({
                           ...p,
-                          [floorDefaultTab]: p[floorDefaultTab].filter((_, i) => i !== idx),
+                          [floorDefaultTab]: (p[floorDefaultTab] ?? []).filter((_, i) => i !== idx),
                         }))
                 }
               />

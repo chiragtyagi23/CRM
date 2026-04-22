@@ -15,7 +15,7 @@ export function GallerySection({
 }) {
   return (
     <>
-      <SectionCard title="Gallery" subtitle="Create image groups (Kitchen, Living Room, etc.) with add/remove and image URLs.">
+      <SectionCard title="Gallery *" subtitle="Create image groups (Kitchen, Living Room, etc.) with add/remove and image URLs.">
         <div className="flex items-center justify-between gap-3">
           <div className="text-xs text-gray-500">{galleryCells.length} groups</div>
           <button
@@ -111,6 +111,7 @@ export function GallerySection({
                     label={`Image ${imgIdx + 1}`}
                     hint="Paste image URL (recommended)."
                     aspect="wide"
+                    uploadMode="defer"
                     value={img}
                     onChange={(next) =>
                       setGalleryCells((prev) =>

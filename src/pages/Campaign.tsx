@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 
-import { apiGet, apiSend } from '../lib/crmApi'
+import { apiGet, apiSend, apiUploadImage } from '../lib/crmApi'
 import { campaignBuilderActions } from '../store/campaignBuilderSlice'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { CampaignListTable } from './campaign/CampaignListTable'
@@ -25,6 +25,150 @@ import type {
 
 function resolveSetState<T>(current: T, next: T | ((prev: T) => T)) {
   return typeof next === 'function' ? (next as (p: T) => T)(current) : next
+}
+
+function nonEmpty(s: unknown) {
+  return typeof s === 'string' && s.trim().length > 0
+}
+
+type RequiredIssue = { section: (typeof TEMPLATE_SECTIONS)[number]['key']; message: string }
+
+function validateRequired(builder: any): RequiredIssue[] {
+  const issues: RequiredIssue[] = []
+
+  // Banner (hero) required: at least 1 banner image
+  const bannerCount = Array.isArray(builder?.bannerImages)
+    ? builder.bannerImages.filter((b: any) => nonEmpty(b?.src)).length
+    : 0
+  if (bannerCount < 1) issues.push({ section: 'hero', message: 'Banner: add at least 1 banner image.' })
+
+  // Overview required fields
+  if (!nonEmpty(builder?.campaignName)) issues.push({ section: 'overview', message: 'Overview: Project name is required.' })
+  if (!nonEmpty(builder?.coverImageUrl)) issues.push({ section: 'overview', message: 'Overview: Cover image is required.' })
+  if (!nonEmpty(builder?.projectLocation)) issues.push({ section: 'overview', message: 'Overview: Location is required.' })
+  if (!nonEmpty(builder?.startingPrice)) issues.push({ section: 'overview', message: 'Overview: Starting price is required.' })
+  if (!nonEmpty(builder?.reraNo)) issues.push({ section: 'overview', message: 'Overview: RERA No. is required.' })
+  if (!nonEmpty(builder?.totalFloors)) issues.push({ section: 'overview', message: 'Overview: Total floors is required.' })
+
+  // Gallery required: at least 1 image across all cells
+  const galleryHasAny = Array.isArray(builder?.galleryCells)
+    ? builder.galleryCells.some((c: any) => Array.isArray(c?.images) && c.images.some((img: any) => nonEmpty(img?.src)))
+    : false
+  if (!galleryHasAny) issues.push({ section: 'gallery', message: 'Gallery: add at least 1 image.' })
+
+  // Floor plans required: at least 1 row with some real value OR at least 1 floor plan image
+  const floorTabs = Array.isArray(builder?.floorTabs) ? builder.floorTabs : []
+  const hasFloorRow = floorTabs.some((t: any) => {
+    const rows = builder?.floorRows?.[t?.id] ?? []
+    return Array.isArray(rows)
+      ? rows.some((r: any) => nonEmpty(r?.configuration) || nonEmpty(r?.carpetArea) || nonEmpty(r?.floorRange) || nonEmpty(r?.price))
+      : false
+  })
+  const hasFloorImg = floorTabs.some((t: any) => {
+    const imgs = builder?.floorPlanImages?.[t?.id] ?? []
+    return Array.isArray(imgs) ? imgs.some((i: any) => nonEmpty(i?.src)) : false
+  })
+  if (!hasFloorRow && !hasFloorImg) {
+    issues.push({ section: 'floorplans', message: 'Floor Plans: add at least 1 plan row or 1 floor plan image.' })
+  }
+
+  // Benefits required: at least 1 item with heading/description
+  const benefitsHasAny = Array.isArray(builder?.benefitItems)
+    ? builder.benefitItems.some((b: any) => nonEmpty(b?.heading) || nonEmpty(b?.description))
+    : false
+  if (!benefitsHasAny) issues.push({ section: 'benefits', message: 'Benefits: add at least 1 benefit item.' })
+
+  return issues
+}
+
+function stripFilesForDraft<T>(v: T): T {
+  const walk = (x: any): any => {
+    if (Array.isArray(x)) return x.map(walk)
+    if (!x || typeof x !== 'object') return x
+    // Remove File objects and blob preview URLs (not restorable).
+    if (x instanceof File) return undefined
+    const out: any = {}
+    for (const k of Object.keys(x)) {
+      if (k === 'file') continue
+      const val = (x as any)[k]
+      if (k === 'src' && typeof val === 'string' && val.startsWith('blob:')) {
+        out[k] = ''
+      } else {
+        out[k] = walk(val)
+      }
+    }
+    return out
+  }
+  return walk(v)
+}
+
+async function materializeImagesForSave(builder: any) {
+  const clone = structuredClone(stripFilesForDraft(builder))
+
+  const uploadIfNeeded = async (img: any): Promise<{ src: string; alt: string }> => {
+    const file: File | undefined = img?.file
+    if (file) {
+      const url = await apiUploadImage(file)
+      return { src: url, alt: String(img?.alt ?? '') }
+    }
+    return { src: String(img?.src ?? ''), alt: String(img?.alt ?? '') }
+  }
+
+  // banners
+  if (Array.isArray(builder?.bannerImages)) {
+    clone.bannerImages = await Promise.all(builder.bannerImages.map(uploadIfNeeded))
+  }
+
+  // benefits background images
+  if (Array.isArray(builder?.benefitBackgroundImages)) {
+    clone.benefitBackgroundImages = await Promise.all(builder.benefitBackgroundImages.map(uploadIfNeeded))
+  }
+
+  // gallery
+  if (Array.isArray(builder?.galleryCells)) {
+    clone.galleryCells = await Promise.all(
+      builder.galleryCells.map(async (cell: any) => ({
+        ...cell,
+        images: Array.isArray(cell?.images) ? await Promise.all(cell.images.map(uploadIfNeeded)) : [],
+      })),
+    )
+  }
+
+  // floor plan images
+  if (builder?.floorPlanImages && typeof builder.floorPlanImages === 'object') {
+    const next: Record<string, any[]> = {}
+    for (const k of Object.keys(builder.floorPlanImages)) {
+      const arr = builder.floorPlanImages[k]
+      next[k] = Array.isArray(arr) ? await Promise.all(arr.map(uploadIfNeeded)) : []
+    }
+    clone.floorPlanImages = next
+  }
+
+  return clone
+}
+
+const LS_DRAFT = 'crm_campaign_draft_v1'
+
+function readDraft(): any | null {
+  try {
+    const raw = window.localStorage.getItem(LS_DRAFT)
+    if (!raw) return null
+    return JSON.parse(raw)
+  } catch {
+    return null
+  }
+}
+
+function writeDraft(value: unknown) {
+  window.localStorage.setItem(LS_DRAFT, JSON.stringify(value))
+}
+
+function clearDraft() {
+  try {
+    window.localStorage.removeItem(LS_DRAFT)
+  } catch {
+    // ignore
+  }
 }
 
 export function Campaign() {
@@ -58,16 +202,58 @@ export function Campaign() {
       .finally(() => setLoadingCampaigns(false))
   }, [])
 
+  // Restore draft if user was mid-creation and refreshed.
+  useEffect(() => {
+    if (builder.selectedCampaignId) return
+    const d = readDraft()
+    if (!d) return
+    dispatch(campaignBuilderActions.hydrateFromDraft(d))
+    showFlash('Draft restored.')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const goToPrevSection = () => {
+    const idx = TEMPLATE_SECTIONS.findIndex((s) => s.key === builder.activeSection)
+    const prev = TEMPLATE_SECTIONS[Math.max(0, idx - 1)]
+    dispatch(campaignBuilderActions.setActiveSection(prev.key))
+  }
+
   const goToNextSection = () => {
+    const issues = validateRequired(builder)
+    const currentIssue = issues.find((i) => i.section === builder.activeSection)
+    if (currentIssue) {
+      window.alert(`Please fill the required fields before continuing.\n\n- ${currentIssue.message}`)
+      return
+    }
     const idx = TEMPLATE_SECTIONS.findIndex((s) => s.key === builder.activeSection)
     const next = TEMPLATE_SECTIONS[Math.min(TEMPLATE_SECTIONS.length - 1, idx + 1)]
     dispatch(campaignBuilderActions.setActiveSection(next.key))
   }
 
+  const saveDraftNow = () => {
+    if (builder.selectedCampaignId) return
+    writeDraft(stripFilesForDraft(builder))
+    showFlash('Draft saved.')
+  }
+
   const doSave = async (templateKey: 'luxury-template' | 'affordable-template') => {
     if (saveState.type === 'saving') return
+    const issues = validateRequired(builder)
+    if (issues.length) {
+      const first = issues[0]
+      dispatch(campaignBuilderActions.setActiveSection(first.section))
+      window.alert(
+        `Please fill the required sections before saving the campaign.\n\nMissing:\n${issues
+          .map((i) => `- ${i.message}`)
+          .join('\n')}`,
+      )
+      setSaveState({ type: 'idle' })
+      return
+    }
     setSaveState({ type: 'saving' })
     try {
+      // If user selected local files in tiles, upload them now and replace `src` with absolute URLs.
+      const builderForSave = await materializeImagesForSave(builder)
       const updating = Boolean(builder.selectedCampaignId)
       const prevSelectedId = builder.selectedCampaignId ? String(builder.selectedCampaignId) : null
       // if (selectedCampaignId) {
@@ -81,15 +267,15 @@ export function Campaign() {
         
         const payload = {
           master: {
-            title: builder.campaignName,
-            address: builder.projectLocation,
-            reg_no: builder.reraNo,
-            logo: builder.logoUrl,
-            coverImage: builder.coverImageUrl,
+            title: builderForSave.campaignName,
+            address: builderForSave.projectLocation,
+            reg_no: builderForSave.reraNo,
+            logo: builderForSave.logoUrl,
+            coverImage: builderForSave.coverImageUrl,
             templateKey,
           },
           hero: {
-            backgroundImages: builder.bannerImages.filter((b) => b.src.trim().length > 0),
+            backgroundImages: builderForSave.bannerImages.filter((b: any) => String(b?.src ?? '').trim().length > 0),
             eyebrow: '',
             titleLine1: '',
             titleLine2Italic: '',
@@ -98,106 +284,85 @@ export function Campaign() {
             metaCells: [],
             primaryCta: { label: 'Book Site Visit', targetSectionId: 'enquiry' },
             secondaryCta: { label: 'View Floor Plans', targetSectionId: 'residences' },
-            badge: builder.possessionDate,
+            badge: builderForSave.possessionDate,
           },
           overview: {
             sectionLabel: 'Project Overview',
             title: { before: 'Everything You Need to ', italic: 'Know', after: '' },
             facts: [
-              { key: 'Project Name', value: builder.campaignName },
-              { key: 'Email', value: builder.contactEmail },
-              { key: 'Mobile', value: builder.contactMobile },
-              { key: 'Starting Price', value: builder.startingPrice },
-              { key: 'Completion Date (CBT)', value: builder.completionDate },
-              { key: 'RERA Registration Number', value: builder.reraNo },
-              { key: 'BHK Range', value: builder.bhkRange },
-              { key: 'Price Range', value: builder.priceRange },
-              { key: 'Location', value: builder.projectLocation },
-              { key: 'Total Floors', value: builder.totalFloors },
-              { key: 'Square Feet Ranges', value: builder.squareFeetRanges },
-              { key: 'Possession', value: builder.possessionDate },
-              { key: 'Serial Number', value: builder.overviewFacts.serialNumber },
-              { key: 'Code Name', value: builder.overviewFacts.codeName },
-              { key: 'Location (detail)', value: builder.overviewFacts.location },
-              { key: 'Land Parcel', value: builder.overviewFacts.landParcel },
-              { key: 'Project', value: builder.overviewFacts.project },
-              { key: 'Apartments', value: builder.overviewFacts.apartments },
-              { key: 'Building', value: builder.overviewFacts.building },
-              { key: 'Carpet Areas', value: builder.overviewFacts.carpetAreas },
+              { key: 'Project Name', value: builderForSave.campaignName },
+              { key: 'Email', value: builderForSave.contactEmail },
+              { key: 'Mobile', value: builderForSave.contactMobile },
+              { key: 'Starting Price', value: builderForSave.startingPrice },
+              { key: 'Completion Date (CBT)', value: builderForSave.completionDate },
+              { key: 'RERA Registration Number', value: builderForSave.reraNo },
+              { key: 'BHK Range', value: builderForSave.bhkRange },
+              { key: 'Price Range', value: builderForSave.priceRange },
+              { key: 'Location', value: builderForSave.projectLocation },
+              { key: 'Total Floors', value: builderForSave.totalFloors },
+              { key: 'Square Feet Ranges', value: builderForSave.squareFeetRanges },
+              { key: 'Possession', value: builderForSave.possessionDate },
+              { key: 'Serial Number', value: builderForSave.overviewFacts.serialNumber },
+              { key: 'Code Name', value: builderForSave.overviewFacts.codeName },
+              { key: 'Location (detail)', value: builderForSave.overviewFacts.location },
+              { key: 'Land Parcel', value: builderForSave.overviewFacts.landParcel },
+              { key: 'Project', value: builderForSave.overviewFacts.project },
+              { key: 'Apartments', value: builderForSave.overviewFacts.apartments },
+              { key: 'Building', value: builderForSave.overviewFacts.building },
+              { key: 'Carpet Areas', value: builderForSave.overviewFacts.carpetAreas },
             ].filter((f) => f.value.trim().length > 0),
             certificationsTitle: 'Project Certifications & Registration',
-            certifications: [{ label: 'MahaRERA No.', value: builder.reraNo }].filter((c) => c.value.trim().length > 0),
+            certifications: [{ label: 'MahaRERA No.', value: builderForSave.reraNo }].filter((c) => c.value.trim().length > 0),
           },
           gallery: {
             sectionLabel: 'Project Images',
-            title: { before: 'A Glimpse of ', italic: builder.campaignName || 'Project', after: '' },
-            cells: builder.galleryCells.map((c) => ({
+            title: { before: 'A Glimpse of ', italic: builderForSave.campaignName || 'Project', after: '' },
+            cells: builderForSave.galleryCells.map((c: any) => ({
               tag: c.tag,
               feature: c.feature,
               wideBottom: c.wideBottom,
-              images: c.images.filter((img) => img.src.trim().length > 0),
+              images: c.images.filter((img: any) => String(img?.src ?? '').trim().length > 0),
             })),
           },
           floorplans: {
             sectionLabel: 'Size & Floor Plans',
             title: { before: 'Choose Your ', italic: 'Residence', after: '' },
-            blueprintImage: builder.floorBlueprintImage,
-            defaultTabId: builder.floorDefaultTab,
-            tabs: [
-              { id: 'bhk3', label: '3 BHK' },
-              { id: 'bhk4', label: '4 BHK' },
-              { id: 'bhk5', label: '5 BHK' },
-            ],
-            panels: {
-              bhk3: {
-                columns: ['Configuration', 'Carpet Area', 'Floor Range', 'Price'],
-                rows: builder.floorRows.bhk3.map((r) => [r.configuration, r.carpetArea, r.floorRange, r.price]),
-                floorPlanImages: builder.floorPlanImages.bhk3.map((i) => i.src).filter((s) => s.trim().length > 0),
-                priceLabel: 'Starting Price',
-                price: '',
-                priceNote: '',
-                planTag: '3 BHK',
-                planInnerModifier: '',
-              },
-              bhk4: {
-                columns: ['Configuration', 'Carpet Area', 'Floor Range', 'Price'],
-                rows: builder.floorRows.bhk4.map((r) => [r.configuration, r.carpetArea, r.floorRange, r.price]),
-                floorPlanImages: builder.floorPlanImages.bhk4.map((i) => i.src).filter((s) => s.trim().length > 0),
-                priceLabel: 'Starting Price',
-                price: '',
-                priceNote: '',
-                planTag: '4 BHK',
-                planInnerModifier: '',
-              },
-              bhk5: {
-                columns: ['Configuration', 'Carpet Area', 'Floor Range', 'Price'],
-                rows: builder.floorRows.bhk5.map((r) => [r.configuration, r.carpetArea, r.floorRange, r.price]),
-                floorPlanImages: builder.floorPlanImages.bhk5.map((i) => i.src).filter((s) => s.trim().length > 0),
-                priceLabel: 'Starting Price',
-                price: '',
-                priceNote: '',
-                planTag: '5 BHK',
-                planInnerModifier: '',
-              },
-            },
+            blueprintImage: builderForSave.floorBlueprintImage,
+            defaultTabId: builderForSave.floorDefaultTab,
+            tabs: builderForSave.floorTabs,
+            panels: Object.fromEntries(
+              builderForSave.floorTabs.map((t: any) => [
+                t.id,
+                {
+                  columns: ['Configuration', 'Carpet Area', 'Floor Range', 'Price'],
+                  rows: (builderForSave.floorRows[t.id] ?? []).map((r: any) => [r.configuration, r.carpetArea, r.floorRange, r.price]),
+                  floorPlanImages: (builderForSave.floorPlanImages[t.id] ?? []).map((i: any) => i.src).filter((s: any) => String(s).trim().length > 0),
+                  priceLabel: 'Starting Price',
+                  price: '',
+                  priceNote: '',
+                  planTag: t.label || t.id,
+                  planInnerModifier: '',
+                },
+              ]),
+            ),
           },
           amenities: {
             sectionLabel: 'Amenities',
             title: { before: '', italic: 'Amenities', after: '' },
-            items: builder.amenityItems.map((a) => ({ name: a.name })).filter((a) => a.name.trim().length > 0),
+            items: builderForSave.amenityItems.map((a: any) => ({ name: a.name })).filter((a: any) => a.name.trim().length > 0),
           },
           benefits: {
             sectionLabel: 'Benefits',
-            title: { before: 'Why Invest in ', italic: builder.campaignName || 'Project', after: '' },
-            backgroundImages: builder.benefitBackgroundImages.filter((b) => b.src.trim().length > 0),
-            items: builder.benefitItems
-              .filter((b) => b.heading.trim().length > 0 || b.description.trim().length > 0)
-              .map((b, idx) => ({
+            title: { before: 'Why Invest in ', italic: builderForSave.campaignName || 'Project', after: '' },
+            backgroundImages: builderForSave.benefitBackgroundImages.filter((b: any) => String(b?.src ?? '').trim().length > 0),
+            items: builderForSave.benefitItems
+              .filter((b: any) => b.heading.trim().length > 0 || b.description.trim().length > 0)
+              .map((b: any, idx: number) => ({
                 num: String(idx + 1).padStart(2, '0'),
                 title: b.heading.trim().length > 0 ? b.heading : `Benefit ${idx + 1}`,
                 text: b.description,
               })),
-            stats: builder.benefitStats.filter((s) => s.value.trim().length > 0 || s.label.trim().length > 0),
+            stats: builderForSave.benefitStats.filter((s: any) => s.value.trim().length > 0 || s.label.trim().length > 0),
           },
           highlights: {
             items: builder.highlightItems
@@ -241,6 +406,7 @@ export function Campaign() {
           dispatch(campaignBuilderActions.setSelectedCampaignId(savedId))
         } else {
           // After creating, go back to "new campaign" mode.
+          clearDraft()
           dispatch(campaignBuilderActions.resetBuilder())
           dispatch(campaignBuilderActions.setTemplateKey(templateKey))
         }
@@ -441,14 +607,6 @@ export function Campaign() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <a
-            className="inline-flex h-11 items-center justify-center rounded-2xl border border-[#e7ddcf] bg-[#FDFBF7] px-5 text-[13px] font-semibold text-[#80654a] shadow-sm hover:bg-[#faf6ef] no-underline"
-            href={`/project-name?template=${encodeURIComponent(selectedTemplateKey)}`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Preview microsite
-          </a>
           <button
             type="button"
             className="inline-flex h-11 items-center justify-center rounded-2xl bg-[#80654a] px-5 text-[13px] font-semibold text-white shadow-sm hover:bg-[#725940]"
@@ -547,6 +705,7 @@ export function Campaign() {
           onSelectCampaign={async (c) => {
             // Toggle Edit <-> Cancel
             if (builder.selectedCampaignId && String(builder.selectedCampaignId) === String((c as any).id)) {
+              clearDraft()
               dispatch(campaignBuilderActions.resetBuilder())
               setTemplateModalOpen(false)
               setSaveState({ type: 'idle' })
@@ -570,13 +729,35 @@ export function Campaign() {
         <section className="rounded-2xl border border-gray-900/5 bg-[#FDFBF7] p-4 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
           <CampaignSidebar
             activeSection={builder.activeSection}
-            onSectionChange={(k) => dispatch(campaignBuilderActions.setActiveSection(k))}
+            onSectionChange={(k) => {
+              // Prevent skipping required checks by clicking sidebar sections.
+              const curIdx = TEMPLATE_SECTIONS.findIndex((s) => s.key === builder.activeSection)
+              const targetIdx = TEMPLATE_SECTIONS.findIndex((s) => s.key === k)
+              const goingBack = targetIdx >= 0 && curIdx >= 0 && targetIdx <= curIdx
+
+              // Always allow going back (no validation gate).
+              if (!goingBack) {
+                const issues = validateRequired(builder)
+                const currentIssue = issues.find((i) => i.section === builder.activeSection)
+                if (currentIssue) {
+                  window.alert(`Please fill the required fields before changing sections.\n\n- ${currentIssue.message}`)
+                  return
+                }
+              }
+              dispatch(campaignBuilderActions.setActiveSection(k))
+            }}
           />
         </section>
 
         <section className="rounded-2xl border border-gray-900/5 bg-[#FDFBF7] p-4 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
           <div className="flex flex-col gap-4">
-            <CampaignSectionHeader label={sectionMeta.label} helper={sectionMeta.helper} onNextSection={goToNextSection} />
+            <CampaignSectionHeader
+              label={sectionMeta.label}
+              helper={sectionMeta.helper}
+              onSaveDraft={saveDraftNow}
+              onPrevSection={goToPrevSection}
+              onNextSection={goToNextSection}
+            />
 
             {builder.activeSection === 'hero' ? (
               <HeroSection
@@ -651,6 +832,8 @@ export function Campaign() {
                 setFloorDefaultTab={(v) =>
                   dispatch(campaignBuilderActions.setFloorDefaultTab(resolveSetState(builder.floorDefaultTab, v)))
                 }
+                floorTabs={builder.floorTabs}
+                setFloorTabs={(v) => dispatch(campaignBuilderActions.setFloorTabs(resolveSetState(builder.floorTabs, v)))}
                 floorRows={builder.floorRows}
                 setFloorRows={(v) => dispatch(campaignBuilderActions.setFloorRows(resolveSetState(builder.floorRows, v)))}
                 floorPlanImages={builder.floorPlanImages}

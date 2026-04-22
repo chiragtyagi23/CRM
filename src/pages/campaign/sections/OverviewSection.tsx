@@ -123,7 +123,7 @@ export function OverviewSection({
                 ) : null}
               </div>
             </Field>
-            <Field label="Cover image (upload)">
+            <Field label="Cover image (upload)" required>
               <div className="flex flex-col gap-2">
                 <div className="flex flex-col gap-2">
                   <input
@@ -177,16 +177,16 @@ export function OverviewSection({
             <Field label="Mobile no.">
               <input className={inputClassName()} value={contactMobile} onChange={(e) => setContactMobile(e.target.value)} placeholder="+91 99999 99999" />
             </Field>
-            <Field label="Location">
+            <Field label="Location" required>
               <input className={inputClassName()} value={projectLocation} onChange={(e) => setProjectLocation(e.target.value)} placeholder="Sector 18, Kharghar, Navi Mumbai" />
             </Field>
-            <Field label="Starting price">
+            <Field label="Starting price" required>
               <input className={inputClassName()} value={startingPrice} onChange={(e) => setStartingPrice(e.target.value)} placeholder="₹ 2.80 Cr*" />
             </Field>
             <Field label="Completion date (CBT)">
               <input className={inputClassName()} value={completionDate} onChange={(e) => setCompletionDate(e.target.value)} placeholder="31 Dec 2027" />
             </Field>
-            <Field label="RERA registration number">
+            <Field label="RERA registration number" required>
               <input className={inputClassName()} value={reraNo} onChange={(e) => setReraNo(e.target.value)} placeholder="P51700078765" />
             </Field>
             <Field label="BHK range">
@@ -195,7 +195,7 @@ export function OverviewSection({
             <Field label="Price range">
               <input className={inputClassName()} value={priceRange} onChange={(e) => setPriceRange(e.target.value)} placeholder="₹ 2.80 Cr* – ₹ 9.80 Cr*" />
             </Field>
-            <Field label="Total floors">
+            <Field label="Total floors" required>
               <input className={inputClassName()} value={totalFloors} onChange={(e) => setTotalFloors(e.target.value)} placeholder="36" />
             </Field>
             <Field label="Square feet ranges">

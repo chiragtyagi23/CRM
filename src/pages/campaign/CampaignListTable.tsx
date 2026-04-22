@@ -57,7 +57,7 @@ export function CampaignListTable({
                         {selectedCampaignId === c.id ? 'Cancel' : 'Edit'}
                       </button>
 
-                      <a
+                      {/* <a
                         className="h-9 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50 inline-flex items-center no-underline"
                         href={`/project-name/${encodeURIComponent(c.id)}?template=${encodeURIComponent(
                           (c as any).templateKey || 'luxury-template',
@@ -66,7 +66,7 @@ export function CampaignListTable({
                         rel="noreferrer"
                       >
                         Preview
-                      </a>
+                      </a> */}
                     </div>
                   </td>
                 </tr>

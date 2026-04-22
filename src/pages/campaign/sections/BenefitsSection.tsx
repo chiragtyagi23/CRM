@@ -23,7 +23,7 @@ export function BenefitsSection({
 }) {
   return (
     <>
-      <SectionCard title="Benefits" subtitle="Add benefit items (heading + description), stats, and background images.">
+      <SectionCard title="Benefits *" subtitle="Add benefit items (heading + description), stats, and background images.">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
             <div className="flex items-center justify-between gap-3">
@@ -153,6 +153,7 @@ export function BenefitsSection({
                     label={`Background ${idx + 1}`}
                     hint="Paste image URL (recommended)."
                     aspect="wide"
+                    uploadMode="defer"
                     value={img}
                     onChange={(next) => setBenefitBackgroundImages((prev) => prev.map((p, i) => (i === idx ? next : p)))}
                     onRemove={

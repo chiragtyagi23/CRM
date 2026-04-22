@@ -14,7 +14,7 @@ export function HeroSection({
   return (
     <>
       <SectionCard
-        title="Banner images"
+        title="Banner images *"
         subtitle="Add up to 5 banner images for the hero slider. Paste image URLs (recommended)."
       >
         <div className="flex items-center justify-between gap-3">
@@ -40,6 +40,7 @@ export function HeroSection({
               label={`Banner ${idx + 1}`}
               hint="Paste image URL (recommended). Upload is only for preview unless you add storage."
               aspect="banner"
+              uploadMode="defer"
               value={b}
               onChange={(next) => setBannerImages((prev) => prev.map((p, i) => (i === idx ? next : p)))}
               onRemove={

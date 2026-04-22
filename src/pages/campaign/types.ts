@@ -21,7 +21,7 @@ export type TemplateSectionKey =
 
 export type CampaignListResponse = { items: ExistingCampaign[] }
 
-export type BannerImage = { src: string; alt: string }
+export type BannerImage = { src: string; alt: string; file?: File }
 
 export type OverviewFactsState = {
   serialNumber: string
@@ -41,7 +41,7 @@ export type GalleryCell = {
   images: BannerImage[]
 }
 
-export type FloorTabKey = 'bhk3' | 'bhk4' | 'bhk5'
+export type FloorTabKey = string
 
 export type FloorRow = { configuration: string; carpetArea: string; floorRange: string; price: string }
 

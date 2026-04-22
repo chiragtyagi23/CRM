@@ -1,10 +1,14 @@
 export function CampaignSectionHeader({
   label,
   helper,
+  onSaveDraft,
+  onPrevSection,
   onNextSection,
 }: {
   label: string
   helper: string
+  onSaveDraft: () => void
+  onPrevSection: () => void
   onNextSection: () => void
 }) {
   return (
@@ -16,6 +20,20 @@ export function CampaignSectionHeader({
           <div className="mt-1 text-sm text-gray-600">{helper}</div>
         </div>
         <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="h-10 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 text-sm font-semibold hover:bg-gray-50"
+            onClick={onSaveDraft}
+          >
+            Save
+          </button>
+          <button
+            type="button"
+            className="h-10 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 text-sm font-semibold hover:bg-gray-50"
+            onClick={onPrevSection}
+          >
+            Previous section
+          </button>
           <button
             type="button"
             className="h-10 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 text-sm font-semibold hover:bg-gray-50"

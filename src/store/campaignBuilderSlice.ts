@@ -35,8 +35,9 @@ export type CampaignBuilderState = {
 
   floorBlueprintImage: string
   floorDefaultTab: FloorTabKey
-  floorRows: Record<FloorTabKey, FloorRow[]>
-  floorPlanImages: Record<FloorTabKey, BannerImage[]>
+  floorTabs: { id: FloorTabKey; label: string }[]
+  floorRows: Record<string, FloorRow[]>
+  floorPlanImages: Record<string, BannerImage[]>
 
   amenityItems: { name: string }[]
   highlightItems: { title: string; description: string }[]
@@ -90,12 +91,23 @@ const initialState: CampaignBuilderState = {
 
   floorBlueprintImage: '',
   floorDefaultTab: 'bhk3',
+  floorTabs: [
+    { id: 'bhk1', label: '1 BHK' },
+    { id: 'bhk2', label: '2 BHK' },
+    { id: 'bhk3', label: '3 BHK' },
+    { id: 'bhk4', label: '4 BHK' },
+    { id: 'bhk5', label: '5 BHK' },
+  ],
   floorRows: {
+    bhk1: [{ configuration: '', carpetArea: '', floorRange: '', price: '' }],
+    bhk2: [{ configuration: '', carpetArea: '', floorRange: '', price: '' }],
     bhk3: [{ configuration: '', carpetArea: '', floorRange: '', price: '' }],
     bhk4: [{ configuration: '', carpetArea: '', floorRange: '', price: '' }],
     bhk5: [{ configuration: '', carpetArea: '', floorRange: '', price: '' }],
   },
   floorPlanImages: {
+    bhk1: [{ src: '', alt: '' }],
+    bhk2: [{ src: '', alt: '' }],
     bhk3: [{ src: '', alt: '' }],
     bhk4: [{ src: '', alt: '' }],
     bhk5: [{ src: '', alt: '' }],
@@ -117,6 +129,11 @@ const slice = createSlice({
   reducers: {
     resetBuilder() {
       return initialState
+    },
+    hydrateFromDraft(_state, action: PayloadAction<any>) {
+      const d = action.payload && typeof action.payload === 'object' ? action.payload : {}
+      const merged = { ...initialState, ...d, selectedCampaignId: null }
+      return merged
     },
     setActiveSection(state, action: PayloadAction<TemplateSectionKey>) {
       state.activeSection = action.payload
@@ -196,10 +213,22 @@ const slice = createSlice({
     setFloorDefaultTab(state, action: PayloadAction<FloorTabKey>) {
       state.floorDefaultTab = action.payload
     },
-    setFloorRows(state, action: PayloadAction<Record<FloorTabKey, FloorRow[]>>) {
+    setFloorTabs(state, action: PayloadAction<{ id: FloorTabKey; label: string }[]>) {
+      state.floorTabs = action.payload
+      // Ensure default tab exists
+      if (!state.floorTabs.some((t) => t.id === state.floorDefaultTab)) {
+        state.floorDefaultTab = state.floorTabs[0]?.id ?? state.floorDefaultTab
+      }
+      // Ensure rows/images maps contain keys for tabs
+      for (const t of state.floorTabs) {
+        if (!state.floorRows[t.id]) state.floorRows[t.id] = [{ configuration: '', carpetArea: '', floorRange: '', price: '' }]
+        if (!state.floorPlanImages[t.id]) state.floorPlanImages[t.id] = [{ src: '', alt: '' }]
+      }
+    },
+    setFloorRows(state, action: PayloadAction<Record<string, FloorRow[]>>) {
       state.floorRows = action.payload
     },
-    setFloorPlanImages(state, action: PayloadAction<Record<FloorTabKey, BannerImage[]>>) {
+    setFloorPlanImages(state, action: PayloadAction<Record<string, BannerImage[]>>) {
       state.floorPlanImages = action.payload
     },
 
@@ -323,11 +352,15 @@ const slice = createSlice({
       const sf = c?.sizeFloor
       if (sf && typeof sf === 'object') {
         const defaultTabId = typeof sf.defaultTabId === 'string' ? sf.defaultTabId : 'bhk3'
-        if (defaultTabId === 'bhk3' || defaultTabId === 'bhk4' || defaultTabId === 'bhk5') {
-          state.floorDefaultTab = defaultTabId
+        if (defaultTabId) state.floorDefaultTab = defaultTabId
+        // Tabs: allow any ids
+        if (Array.isArray(sf.tabs) && sf.tabs.length) {
+          state.floorTabs = sf.tabs
+            .map((t: any) => ({ id: String(t?.id ?? '').trim(), label: String(t?.label ?? '').trim() }))
+            .filter((t: any) => t.id.length > 0)
         }
         const panels = sf.panels && typeof sf.panels === 'object' ? sf.panels : {}
-        const readPanelRows = (key: FloorTabKey): FloorRow[] => {
+        const readPanelRows = (key: string): FloorRow[] => {
           const p = (panels as any)[key]
           const rows = Array.isArray(p?.rows) ? p.rows : []
           const mapped = rows
@@ -341,13 +374,12 @@ const slice = createSlice({
             .filter((r: any) => r.configuration || r.carpetArea || r.floorRange || r.price)
           return mapped.length ? mapped : [{ configuration: '', carpetArea: '', floorRange: '', price: '' }]
         }
-        state.floorRows = {
-          bhk3: readPanelRows('bhk3'),
-          bhk4: readPanelRows('bhk4'),
-          bhk5: readPanelRows('bhk5'),
-        }
+        const nextRows: Record<string, FloorRow[]> = {}
+        const tabIds = state.floorTabs.map((t) => t.id)
+        for (const id of tabIds) nextRows[id] = readPanelRows(id)
+        state.floorRows = nextRows
 
-        const readPlanImages = (key: FloorTabKey): BannerImage[] => {
+        const readPlanImages = (key: string): BannerImage[] => {
           const p = (panels as any)[key]
           const imgs = Array.isArray(p?.floorPlanImages) ? p.floorPlanImages : []
           const mapped = imgs
@@ -356,11 +388,9 @@ const slice = createSlice({
             .map((src: string) => ({ src, alt: '' }))
           return mapped.length ? mapped : [{ src: '', alt: '' }]
         }
-        state.floorPlanImages = {
-          bhk3: readPlanImages('bhk3'),
-          bhk4: readPlanImages('bhk4'),
-          bhk5: readPlanImages('bhk5'),
-        }
+        const nextImgs: Record<string, BannerImage[]> = {}
+        for (const id of tabIds) nextImgs[id] = readPlanImages(id)
+        state.floorPlanImages = nextImgs
       }
 
       // AMENITIES
