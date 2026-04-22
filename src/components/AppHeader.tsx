@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { BULK_UPLOAD_LEAVE_MESSAGE, isBulkUploadDirty } from '../lib/bulkUploadNavigation'
 import { useSiteSection } from '../lib/siteApi'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { authActions } from '../store/authSlice'
@@ -219,6 +220,9 @@ export function AppHeader() {
                 type="button"
                 className="inline-flex h-9 items-center justify-center rounded-xl border border-gray-300 bg-white px-4 text-[12px] font-semibold text-gray-700 hover:bg-gray-50"
                 onClick={() => {
+                  if (window.location.hash === '#leads/bulk-upload' && isBulkUploadDirty()) {
+                    if (!window.confirm(BULK_UPLOAD_LEAVE_MESSAGE)) return
+                  }
                   dispatch(authActions.logout())
                   window.location.hash = '#login'
                 }}
@@ -277,6 +281,9 @@ export function AppHeader() {
                 type="button"
                 className="app-header__link app-header__link--mobile"
                 onClick={() => {
+                  if (window.location.hash === '#leads/bulk-upload' && isBulkUploadDirty()) {
+                    if (!window.confirm(BULK_UPLOAD_LEAVE_MESSAGE)) return
+                  }
                   dispatch(authActions.logout())
                   setMenuOpen(false)
                   window.location.hash = '#login'

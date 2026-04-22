@@ -7,6 +7,7 @@ import { CaptureLead } from './pages/CaptureLead'
 import { SiteVisits } from './pages/SiteVisits'
 import { Reports } from './pages/Reports'
 import { LeadDetails } from './pages/LeadDetails'
+import { BulkUploadLeads } from './pages/BulkUploadLeads'
 import { Login } from './pages/Login'
 import { Signup } from './pages/Signup'
 import { Home } from './pages/Home'
@@ -34,6 +35,7 @@ function App() {
   const isSignup = hash === '#signup'
   const isCampaign = hash === '#campaign'
   const isLeads = hash === '#leads'
+  const isLeadsBulkUpload = hash === '#leads/bulk-upload'
   const isLeadDetails = hash.startsWith('#leads/viewdetail/')
   const isCaptureLead = hash === '#capture-lead'
   const isSiteVisits = hash === '#site-visits'
@@ -43,6 +45,13 @@ function App() {
   useEffect(() => {
     dispatch(hydrateAuth())
   }, [dispatch])
+
+  useEffect(() => {
+    if (!isLeadsBulkUpload) return
+    if (!token || user?.role !== 'admin') {
+      window.location.hash = '#leads'
+    }
+  }, [isLeadsBulkUpload, token, user?.role])
 
   // Basic auth guard (UI-only): force login for app pages.
   useEffect(() => {
@@ -115,6 +124,10 @@ function App() {
       ) : isLeadDetails ? (
         <main className="app-main" id="lead-details" style={{ backgroundColor: '#f6efe4' }}>
           <LeadDetails leadId={leadDetailsId} />
+        </main>
+      ) : isLeadsBulkUpload && isAdmin ? (
+        <main className="app-main" id="leads-bulk-upload" style={{ backgroundColor: '#f6efe4' }}>
+          <BulkUploadLeads />
         </main>
       ) : isLeads ? (
         <main className="app-main" id="leads" style={{ backgroundColor: '#f6efe4' }}>

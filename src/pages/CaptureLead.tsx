@@ -40,6 +40,17 @@ function IconCalendar() {
   )
 }
 
+function IconClock() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
+      <path
+        fill="currentColor"
+        d="M9 2.25a6.75 6.75 0 1 0 0 13.5A6.75 6.75 0 0 0 9 2.25zm0 1.5a5.25 5.25 0 1 1 0 10.5A5.25 5.25 0 0 1 9 3.75zm.75 2.5V9.5l2.8 1.68a.75.75 0 1 1-.78 1.28L8.25 10.1V6.25a.75.75 0 0 1 1.5 0z"
+      />
+    </svg>
+  )
+}
+
 function IconUser() {
   return (
     <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
@@ -203,6 +214,8 @@ export function CaptureLead() {
     [],
   )
 
+  const preferredLocationOtherValue = '__other__'
+
   const [selected, setSelected] = useState<SourceId | null>(null)
   const [firstCallDate, setFirstCallDate] = useState('')
   const [callBy, setCallBy] = useState('')
@@ -219,6 +232,7 @@ export function CaptureLead() {
   const [workProfile, setWorkProfile] = useState<'SERVICE' | 'BUSINESS'>('SERVICE')
   const [industry, setIndustry] = useState('')
   const [preferredLocation, setPreferredLocation] = useState('KHARGHAR')
+  const [preferredLocationOther, setPreferredLocationOther] = useState('')
   const [possessionBy, setPossessionBy] = useState('')
   const [leadStatus, setLeadStatus] = useState<'HOT' | 'WARM' | 'COLD'>('HOT')
   const [buyingStage, setBuyingStage] = useState<
@@ -226,6 +240,7 @@ export function CaptureLead() {
   >('SEARCHING')
   const [remarks, setRemarks] = useState('')
   const [callbackDate, setCallbackDate] = useState('')
+  const [callbackTime, setCallbackTime] = useState('')
 
   useEffect(() => {
     if (!token) return
@@ -278,14 +293,15 @@ export function CaptureLead() {
                 type="button"
                 onClick={() => setSelected(s.id)}
                 className={[
-                  'flex h-[86px] flex-col items-center justify-center gap-2 rounded-xl border bg-white px-5 text-[12px] font-semibold text-gray-800',
-                  'border-gray-200 hover:bg-gray-50',
-                  active ? 'bg-[#fab969]' : '',
+                  'flex h-[86px] flex-col items-center justify-center gap-2 rounded-xl border px-5 text-[12px] font-semibold transition-colors cursor-pointer',
+                  active
+                    ? 'border-[#80654a] bg-[#faf6ef] text-gray-900 shadow-[inset_0_0_0_2px_rgba(128,101,74,0.2)]'
+                    : 'border-gray-200 bg-white text-gray-800 hover:border-gray-300 hover:bg-gray-50',
                 ].join(' ')}
                 aria-pressed={active}
               >
                 {s.icon}
-                <span className="text-[12px] font-semibold text-gray-700">{s.label}</span>
+                <span className={`text-[12px] font-semibold ${active ? 'text-gray-900' : 'text-gray-700'}`}>{s.label}</span>
               </button>
             )
           })}
@@ -459,11 +475,11 @@ export function CaptureLead() {
       </section>
 
       <section className="rounded-2xl border border-gray-900/5 bg-white p-5 sm:p-7 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
-        <div className="text-[12px] font-semibold tracking-[0.02em] text-gray-800">
-          PREFERRED LOCATIONS <span className="text-rose-500">*</span>
+        <div className="text-[18px] font-bold text-gray-800">
+          Preferred Locations <span className="text-rose-500">*</span>
         </div>
 
-        <div className="mt-5">
+        <div className="mt-5 space-y-4">
           <Field label="Preferred Location" required icon={<IconPin />}>
             <select
               value={preferredLocation}
@@ -475,8 +491,19 @@ export function CaptureLead() {
                   {loc}
                 </option>
               ))}
+              <option value={preferredLocationOtherValue}>Other (custom)</option>
             </select>
           </Field>
+          {preferredLocation === preferredLocationOtherValue ? (
+            <Field label="Custom location" required icon={<IconPin />}>
+              <input
+                value={preferredLocationOther}
+                onChange={(e) => setPreferredLocationOther(e.target.value)}
+                placeholder="e.g., Belapur, Seawoods, Airoli…"
+                className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-[13px] text-gray-700 placeholder:text-gray-400 focus:border-[#cdb89f] focus:outline-none"
+              />
+            </Field>
+          ) : null}
         </div>
       </section>
 
@@ -555,8 +582,8 @@ export function CaptureLead() {
       <section className="rounded-2xl border border-gray-900/5 bg-white p-5 sm:p-7 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
         <div className="text-[18px] font-bold text-gray-900">Additional Information</div>
 
-        <div className="mt-5 grid grid-cols-1 gap-6">
-          <label className="block">
+        <div className="mt-5 grid grid-cols-1 gap-6 min-[900px]:grid-cols-2">
+          <label className="block min-[900px]:col-span-2">
             <div className="mb-2 inline-flex items-center gap-2 text-[11px] font-semibold text-gray-500">
               <span className="text-gray-400">
                 <IconRemarks />
@@ -575,8 +602,17 @@ export function CaptureLead() {
             <input
               value={callbackDate}
               onChange={(e) => setCallbackDate(e.target.value)}
-              placeholder="dd-mm-yyyy --:--"
+              placeholder="dd-mm-yyyy or yyyy-mm-dd"
               className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-[13px] text-gray-700 placeholder:text-gray-400 focus:border-[#cdb89f] focus:outline-none"
+            />
+          </Field>
+
+          <Field label="CB TIME (Callback Time)" required icon={<IconClock />}>
+            <input
+              type="time"
+              value={callbackTime}
+              onChange={(e) => setCallbackTime(e.target.value)}
+              className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-[13px] text-gray-700 focus:border-[#cdb89f] focus:outline-none"
             />
           </Field>
         </div>
@@ -595,8 +631,19 @@ export function CaptureLead() {
         <button
           type="button"
           className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#80654a] text-[13px] font-semibold text-white shadow-sm hover:bg-[#725940]"
-          disabled={creating || !fullName.trim() || !num.trim()}
+          disabled={
+            creating ||
+            !fullName.trim() ||
+            !num.trim() ||
+            !callbackDate.trim() ||
+            !callbackTime.trim() ||
+            (preferredLocation === preferredLocationOtherValue && !preferredLocationOther.trim())
+          }
           onClick={async () => {
+            const preferredResolved =
+              preferredLocation === preferredLocationOtherValue
+                ? preferredLocationOther.trim()
+                : preferredLocation
             const payload = {
               source: selected,
               firstCallDate: firstCallDate || null,
@@ -612,11 +659,12 @@ export function CaptureLead() {
               workLocation: workLocation || null,
               workProfile,
               industryType: industry || null,
-              preferredLocation: preferredLocation ? [preferredLocation] : [],
+              preferredLocation: preferredResolved ? [preferredResolved] : [],
               possessionDate: possessionBy || null,
               status: leadStatus,
               propertyBuyingStage: buyingStage,
               callbackDate: callbackDate || null,
+              callbackTime: callbackTime.trim() || null,
             }
 
             await dispatch(submitCaptureLead(payload)).unwrap()

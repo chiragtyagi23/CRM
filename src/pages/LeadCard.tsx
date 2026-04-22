@@ -1,42 +1,84 @@
+import type { ReactNode } from 'react'
 import type { LeadDTO, LeadScoreDTO, LeadStatusDTO } from '../lib/dashboardDummyApi'
+import { FiCalendar, FiEye, FiMail, FiMessageSquare, FiPhone } from 'react-icons/fi'
 
-function IconPhone({ className }: { className?: string }) {
+function BadgeSelect({
+  id,
+  value,
+  onChange,
+  badgeClassName,
+  children,
+}: {
+  id: string
+  value: string
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void
+  badgeClassName: string
+  children: ReactNode
+}) {
   return (
-    <svg className={className} width="16" height="16" viewBox="0 0 18 18" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M5.45 2.25h2.05c.38 0 .7.27.76.64l.38 2.3c.06.37-.16.73-.52.84l-1.56.5c.37.87.98 1.82 1.76 2.6.78.78 1.73 1.39 2.6 1.76l.5-1.56c.11-.36.47-.58.84-.52l2.3.38c.37.06.64.38.64.76v2.05c0 .42-.32.76-.74.8-1.2.1-3.64-.02-6.22-2.6-2.58-2.58-2.7-5.02-2.6-6.22.04-.42.38-.74.8-.74z"
-      />
-    </svg>
+    <span className="relative inline-flex min-w-0">
+      <select
+        id={id}
+        value={value}
+        onChange={onChange}
+        className={`w-full min-w-0 cursor-pointer appearance-none rounded-full border-0 py-1 pl-3 pr-9 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#8B7355]/40 ${badgeClassName}`}
+      >
+        {children}
+      </select>
+      <span
+        className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-[#8B7355]"
+        aria-hidden
+      >
+        <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M2.5 4.25L6 7.75L9.5 4.25"
+            stroke="currentColor"
+            strokeWidth="1.25"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </span>
+    </span>
   )
 }
 
-function IconMail({ className }: { className?: string }) {
-  return (
-    <svg className={className} width="16" height="16" viewBox="0 0 18 18" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M3.5 4h11A1.5 1.5 0 0 1 16 5.5v7A1.5 1.5 0 0 1 14.5 14h-11A1.5 1.5 0 0 1 2 12.5v-7A1.5 1.5 0 0 1 3.5 4zm.4 1.5 5.1 3.6 5.1-3.6H3.9zm10.6 1.8-4.99 3.52a.9.9 0 0 1-1.02 0L3.5 7.3v5.2c0 .28.22.5.5.5h10c.28 0 .5-.22.5-.5V7.3z"
-      />
-    </svg>
-  )
+function getScoreBadgeColor(score: LeadScoreDTO) {
+  switch (score) {
+    case 'Hot':
+      return 'bg-[#D96B6B]/20 text-[#D96B6B]'
+    case 'Warm':
+      return 'bg-[#E8DCCB] text-[#8B7355]'
+    case 'Cold':
+      return 'bg-[#F5EFE7] text-[#8B7355]'
+    default:
+      return 'bg-[#E8DCCB] text-[#8B7355]'
+  }
 }
 
-function IconEye({ className }: { className?: string }) {
-  return (
-    <svg className={className} width="16" height="16" viewBox="0 0 18 18" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M9 4c3.7 0 6.82 2.17 8.3 5.26a1 1 0 0 1 0 .88C15.82 13.83 12.7 16 9 16s-6.82-2.17-8.3-5.26a1 1 0 0 1 0-.88C2.18 6.17 5.3 4 9 4zm0 2a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0 2.1a1.9 1.9 0 1 1 0 3.8 1.9 1.9 0 0 1 0-3.8z"
-      />
-    </svg>
-  )
+function getStatusBadgeColor(status: string) {
+  if (status === 'Closed Won') return 'bg-[#6FAF8F]/20 text-[#6FAF8F]'
+  if (status === 'Closed Lost') return 'bg-[#D96B6B]/20 text-[#D96B6B]'
+  return 'bg-[#E8DCCB] text-[#8B7355]'
 }
 
-function fmtShortDate(iso: string) {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return iso
-  return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`
+function formatRelativeDate(iso: string) {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return iso
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+  if (diffMins < 1) return 'just now'
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffHours < 24) return `${diffHours}h ago`
+  if (diffDays < 7) return `${diffDays}d ago`
+  return date.toLocaleDateString()
+}
+
+function digitsForWhatsApp(contact: string) {
+  return String(contact ?? '').replace(/\D/g, '')
 }
 
 export function LeadCard({
@@ -60,99 +102,95 @@ export function LeadCard({
   dirty?: boolean
   onUpdate?: () => void
 }) {
+  const telHref = lead.contact?.trim() ? `tel:${lead.contact.replace(/\s/g, '')}` : undefined
+  const waDigits = digitsForWhatsApp(lead.contact)
+  const waHref = waDigits.length >= 10 ? `https://wa.me/${waDigits}` : undefined
+
   return (
-    <article className="rounded-2xl border border-gray-900/5 bg-white px-6 py-5 shadow-[0_10px_24px_rgba(17,24,39,0.05)]">
-      <div className="flex flex-col gap-4 min-[920px]:flex-row min-[920px]:items-start min-[920px]:justify-between">
+    <article className="rounded-xl border border-[#8B7355]/10 bg-white p-6 transition-all hover:shadow-lg">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
         <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="truncate text-[16px] font-semibold text-gray-900">{lead.name}</div>
-              <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-gray-500">
-                <span className="inline-flex min-w-0 items-center gap-1.5">
-                  <IconPhone className="text-gray-400" />
-                  <span className="font-medium text-gray-600">{lead.contact || '—'}</span>
+          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <h3 className="mb-1 text-lg font-semibold text-[#2E2E2E]">{lead.name}</h3>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-[#8B7355]">
+                <span className="inline-flex items-center gap-1">
+                  <FiPhone className="h-4 w-4 shrink-0" aria-hidden />
+                  {lead.contact || '—'}
                 </span>
-                <span className="inline-flex min-w-0 items-center gap-1.5">
-                  <IconMail className="text-gray-400" />
-                  <span className="min-w-0 truncate font-medium text-gray-600">{lead.email || '—'}</span>
+                <span className="text-[#E8DCCB]">•</span>
+                <span className="inline-flex min-w-0 items-center gap-1">
+                  <FiMail className="h-4 w-4 shrink-0" aria-hidden />
+                  <span className="truncate">{lead.email || '—'}</span>
                 </span>
               </div>
             </div>
-
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <label className="sr-only" htmlFor={`lead-score-${lead.id}`}>
                 Lead score
               </label>
-              <select
+              <BadgeSelect
                 id={`lead-score-${lead.id}`}
                 value={lead.score}
                 onChange={(e) => onChangeScore?.(e.target.value as LeadScoreDTO)}
-                className={[
-                  'h-8 rounded-full border px-2.5 text-[11px] font-semibold',
-                  lead.score === 'Hot'
-                    ? 'border-rose-200 bg-rose-50 text-rose-700'
-                    : lead.score === 'Cold'
-                      ? 'border-slate-200 bg-slate-50 text-slate-700'
-                      : 'border-[rgba(157,122,86,0.22)] bg-[rgba(157,122,86,0.10)] text-[#7a5b3f]',
-                ].join(' ')}
+                badgeClassName={getScoreBadgeColor(lead.score)}
               >
                 <option value="Hot">Hot</option>
                 <option value="Warm">Warm</option>
                 <option value="Cold">Cold</option>
-              </select>
-
+              </BadgeSelect>
               <label className="sr-only" htmlFor={`lead-status-${lead.id}`}>
                 Lead status
               </label>
-              <select
+              <BadgeSelect
                 id={`lead-status-${lead.id}`}
                 value={lead.status}
                 onChange={(e) => onChangeStatus?.(e.target.value as LeadStatusDTO)}
-                className={[
-                  'h-8 rounded-full border px-2.5 text-[11px] font-semibold',
-                  lead.status === 'New' ? 'border-slate-200 bg-slate-50 text-slate-700' : 'border-gray-200 bg-white text-gray-800',
-                ].join(' ')}
+                badgeClassName={getStatusBadgeColor(lead.status)}
               >
                 <option value="New">New</option>
                 <option value="Contacted">Contacted</option>
                 <option value="Qualified">Qualified</option>
                 <option value="Opportunity">Opportunity</option>
                 <option value="Site Visit">Site Visit</option>
-              </select>
+              </BadgeSelect>
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-x-12 gap-y-3 min-[760px]:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
             <div>
-              <div className="text-[11px] text-gray-400">Budget</div>
-              <div className="mt-0.5 text-[12px] font-semibold text-gray-900">{lead.budgetLabel || '—'}</div>
+              <p className="mb-0.5 text-[#8B7355]">Budget</p>
+              <p className="font-medium text-[#2E2E2E]">{lead.budgetLabel?.trim() || 'Not specified'}</p>
             </div>
             <div>
-              <div className="text-[11px] text-gray-400">BHK</div>
-              <div className="mt-0.5 text-[12px] font-semibold text-gray-900">{lead.bhkLabel || '—'}</div>
+              <p className="mb-0.5 text-[#8B7355]">BHK</p>
+              <p className="font-medium text-[#2E2E2E]">{lead.bhkLabel?.trim() || 'Not specified'}</p>
             </div>
             <div>
-              <div className="text-[11px] text-gray-400">Location</div>
-              <div className="mt-0.5 text-[12px] font-semibold text-gray-900">{lead.locationLabel || '—'}</div>
+              <p className="mb-0.5 text-[#8B7355]">Location</p>
+              <p className="font-medium text-[#2E2E2E]">{lead.locationLabel?.trim() || 'Not specified'}</p>
             </div>
             <div>
-              <div className="text-[11px] text-gray-400">Source</div>
-              <div className="mt-0.5 text-[12px] font-semibold text-gray-900">{lead.source || '—'}</div>
+              <p className="mb-0.5 text-[#8B7355]">Source</p>
+              <p className="font-medium text-[#2E2E2E]">{lead.source || 'Not specified'}</p>
             </div>
           </div>
 
-          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-500">
-            <span>Created {fmtShortDate(lead.createdAtISO)}</span>
-            <span className="text-gray-300">·</span>
-            <span>Last contact {fmtShortDate(lead.lastContactAtISO)}</span>
-            <span className="text-gray-300">·</span>
+          <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-[#8B7355]">
+            <span className="inline-flex items-center gap-1">
+              <FiCalendar className="h-3 w-3 shrink-0" aria-hidden />
+              Created {formatRelativeDate(lead.createdAtISO)}
+            </span>
+            <span>•</span>
+            <span>Last contact {formatRelativeDate(lead.lastContactAtISO)}</span>
+            <span>•</span>
             {canEditAssignee ? (
-              <span className="inline-flex items-center gap-2">
+              <span className="inline-flex flex-wrap items-center gap-2">
                 <span>Assigned to</span>
                 <select
                   value={lead.assignedTo === '—' ? '' : lead.assignedTo}
                   onChange={(e) => onChangeAssignee?.(e.target.value)}
-                  className="h-7 rounded-xl border border-gray-200 bg-white px-2 text-[11px] font-semibold text-gray-700"
+                  className="max-w-[160px] rounded-lg border border-[#E8DCCB] bg-white px-2 py-1 text-xs font-medium text-[#2E2E2E] focus:border-[#8B7355] focus:outline-none"
                 >
                   <option value="" disabled>
                     Select
@@ -169,34 +207,56 @@ export function LeadCard({
             )}
             {lead.repeatCustomer ? (
               <>
-                <span className="text-gray-300">·</span>
-                <span className="font-semibold text-emerald-700">Repeat Customer</span>
+                <span>•</span>
+                <span className="font-medium text-[#6FAF8F]">Repeat Customer</span>
               </>
             ) : null}
           </div>
-
-          {/* <div className="mt-2 text-[11px] text-gray-500">
-            <span className="text-gray-400">Sentiment:</span>{' '}
-            <span className="font-semibold text-emerald-700">{lead.sentiment}</span>{' '}
-            <span className="text-gray-300">·</span>{' '}
-            <span className="text-gray-400">Timeline:</span> {lead.timelineLabel}
-          </div> */}
         </div>
 
-        <div className="flex shrink-0 flex-col gap-2 min-[920px]:items-end">
+        <div className="flex flex-col gap-2 lg:flex-col">
           <button
             type="button"
-            className="inline-flex h-9 w-[132px] items-center justify-center gap-2 rounded-xl bg-[#80654a] px-4 text-[11px] font-semibold text-white shadow-sm hover:bg-[#725940]"
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#8B7355] px-4 py-2 text-sm text-white transition-colors hover:bg-[#6d5a43] lg:flex-none"
             onClick={() => onViewDetails(lead)}
           >
-            <IconEye className="text-white/90" />
+            <FiEye className="h-4 w-4 shrink-0" aria-hidden />
             View Details
           </button>
-
+          {telHref ? (
+            <a
+              href={telHref}
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-[#8B7355] px-4 py-2 text-sm text-[#8B7355] transition-colors hover:bg-[#F5EFE7] lg:flex-none no-underline"
+            >
+              <FiPhone className="h-4 w-4 shrink-0" aria-hidden />
+              Call
+            </a>
+          ) : (
+            <span className="flex flex-1 cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-[#E8DCCB] px-4 py-2 text-sm text-[#8B7355]/50 lg:flex-none">
+              <FiPhone className="h-4 w-4" aria-hidden />
+              Call
+            </span>
+          )}
+          {waHref ? (
+            <a
+              href={waHref}
+              target="_blank"
+              rel="noreferrer"
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-[#6FAF8F] px-4 py-2 text-sm text-[#6FAF8F] transition-colors hover:bg-[#6FAF8F]/10 lg:flex-none no-underline"
+            >
+              <FiMessageSquare className="h-4 w-4 shrink-0" aria-hidden />
+              WhatsApp
+            </a>
+          ) : (
+            <span className="flex flex-1 cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-[#E8DCCB] px-4 py-2 text-sm text-[#6FAF8F]/50 lg:flex-none">
+              <FiMessageSquare className="h-4 w-4" aria-hidden />
+              WhatsApp
+            </span>
+          )}
           {dirty ? (
             <button
               type="button"
-              className="inline-flex h-9 w-[132px] items-center justify-center rounded-xl border border-[#cdb89f] bg-[#faf6ef] px-4 text-[11px] font-semibold text-[#80654a] hover:bg-[#f3ede3]"
+              className="flex flex-1 items-center justify-center rounded-lg border border-[#E8DCCB] bg-[#F5EFE7] px-4 py-2 text-sm font-semibold text-[#8B7355] transition-colors hover:bg-[#ede4d8] lg:flex-none"
               onClick={() => onUpdate?.()}
             >
               Update
@@ -207,4 +267,3 @@ export function LeadCard({
     </article>
   )
 }
-
