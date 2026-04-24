@@ -18,7 +18,7 @@ export function CampaignListTable({
         <table className="w-full text-sm">
           <thead className="text-gray-500">
             <tr className="border-b border-gray-200">
-              <th className="text-left font-semibold px-4 py-3">Campaign name</th>
+              <th className="text-left font-semibold px-4 py-3">Project name</th>
               <th className="text-left font-semibold px-4 py-3">Address</th>
               <th className="text-left font-semibold px-4 py-3">Reg no.</th>
               <th className="text-left font-semibold px-4 py-3">Action</th>

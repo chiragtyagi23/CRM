@@ -5,6 +5,11 @@ function baseUrl() {
   return (raw && raw.trim().length > 0 ? raw.trim() : 'http://localhost:4000').replace(/\/$/, '')
 }
 
+/** Same origin as the CRM API (for resolving `/uploads/...` draft URLs). */
+export function getCrmApiBaseUrl(): string {
+  return baseUrl()
+}
+
 function authHeader(): Record<string, string> | undefined {
   try {
     const token = window.localStorage.getItem('crm_token')
@@ -41,11 +46,14 @@ export type UploadImageResponse = {
   file: { filename: string; mimetype: string; size: number }
 }
 
-/** POST multipart file field `image`. Returns absolute URL you can store as `src`. */
-export async function apiUploadImage(file: File): Promise<string> {
+export type ApiUploadImageOptions = { /** Store on API disk only; use {@link promoteLocalDraftImageUrl} or save-time upload for S3. */ draft?: boolean }
+
+/** POST multipart file field `image`. Returns absolute URL you can store as `src`. Pass `{ draft: true }` while editing; omit on final save to send to S3 when configured. */
+export async function apiUploadImage(file: File, opts?: ApiUploadImageOptions): Promise<string> {
   const form = new FormData()
   form.append('image', file)
-  const res = await fetch(`${baseUrl()}/api/upload`, { method: 'POST', body: form })
+  const q = opts?.draft ? '?draft=1' : ''
+  const res = await fetch(`${baseUrl()}/api/upload${q}`, { method: 'POST', body: form })
   const body = await safeJson(res)
   if (!res.ok) {
     const msg =
@@ -55,15 +63,22 @@ export async function apiUploadImage(file: File): Promise<string> {
     throw { message: msg, status: res.status, body } satisfies ApiError
   }
   const data = body as UploadImageResponse
-  const path = data.url.startsWith('/') ? data.url : `/${data.url}`
+  return resolveUploadPublicUrl(data.url)
+}
+
+function resolveUploadPublicUrl(url: string): string {
+  const u = url.trim()
+  if (/^https?:\/\//i.test(u)) return u
+  const path = u.startsWith('/') ? u : `/${u}`
   return `${baseUrl()}${path}`
 }
 
 /** POST multipart file field `video`. Returns absolute URL you can store and play. */
-export async function apiUploadVideo(file: File): Promise<string> {
+export async function apiUploadVideo(file: File, opts?: ApiUploadImageOptions): Promise<string> {
   const form = new FormData()
   form.append('video', file)
-  const res = await fetch(`${baseUrl()}/api/upload/video`, { method: 'POST', body: form })
+  const q = opts?.draft ? '?draft=1' : ''
+  const res = await fetch(`${baseUrl()}/api/upload/video${q}`, { method: 'POST', body: form })
   const body = await safeJson(res)
   if (!res.ok) {
     const msg =
@@ -73,8 +88,35 @@ export async function apiUploadVideo(file: File): Promise<string> {
     throw { message: msg, status: res.status, body } satisfies ApiError
   }
   const data = body as UploadImageResponse
-  const path = data.url.startsWith('/') ? data.url : `/${data.url}`
-  return `${baseUrl()}${path}`
+  return resolveUploadPublicUrl(data.url)
+}
+
+/**
+ * If `url` points at a draft file on this API (`/uploads/...`), re-uploads it via POST /api/upload (final / S3).
+ * Otherwise returns `url` unchanged (e.g. already on S3 or external).
+ */
+export async function promoteLocalDraftImageUrl(url: string): Promise<string> {
+  const u = (url || '').trim()
+  if (!u) return u
+  const origin = baseUrl()
+  const uploadsSegment = '/uploads/'
+  let fetchUrl: string | null = null
+  if (u.startsWith('/') && u.includes(uploadsSegment)) {
+    fetchUrl = `${origin}${u}`
+  } else if (u.startsWith(origin) && u.includes(uploadsSegment)) {
+    fetchUrl = u
+  }
+  if (!fetchUrl) return u
+
+  const res = await fetch(fetchUrl)
+  if (!res.ok) return u
+  const blob = await res.blob()
+  const name =
+    decodeURIComponent(fetchUrl.split('/').pop() || 'image.jpg')
+      .split('?')[0]
+      .replace(/[^\w.\-]+/g, '_') || 'image.jpg'
+  const file = new File([blob], name, { type: blob.type || 'image/jpeg' })
+  return apiUploadImage(file)
 }
 
 async function safeJson(res: Response) {

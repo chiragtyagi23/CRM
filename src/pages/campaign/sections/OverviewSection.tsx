@@ -93,7 +93,7 @@ export function OverviewSection({
                     setLogoError(null)
                     setLogoUploading(true)
                     try {
-                      const url = await apiUploadImage(file)
+                      const url = await apiUploadImage(file, { draft: true })
                       setLogoUrl(url)
                     } catch (err: unknown) {
                       setLogoError(err instanceof Error ? err.message : 'Upload failed')
@@ -136,7 +136,7 @@ export function OverviewSection({
                       setCoverError(null)
                       setCoverUploading(true)
                       try {
-                        const url = await apiUploadImage(file)
+                        const url = await apiUploadImage(file, { draft: true })
                         setCoverImageUrl(url)
                       } catch (err: unknown) {
                         setCoverError(err instanceof Error ? err.message : 'Upload failed')

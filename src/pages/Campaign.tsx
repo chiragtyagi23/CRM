@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 
-import { apiGet, apiSend, apiUploadImage } from '../lib/crmApi'
+import { apiGet, apiSend, apiUploadImage, promoteLocalDraftImageUrl } from '../lib/crmApi'
 import { campaignBuilderActions } from '../store/campaignBuilderSlice'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { CampaignListTable } from './campaign/CampaignListTable'
@@ -111,7 +111,8 @@ async function materializeImagesForSave(builder: any) {
       const url = await apiUploadImage(file)
       return { src: url, alt: String(img?.alt ?? '') }
     }
-    return { src: String(img?.src ?? ''), alt: String(img?.alt ?? '') }
+    const src = await promoteLocalDraftImageUrl(String(img?.src ?? ''))
+    return { src, alt: String(img?.alt ?? '') }
   }
 
   // banners
@@ -143,6 +144,9 @@ async function materializeImagesForSave(builder: any) {
     }
     clone.floorPlanImages = next
   }
+
+  clone.logoUrl = await promoteLocalDraftImageUrl(String(clone.logoUrl ?? ''))
+  clone.coverImageUrl = await promoteLocalDraftImageUrl(String(clone.coverImageUrl ?? ''))
 
   return clone
 }

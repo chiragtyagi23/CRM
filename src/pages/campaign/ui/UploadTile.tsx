@@ -108,7 +108,7 @@ export function UploadTile({
 
     setUploading(true)
     try {
-      const absoluteUrl = await apiUploadImage(file)
+      const absoluteUrl = await apiUploadImage(file, { draft: true })
       onChange({
         src: absoluteUrl,
         alt: value?.alt?.trim() ? value.alt : file.name.replace(/\.[^/.]+$/, '') || label,
