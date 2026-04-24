@@ -492,7 +492,17 @@ export function BulkUploadLeads() {
             <button
               type="button"
               onClick={() => void handleUpload()}
-              disabled={isUploading || uploadedLeads.length === 0 || !selectedCampaignId}
+              disabled={
+                isUploading ||
+                uploadedLeads.length === 0 ||
+                !selectedCampaignId ||
+                errorLeadsCount > 0
+              }
+              title={
+                errorLeadsCount > 0
+                  ? 'Fix or remove rows with errors before uploading.'
+                  : undefined
+              }
               className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-[#80654a] py-3 text-[13px] font-semibold text-white hover:bg-[#725940] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isUploading ? (
