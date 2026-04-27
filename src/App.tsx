@@ -1,6 +1,7 @@
 import { AppHeader } from './components/AppHeader'
-import { Campaign } from './pages/Campaign'
 import { useEffect, useState } from 'react'
+import { CampaignBuilder } from './pages/CampaignBuilder'
+import { CampaignList } from './pages/CampaignList'
 import { Dashboard } from './pages/Dashboard'
 import { Leads } from './pages/Leads'
 import { CaptureLead } from './pages/CaptureLead'
@@ -33,7 +34,7 @@ function App() {
   const isHome = hash === '#home' || hash === ''
   const isLogin = hash === '#login'
   const isSignup = hash === '#signup'
-  const isCampaign = hash === '#campaign'
+  const isCampaign = hash === '#campaign' || hash.startsWith('#campaign/')
   const isLeads = hash === '#leads'
   const isLeadsBulkUpload = hash === '#leads/bulk-upload'
   const isLeadDetails = hash.startsWith('#leads/viewdetail/')
@@ -41,6 +42,9 @@ function App() {
   const isSiteVisits = hash === '#site-visits'
   const isReports = hash === '#reports'
   const leadDetailsId = isLeadDetails ? hash.replace('#leads/viewdetail/', '') : ''
+  const campaignEditId = hash.startsWith('#campaign/edit/') ? hash.replace('#campaign/edit/', '') : ''
+  const isCampaignNew = hash === '#campaign/new'
+  const isCampaignEdit = hash.startsWith('#campaign/edit/') && campaignEditId.length > 0
 
   useEffect(() => {
     dispatch(hydrateAuth())
@@ -104,7 +108,13 @@ function App() {
       ) : isCampaign ? (
         <main className="app-main" id="campaign" style={{ backgroundColor: '#f6efe4' }}>
           {isAdmin ? (
-            <Campaign />
+            isCampaignNew ? (
+              <CampaignBuilder />
+            ) : isCampaignEdit ? (
+              <CampaignBuilder initialCampaignId={decodeURIComponent(campaignEditId)} />
+            ) : (
+              <CampaignList />
+            )
           ) : (
             <div className="mx-auto box-border w-full max-w-[1280px] px-4 py-10">
               <div className="rounded-2xl border border-gray-900/5 bg-[#FDFBF7] p-6 text-[13px] text-gray-600 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">

@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 
-import type { BannerImage, FloorRow, FloorTabKey, GalleryCell, OverviewFactsState, TemplateSectionKey } from '../pages/campaign/types'
+import type { BannerImage, FloorRow, FloorTabKey, GalleryCell, MediaFile, OverviewFactsState, TemplateSectionKey } from '../pages/campaign/types'
 
 export type CampaignBuilderState = {
   activeSection: TemplateSectionKey
@@ -16,9 +16,11 @@ export type CampaignBuilderState = {
   coverImageUrl: string
 
   bannerImages: BannerImage[]
+  offerCreatives: BannerImage[]
+  uspImages: BannerImage[]
 
-  videos: { intro: string; walkthrough: string; extra: string }
-  reels: { reel1: string; reel2: string; reel3: string }
+  videos: { intro: MediaFile; walkthrough: MediaFile; extra: MediaFile }
+  reels: { reel1: MediaFile; reel2: MediaFile; reel3: MediaFile }
 
   contactEmail: string
   contactMobile: string
@@ -39,7 +41,7 @@ export type CampaignBuilderState = {
   floorRows: Record<string, FloorRow[]>
   floorPlanImages: Record<string, BannerImage[]>
 
-  amenityItems: { name: string }[]
+  amenityItems: { name: string; icons: BannerImage[] }[]
   highlightItems: { title: string; description: string }[]
 
   benefitStats: { value: string; label: string }[]
@@ -50,7 +52,7 @@ export type CampaignBuilderState = {
 }
 
 const initialState: CampaignBuilderState = {
-  activeSection: 'hero',
+  activeSection: 'images',
   selectedCampaignId: null,
   templateKey: 'luxury-template',
 
@@ -63,9 +65,11 @@ const initialState: CampaignBuilderState = {
   coverImageUrl: '',
 
   bannerImages: [{ src: '', alt: '' }],
+  offerCreatives: [{ src: '', alt: '' }],
+  uspImages: [{ src: '', alt: '' }],
 
-  videos: { intro: '', walkthrough: '', extra: '' },
-  reels: { reel1: '', reel2: '', reel3: '' },
+  videos: { intro: { url: '' }, walkthrough: { url: '' }, extra: { url: '' } },
+  reels: { reel1: { url: '' }, reel2: { url: '' }, reel3: { url: '' } },
 
   contactEmail: '',
   contactMobile: '',
@@ -87,40 +91,26 @@ const initialState: CampaignBuilderState = {
     carpetAreas: '',
   },
 
-  galleryCells: [{ tag: 'Kitchen', feature: true, wideBottom: false, images: [{ src: '', alt: '' }] }],
+  galleryCells: [{ tag: '', part: 'external', feature: true, wideBottom: false, images: [{ src: '', alt: '' }] }],
 
   floorBlueprintImage: '',
-  floorDefaultTab: 'bhk3',
-  floorTabs: [
-    { id: 'bhk1', label: '1 BHK' },
-    { id: 'bhk2', label: '2 BHK' },
-    { id: 'bhk3', label: '3 BHK' },
-    { id: 'bhk4', label: '4 BHK' },
-    { id: 'bhk5', label: '5 BHK' },
-  ],
+  floorDefaultTab: 'bhk1',
+  floorTabs: [{ id: 'bhk1', label: '1 BHK' }],
   floorRows: {
     bhk1: [{ configuration: '', carpetArea: '', floorRange: '', price: '' }],
-    bhk2: [{ configuration: '', carpetArea: '', floorRange: '', price: '' }],
-    bhk3: [{ configuration: '', carpetArea: '', floorRange: '', price: '' }],
-    bhk4: [{ configuration: '', carpetArea: '', floorRange: '', price: '' }],
-    bhk5: [{ configuration: '', carpetArea: '', floorRange: '', price: '' }],
   },
   floorPlanImages: {
     bhk1: [{ src: '', alt: '' }],
-    bhk2: [{ src: '', alt: '' }],
-    bhk3: [{ src: '', alt: '' }],
-    bhk4: [{ src: '', alt: '' }],
-    bhk5: [{ src: '', alt: '' }],
   },
 
-  amenityItems: [{ name: '' }],
+  amenityItems: [{ name: '', icons: [{ src: '', alt: '' }] }],
   highlightItems: [{ title: '', description: '' }],
 
   benefitStats: [{ value: '', label: '' }],
   benefitBackgroundImages: [{ src: '', alt: '' }],
   benefitItems: [{ heading: '', description: '' }],
 
-  socialInfrastructureGroups: [{ title: 'Transportation', items: [{ name: '', value: '' }] }],
+  socialInfrastructureGroups: [{ title: '', items: [{ name: '', value: '' }] }],
 }
 
 const slice = createSlice({
@@ -167,10 +157,17 @@ const slice = createSlice({
       state.bannerImages = action.payload
     },
 
-    setVideos(state, action: PayloadAction<{ intro: string; walkthrough: string; extra: string }>) {
+    setOfferCreatives(state, action: PayloadAction<BannerImage[]>) {
+      state.offerCreatives = action.payload
+    },
+    setUspImages(state, action: PayloadAction<BannerImage[]>) {
+      state.uspImages = action.payload
+    },
+
+    setVideos(state, action: PayloadAction<{ intro: MediaFile; walkthrough: MediaFile; extra: MediaFile }>) {
       state.videos = action.payload
     },
-    setReels(state, action: PayloadAction<{ reel1: string; reel2: string; reel3: string }>) {
+    setReels(state, action: PayloadAction<{ reel1: MediaFile; reel2: MediaFile; reel3: MediaFile }>) {
       state.reels = action.payload
     },
 
@@ -232,7 +229,7 @@ const slice = createSlice({
       state.floorPlanImages = action.payload
     },
 
-    setAmenityItems(state, action: PayloadAction<{ name: string }[]>) {
+    setAmenityItems(state, action: PayloadAction<{ name: string; icons: BannerImage[] }[]>) {
       state.amenityItems = action.payload
     },
     setHighlightItems(state, action: PayloadAction<{ title: string; description: string }[]>) {
@@ -292,15 +289,57 @@ const slice = createSlice({
       state.coverImageUrl = typeof c.coverImage === 'string' ? c.coverImage : state.coverImageUrl
 
       // HERO banners
-      const heroBg = c?.hero?.data?.backgroundImages
-      if (Array.isArray(heroBg)) {
-        const imgs = heroBg
+      const reserved = Array.isArray(c?.projectImages) ? c.projectImages : []
+      const groupImages = (tag: string) => {
+        const grp = reserved.find((r: any) => String(r?.tag ?? '') === tag)
+        const imgs = Array.isArray(grp?.images) ? grp.images : []
+        return imgs
           .map((x: any) => ({
             src: typeof x?.src === 'string' ? x.src : '',
             alt: typeof x?.alt === 'string' ? x.alt : '',
           }))
           .filter((x: any) => x.src.trim().length > 0)
-        state.bannerImages = imgs.length ? imgs : [{ src: '', alt: '' }]
+      }
+
+      const bannersFromProjectImages = groupImages('__banners')
+      const offersFromProjectImages = groupImages('__festival_offers')
+      const uspFromProjectImages = groupImages('__usp_images')
+
+      if (bannersFromProjectImages.length) {
+        state.bannerImages = bannersFromProjectImages
+      } else {
+        const heroBg = c?.hero?.data?.backgroundImages
+        if (Array.isArray(heroBg)) {
+          const imgs = heroBg
+            .map((x: any) => ({
+              src: typeof x?.src === 'string' ? x.src : '',
+              alt: typeof x?.alt === 'string' ? x.alt : '',
+            }))
+            .filter((x: any) => x.src.trim().length > 0)
+          state.bannerImages = imgs.length ? imgs : [{ src: '', alt: '' }]
+        }
+      }
+
+      if (offersFromProjectImages.length) {
+        state.offerCreatives = offersFromProjectImages
+      } else if (Array.isArray(c?.documents)) {
+        const docs = c.documents
+        const offer = docs
+          .filter((d: any) => String(d?.type ?? '') === 'offer_creative')
+          .map((d: any) => ({ src: typeof d?.url === 'string' ? d.url : '', alt: '' }))
+          .filter((x: any) => x.src.trim().length > 0)
+        state.offerCreatives = offer.length ? offer : [{ src: '', alt: '' }]
+      }
+
+      if (uspFromProjectImages.length) {
+        state.uspImages = uspFromProjectImages
+      } else if (Array.isArray(c?.documents)) {
+        const docs = c.documents
+        const usp = docs
+          .filter((d: any) => String(d?.type ?? '') === 'usp_image')
+          .map((d: any) => ({ src: typeof d?.url === 'string' ? d.url : '', alt: '' }))
+          .filter((x: any) => x.src.trim().length > 0)
+        state.uspImages = usp.length ? usp : [{ src: '', alt: '' }]
       }
 
       // OVERVIEW facts -> builder fields
@@ -332,8 +371,14 @@ const slice = createSlice({
 
       // GALLERY
       if (Array.isArray(c?.projectImages)) {
-        const cells: GalleryCell[] = c.projectImages.map((g: any) => ({
+        const cells: GalleryCell[] = c.projectImages
+          .filter((g: any) => !String(g?.tag ?? '').startsWith('__'))
+          .map((g: any) => ({
           tag: typeof g?.tag === 'string' ? g.tag.trim() : 'Gallery',
+          part:
+            typeof g?.tag === 'string' && (g.tag.trim() === 'Exterior' || g.tag.trim().startsWith('Amenities -'))
+              ? 'external'
+              : 'internal',
           feature: Boolean(g?.feature),
           wideBottom: Boolean(g?.wideBottom),
           images: Array.isArray(g?.images)
@@ -396,9 +441,34 @@ const slice = createSlice({
       // AMENITIES
       if (Array.isArray(c?.amenities)) {
         const items = c.amenities
-          .map((a: any) => ({ name: typeof a?.name === 'string' ? a.name : '' }))
+          .map((a: any) => {
+            const name = typeof a?.name === 'string' ? a.name : ''
+            const rawIcon = a?.icon
+            let iconUrls: string[] = []
+            if (Array.isArray(rawIcon)) {
+              iconUrls = rawIcon.map((x: any) => String(x ?? '')).filter((s: string) => s.trim().length > 0)
+            } else if (typeof rawIcon === 'string') {
+              const s = rawIcon.trim()
+              if (s) {
+                try {
+                  const parsed = JSON.parse(s)
+                  if (Array.isArray(parsed)) {
+                    iconUrls = parsed.map((x: any) => String(x ?? '')).filter((t: string) => t.trim().length > 0)
+                  } else if (typeof parsed === 'string') {
+                    iconUrls = [parsed]
+                  } else {
+                    iconUrls = [s]
+                  }
+                } catch {
+                  iconUrls = [s]
+                }
+              }
+            }
+            const icons = iconUrls.length ? iconUrls.map((u) => ({ src: u, alt: '' })) : [{ src: '', alt: '' }]
+            return { name, icons }
+          })
           .filter((a: any) => a.name.trim().length > 0)
-        state.amenityItems = items.length ? items : [{ name: '' }]
+        state.amenityItems = items.length ? items : [{ name: '', icons: [{ src: '', alt: '' }] }]
       }
 
       // HIGHLIGHTS
@@ -456,14 +526,14 @@ const slice = createSlice({
           if (kind && url) byKind.set(kind, url)
         }
         state.videos = {
-          intro: byKind.get('video_intro') ?? '',
-          walkthrough: byKind.get('video_walkthrough') ?? '',
-          extra: byKind.get('video_extra') ?? '',
+          intro: { url: byKind.get('video_intro') ?? '' },
+          walkthrough: { url: byKind.get('video_walkthrough') ?? '' },
+          extra: { url: byKind.get('video_extra') ?? '' },
         }
         state.reels = {
-          reel1: byKind.get('reel_1') ?? '',
-          reel2: byKind.get('reel_2') ?? '',
-          reel3: byKind.get('reel_3') ?? '',
+          reel1: { url: byKind.get('reel_1') ?? '' },
+          reel2: { url: byKind.get('reel_2') ?? '' },
+          reel3: { url: byKind.get('reel_3') ?? '' },
         }
       }
     },

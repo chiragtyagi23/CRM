@@ -178,6 +178,7 @@ export function FloorplansSection({
                 hint="Paste image URL or use Upload."
                 aspect="wide"
                 uploadMode="defer"
+                allowMultiple
                 value={img}
                 onChange={(next) =>
                   setFloorPlanImages((p) => ({
@@ -185,6 +186,16 @@ export function FloorplansSection({
                     [floorDefaultTab]: (p[floorDefaultTab] ?? []).map((it, i) => (i === idx ? next : it)),
                   }))
                 }
+                onAddMany={(items) => {
+                  if (!items.length) return
+                  setFloorPlanImages((p) => ({
+                    ...p,
+                    [floorDefaultTab]: [
+                      ...(p[floorDefaultTab] ?? []),
+                      ...items.map((x) => ({ src: x.src, alt: x.alt, file: x.file })),
+                    ],
+                  }))
+                }}
                 onRemove={
                   (floorPlanImages[floorDefaultTab] ?? []).length <= 1
                     ? undefined

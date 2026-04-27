@@ -133,6 +133,7 @@ export function AppHeader() {
 
   const isActiveLink = (link: string) => {
     if (!link.startsWith('#')) return false
+    if (link === '#campaign') return hash === '#campaign' || hash.startsWith('#campaign/')
     return hash === link
   }
 

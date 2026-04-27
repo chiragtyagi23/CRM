@@ -41,8 +41,15 @@ export function HeroSection({
               hint="Paste image URL (recommended). Upload is only for preview unless you add storage."
               aspect="banner"
               uploadMode="defer"
+              allowMultiple
               value={b}
               onChange={(next) => setBannerImages((prev) => prev.map((p, i) => (i === idx ? next : p)))}
+              onAddMany={(items) => {
+                const remaining = 5 - bannerImages.length
+                const toAdd = items.slice(0, remaining)
+                if (!toAdd.length) return
+                setBannerImages((prev) => [...prev, ...toAdd.map((x) => ({ src: x.src, alt: x.alt, file: x.file }))])
+              }}
               onRemove={
                 bannerImages.length <= 1 ? undefined : () => setBannerImages((prev) => prev.filter((_, i) => i !== idx))
               }

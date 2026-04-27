@@ -15,11 +15,22 @@ export function HighlightsSection({
     <SectionCard title="Highlights" subtitle="USP cards shown as highlight tiles.">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-          <div className="text-sm font-semibold text-gray-900">Highlight items</div>
-          <div className="mt-3 grid grid-cols-1 gap-2">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm font-semibold text-gray-900">Highlight items</div>
+            <button
+              type="button"
+              className="h-9 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50"
+              onClick={() => setHighlightItems((prev) => [...prev, { title: '', description: '' }])}
+            >
+              Add highlight
+            </button>
+          </div>
+
+          <div className="mt-3 grid grid-cols-1 gap-3">
             {highlightItems.map((item, idx) => (
-              <div key={idx} className="rounded-xl border border-gray-200 bg-white p-3">
-                <div className="flex items-center gap-2">
+              <div key={idx} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="text-xs font-semibold text-gray-500">#{String(idx + 1).padStart(2, '0')}</div>
                   <input
                     className={inputClassName()}
                     value={item.title}
@@ -44,7 +55,7 @@ export function HighlightsSection({
                   </button>
                 </div>
 
-                <div className="mt-2">
+                <div className="mt-3">
                   <textarea
                     className={inputClassName()}
                     value={item.description}
@@ -59,13 +70,6 @@ export function HighlightsSection({
                 </div>
               </div>
             ))}
-            <button
-              type="button"
-              className="h-10 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 text-sm font-semibold hover:bg-gray-50 w-max"
-              onClick={() => setHighlightItems((prev) => [...prev, { title: '', description: '' }])}
-            >
-              Add highlight
-            </button>
           </div>
         </div>
         <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">

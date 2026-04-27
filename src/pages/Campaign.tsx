@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+// Legacy re-export for older imports.
+export { CampaignBuilder as Campaign } from './CampaignBuilder'
 
 import { apiGet, apiSend, apiUploadImage, promoteLocalDraftImageUrl } from '../lib/crmApi'
 import { campaignBuilderActions } from '../store/campaignBuilderSlice'

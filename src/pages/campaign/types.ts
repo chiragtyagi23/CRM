@@ -9,9 +9,8 @@ export type ExistingCampaign = {
 }
 
 export type TemplateSectionKey =
-  | 'hero'
+  | 'images'
   | 'overview'
-  | 'gallery'
   | 'media'
   | 'floorplans'
   | 'amenities'
@@ -22,6 +21,8 @@ export type TemplateSectionKey =
 export type CampaignListResponse = { items: ExistingCampaign[] }
 
 export type BannerImage = { src: string; alt: string; file?: File }
+
+export type MediaFile = { url: string; file?: File }
 
 export type OverviewFactsState = {
   serialNumber: string
@@ -36,6 +37,7 @@ export type OverviewFactsState = {
 
 export type GalleryCell = {
   tag: string
+  part?: 'external' | 'internal'
   feature: boolean
   wideBottom: boolean
   images: BannerImage[]

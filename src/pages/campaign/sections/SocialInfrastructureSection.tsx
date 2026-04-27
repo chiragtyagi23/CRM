@@ -17,18 +17,7 @@ export function SocialInfrastructureSection({
       title="Social infrastructure"
       subtitle="Create cards like Transportation, Education, Healthcare. Each card has sub-items (name + value) with add/remove."
     >
-      <div className="flex items-center justify-between gap-3">
-        <div className="text-xs text-gray-500">{socialInfrastructureGroups.length} cards</div>
-        <button
-          type="button"
-          className="h-10 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 text-sm font-semibold hover:bg-gray-50"
-          onClick={() =>
-            setSocialInfrastructureGroups((prev) => [...prev, { title: '', items: [{ name: '', value: '' }] }])
-          }
-        >
-          Add card
-        </button>
-      </div>
+      <div className="text-xs text-gray-500">{socialInfrastructureGroups.length} cards</div>
 
       <div className="mt-4 grid grid-cols-1 gap-4">
         {socialInfrastructureGroups.map((group, groupIdx) => (
@@ -137,6 +126,18 @@ export function SocialInfrastructureSection({
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="mt-4 flex justify-end">
+        <button
+          type="button"
+          className="h-10 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 text-sm font-semibold hover:bg-gray-50"
+          onClick={() =>
+            setSocialInfrastructureGroups((prev) => [...prev, { title: '', items: [{ name: '', value: '' }] }])
+          }
+        >
+          Add card
+        </button>
       </div>
     </SectionCard>
   )

@@ -38,21 +38,41 @@ async function previewUrlForFile(file: File): Promise<string> {
   return URL.createObjectURL(blob)
 }
 
+export async function buildImageValueFromFile(
+  file: File,
+  labelFallback: string,
+  currentAlt?: string,
+): Promise<{ src: string; alt: string; file: File }> {
+  let previewUrl = ''
+  previewUrl = await previewUrlForFile(file)
+  return {
+    src: previewUrl,
+    alt: currentAlt?.trim() ? currentAlt : file.name.replace(/\.[^/.]+$/, '') || labelFallback,
+    file,
+  }
+}
+
 export function UploadTile({
   label,
   hint,
   aspect,
   uploadMode = 'defer',
+  altPlaceholder,
+  allowMultiple,
   value,
   onChange,
+  onAddMany,
   onRemove,
 }: {
   label: string
   hint: string
   aspect?: 'banner' | 'square' | 'wide' | 'tall'
   uploadMode?: 'immediate' | 'defer'
+  altPlaceholder?: string
+  allowMultiple?: boolean
   value?: { src: string; alt: string; file?: File }
   onChange?: (next: { src: string; alt: string; file?: File }) => void
+  onAddMany?: (items: { src: string; alt: string; file: File }[]) => void
   onRemove?: () => void
 }) {
   const inputId = useId()
@@ -82,27 +102,28 @@ export function UploadTile({
           : 'aspect-square'
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const files = Array.from(e.target.files ?? [])
     e.target.value = ''
-    if (!file || !onChange) return
+    if (!files.length || !onChange) return
     setUploadError(null)
+
+    const first = files[0]!
+    const rest = files.slice(1)
     if (uploadMode === 'defer') {
-      let previewUrl = ''
       try {
-        previewUrl = await previewUrlForFile(file)
+        const firstValue = await buildImageValueFromFile(first, label, value?.alt)
+        onChange(firstValue)
+        if (allowMultiple && rest.length && onAddMany) {
+          const more = await Promise.all(rest.map((f) => buildImageValueFromFile(f, label, undefined)))
+          onAddMany(more)
+        }
       } catch (err) {
         const msg =
           err && typeof err === 'object' && 'message' in err
             ? String((err as { message: unknown }).message)
             : 'Preview generation failed'
         setUploadError(msg)
-        previewUrl = ''
       }
-      onChange({
-        src: previewUrl,
-        alt: value?.alt?.trim() ? value.alt : file.name.replace(/\.[^/.]+$/, '') || label,
-        file,
-      })
       return
     }
 
@@ -111,7 +132,7 @@ export function UploadTile({
       const absoluteUrl = await apiUploadImage(file, { draft: true })
       onChange({
         src: absoluteUrl,
-        alt: value?.alt?.trim() ? value.alt : file.name.replace(/\.[^/.]+$/, '') || label,
+        alt: value?.alt?.trim() ? value.alt : first.name.replace(/\.[^/.]+$/, '') || label,
       })
     } catch (err) {
       const msg =
@@ -124,7 +145,7 @@ export function UploadTile({
 
   return (
     <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="text-sm font-semibold text-gray-900">{label}</div>
           <div className="mt-1 text-xs text-gray-600">{hint}</div>
@@ -135,12 +156,12 @@ export function UploadTile({
             </div>
           ) : null}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           {value?.file ? (
             <button
               type="button"
               onClick={clearLocalSelection}
-              className="h-8 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50"
+              className="h-8 whitespace-nowrap px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50"
             >
               Unselect
             </button>
@@ -149,7 +170,7 @@ export function UploadTile({
             <button
               type="button"
               onClick={onRemove}
-              className="h-8 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50"
+              className="h-8 whitespace-nowrap px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50"
             >
               Remove
             </button>
@@ -177,7 +198,7 @@ export function UploadTile({
           />
           <input
             className={inputClassName()}
-            placeholder="Alt text"
+            placeholder={altPlaceholder ?? 'Alt text'}
             value={value?.alt ?? ''}
             onChange={(e) => onChange({ src: value?.src ?? '', alt: e.target.value, file: value?.file })}
           />
@@ -185,7 +206,15 @@ export function UploadTile({
       ) : null}
       {onChange ? (
         <div className="mt-3">
-          <input id={inputId} type="file" accept="image/*" className="hidden" disabled={uploading} onChange={handleFileChange} />
+          <input
+            id={inputId}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            disabled={uploading}
+            onChange={handleFileChange}
+            multiple={Boolean(allowMultiple)}
+          />
           <label
             htmlFor={inputId}
             className={

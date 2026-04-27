@@ -26,16 +26,7 @@ export function BenefitsSection({
       <SectionCard title="Benefits *" subtitle="Add benefit items (heading + description), stats, and background images.">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="text-sm font-semibold text-gray-900">Benefit items</div>
-              <button
-                type="button"
-                className="h-9 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50"
-                onClick={() => setBenefitItems((prev) => [...prev, { heading: '', description: '' }])}
-              >
-                Add benefit
-              </button>
-            </div>
+            <div className="text-sm font-semibold text-gray-900">Benefit items</div>
             <div className="mt-3 grid grid-cols-1 gap-3">
               {benefitItems.map((b, idx) => (
                 <div key={idx} className="rounded-xl border border-gray-200 bg-white p-3">
@@ -78,6 +69,15 @@ export function BenefitsSection({
                   </div>
                 </div>
               ))}
+            </div>
+            <div className="mt-3 flex justify-end">
+              <button
+                type="button"
+                className="h-9 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50"
+                onClick={() => setBenefitItems((prev) => [...prev, { heading: '', description: '' }])}
+              >
+                Add benefit
+              </button>
             </div>
           </div>
 
@@ -154,8 +154,15 @@ export function BenefitsSection({
                     hint="Paste image URL (recommended)."
                     aspect="wide"
                     uploadMode="defer"
+                    allowMultiple
                     value={img}
                     onChange={(next) => setBenefitBackgroundImages((prev) => prev.map((p, i) => (i === idx ? next : p)))}
+                    onAddMany={(items) => {
+                      const remaining = 5 - benefitBackgroundImages.length
+                      const toAdd = items.slice(0, remaining)
+                      if (!toAdd.length) return
+                      setBenefitBackgroundImages((prev) => [...prev, ...toAdd.map((x) => ({ src: x.src, alt: x.alt, file: x.file }))])
+                    }}
                     onRemove={
                       benefitBackgroundImages.length <= 1
                         ? undefined
