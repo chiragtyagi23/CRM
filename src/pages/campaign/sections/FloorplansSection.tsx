@@ -1,9 +1,9 @@
 import type { Dispatch, SetStateAction } from 'react'
 
-import type { BannerImage, FloorRow, FloorTabKey } from '../types'
-import { SectionCard } from '../ui/SectionCard'
-import { UploadTile } from '../ui/UploadTile'
-import { inputClassName } from '../ui/classNames'
+import { CampaignUploadTile } from '../../../components/CampaignUploadTile'
+import type { BannerImage, FloorRow, FloorTabKey } from '../../../types/campaign'
+import { SectionCard } from '../../../ui/campaign/SectionCard'
+import { inputClassName } from '../../../ui/campaign/classNames'
 
 export function FloorplansSection({
   floorBlueprintImage,
@@ -172,7 +172,7 @@ export function FloorplansSection({
 
           <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
             {(floorPlanImages[floorDefaultTab] ?? []).map((img, idx) => (
-              <UploadTile
+              <CampaignUploadTile
                 key={idx}
                 label={`Floor plan ${idx + 1}`}
                 hint="Paste image URL or use Upload."

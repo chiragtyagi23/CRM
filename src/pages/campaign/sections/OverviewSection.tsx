@@ -1,10 +1,10 @@
 import { useState, type Dispatch, type SetStateAction } from 'react'
 
-import type { OverviewFactsState } from '../types'
+import type { OverviewFactsState } from '../../../types/campaign'
 import { apiUploadImage } from '../../../lib/crmApi'
-import { Field } from '../ui/Field'
-import { SectionCard } from '../ui/SectionCard'
-import { inputClassName } from '../ui/classNames'
+import { Field } from '../../../ui/campaign/Field'
+import { SectionCard } from '../../../ui/campaign/SectionCard'
+import { inputClassName } from '../../../ui/campaign/classNames'
 
 export function OverviewSection({
   campaignName,

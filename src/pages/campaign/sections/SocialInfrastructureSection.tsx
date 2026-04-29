@@ -1,9 +1,9 @@
 import type { Dispatch, SetStateAction } from 'react'
 
-import type { SocialInfraGroup } from '../types'
-import { Field } from '../ui/Field'
-import { SectionCard } from '../ui/SectionCard'
-import { inputClassName } from '../ui/classNames'
+import type { SocialInfraGroup } from '../../../types/campaign'
+import { Field } from '../../../ui/campaign/Field'
+import { SectionCard } from '../../../ui/campaign/SectionCard'
+import { inputClassName } from '../../../ui/campaign/classNames'
 
 export function SocialInfrastructureSection({
   socialInfrastructureGroups,

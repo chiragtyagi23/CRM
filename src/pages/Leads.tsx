@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { FiSearch, FiSliders, FiTrendingUp, FiUpload } from 'react-icons/fi'
+import { useNavigate } from 'react-router-dom'
 
 import type { LeadScoreDTO, LeadStatusDTO } from '../lib/dashboardDummyApi'
-import { LeadCard } from './LeadCard'
+import { LeadCard } from '../components/LeadCard'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { loadCaptureLeads, updateCaptureLead } from '../store/captureLeadsSlice'
 import { fetchUsers } from '../lib/usersApi'
 import { ALL_LEAD_SCORES, ALL_LEAD_STATUSES, toLeadRow } from '../utils/leadMapping'
 
 export function Leads() {
+  const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { items, loading } = useAppSelector((s) => s.captureLeads)
   const isAdmin = useAppSelector((s) => s.auth.user?.role === 'admin')
@@ -94,7 +96,7 @@ export function Leads() {
                   type="button"
                   className="inline-flex h-10 w-45 items-center justify-center gap-2 rounded-lg border border-[#8B7355] px-6 text-[13px] font-semibold text-[#8B7355] transition-colors hover:bg-[#F5EFE7]"
                   onClick={() => {
-                    window.location.hash = '#leads/bulk-upload'
+                    navigate('/leads/bulk-upload')
                   }}
                 >
                   <FiUpload className="h-4 w-4 shrink-0" aria-hidden />
@@ -106,7 +108,7 @@ export function Leads() {
                 className="inline-flex h-10 w-46 items-center justify-center gap-2 rounded-lg bg-[#8B7355] px-6 text-[13px] font-semibold text-white transition-colors hover:bg-[#6d5a43]"
                 onClick={() => {
                   if (isAdmin) {
-                    window.location.hash = '#capture-lead'
+                    navigate('/capture-lead')
                     return
                   }
                   window.alert('Add New Lead (dummy)')
@@ -263,7 +265,7 @@ export function Leads() {
                   })
                 }}
                 onViewDetails={() => {
-                  window.location.hash = `#leads/viewdetail/${lead.id}`
+                  navigate(`/leads/viewdetail/${lead.id}`)
                 }}
               />
             ))

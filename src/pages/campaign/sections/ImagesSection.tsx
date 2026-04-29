@@ -1,9 +1,8 @@
 import { useState } from 'react'
 
-import type { BannerImage, GalleryCell } from '../types'
+import { CampaignImageListSection } from '../../../components/CampaignImageListSection'
+import type { BannerImage, GalleryCell } from '../../../types/campaign'
 import { GallerySection } from './GallerySection'
-import { HeroSection } from './HeroSection'
-import { ImageListSection } from './ImageListSection'
 
 type ImagesTab = 'banners' | 'offers' | 'usp' | 'gallery'
 
@@ -77,9 +76,20 @@ export function ImagesSection({
         </button>
       </div>
 
-      {tab === 'banners' ? <HeroSection bannerImages={bannerImages} setBannerImages={setBannerImages} /> : null}
+      {tab === 'banners' ? (
+        <CampaignImageListSection
+          title="Banner images *"
+          subtitle="Add up to 5 banner images for the hero slider. Paste image URLs (recommended)."
+          max={5}
+          aspect="banner"
+          labelPrefix="Banner"
+          tileHint="Paste image URL (recommended). Upload is only for preview unless you add storage."
+          images={bannerImages}
+          setImages={setBannerImages}
+        />
+      ) : null}
       {tab === 'offers' ? (
-        <ImageListSection
+        <CampaignImageListSection
           title="Festival / Offer creatives"
           subtitle="WhatsApp-style promotional creatives. Add up to 5 images. Use the Alt field to store time text (e.g. Till 9 PM, 2 days left, Offer ends in 1:30)."
           max={5}
@@ -90,7 +100,7 @@ export function ImagesSection({
         />
       ) : null}
       {tab === 'usp' ? (
-        <ImageListSection
+        <CampaignImageListSection
           title="USP images"
           subtitle="2–3 images that represent project differentiation. Max 3."
           max={3}

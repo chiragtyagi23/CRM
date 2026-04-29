@@ -1,7 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react'
 
-import { SectionCard } from '../ui/SectionCard'
-import { VideoTile } from '../ui/VideoTile'
+import { CampaignVideoTile } from '../../../components/CampaignVideoTile'
+import { SectionCard } from '../../../ui/campaign/SectionCard'
 
 export function MediaSection({
   videos,
@@ -22,19 +22,19 @@ export function MediaSection({
     <div className="flex flex-col gap-4">
       <SectionCard title="Videos" subtitle="3 long videos. Upload a file (up to 1 GB) or paste a direct video URL (mp4/webm).">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <VideoTile
+          <CampaignVideoTile
             label="Intro"
             hint="Long video (overview/intro)."
             value={videos.intro}
             onChange={(next) => setVideos((prev) => ({ ...prev, intro: next }))}
           />
-          <VideoTile
+          <CampaignVideoTile
             label="Walkthrough"
             hint="Long walkthrough video."
             value={videos.walkthrough}
             onChange={(next) => setVideos((prev) => ({ ...prev, walkthrough: next }))}
           />
-          <VideoTile
+          <CampaignVideoTile
             label="Extra"
             hint="Any additional long video."
             value={videos.extra}
@@ -45,19 +45,19 @@ export function MediaSection({
 
       <SectionCard title="Reels" subtitle="3 short reels. Upload a file (up to 1 GB) or paste a direct video URL.">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <VideoTile
+          <CampaignVideoTile
             label="Reel 1"
             hint="15–30 sec reel."
             value={reels.reel1}
             onChange={(next) => setReels((prev) => ({ ...prev, reel1: next }))}
           />
-          <VideoTile
+          <CampaignVideoTile
             label="Reel 2"
             hint="15–30 sec reel."
             value={reels.reel2}
             onChange={(next) => setReels((prev) => ({ ...prev, reel2: next }))}
           />
-          <VideoTile
+          <CampaignVideoTile
             label="Reel 3"
             hint="15–30 sec reel."
             value={reels.reel3}

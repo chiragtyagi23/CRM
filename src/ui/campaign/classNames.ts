@@ -16,3 +16,4 @@ export function textareaClassName(heightClass: string) {
     heightClass,
   ].join(' ')
 }
+

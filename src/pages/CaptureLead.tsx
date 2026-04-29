@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type React from 'react'
+import { useNavigate } from 'react-router-dom'
 import { FaFacebook, FaGlobe, FaQrcode } from 'react-icons/fa'
 import { FaBookmark, FaHouse } from 'react-icons/fa6'
 import { MdPeopleAlt } from 'react-icons/md'
@@ -205,6 +206,7 @@ function TogglePills<T extends string>({
 }
 
 export function CaptureLead() {
+  const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const creating = useAppSelector((s) => s.captureLeads.creating)
   const token = useAppSelector((s) => s.auth.token)
@@ -669,7 +671,7 @@ export function CaptureLead() {
 
             await dispatch(submitCaptureLead(payload)).unwrap()
             alert('Captured lead (saved)')
-            window.location.hash = '#leads'
+            navigate('/leads')
           }}
         >
           <span className="text-white/90">

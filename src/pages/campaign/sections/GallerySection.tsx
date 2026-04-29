@@ -1,10 +1,10 @@
 import { useId, useMemo, useState, type Dispatch, type SetStateAction } from 'react'
 
-import type { GalleryCell } from '../types'
-import { Field } from '../ui/Field'
-import { SectionCard } from '../ui/SectionCard'
-import { UploadTile } from '../ui/UploadTile'
-import { inputClassName } from '../ui/classNames'
+import { buildImageValueFromFile, CampaignUploadTile } from '../../../components/CampaignUploadTile'
+import type { GalleryCell } from '../../../types/campaign'
+import { Field } from '../../../ui/campaign/Field'
+import { SectionCard } from '../../../ui/campaign/SectionCard'
+import { inputClassName } from '../../../ui/campaign/classNames'
 
 type GalleryPart = 'external' | 'internal'
 
@@ -160,7 +160,6 @@ export function GallerySection({
                       const files = Array.from(e.target.files ?? [])
                       e.target.value = ''
                       if (!files.length) return
-                      const { buildImageValueFromFile } = await import('../ui/UploadTile')
                       const items = await Promise.all(files.map((f) => buildImageValueFromFile(f, 'Image')))
                       setGalleryCells((prev) =>
                         prev.map((c, i) =>
@@ -195,7 +194,7 @@ export function GallerySection({
 
               <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {cell.images.map((img, imgIdx) => (
-                  <UploadTile
+                  <CampaignUploadTile
                     key={imgIdx}
                     label={`Image ${imgIdx + 1}`}
                     hint="Paste image URL (recommended)."

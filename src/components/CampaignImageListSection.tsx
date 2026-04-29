@@ -1,15 +1,18 @@
 import type { Dispatch, SetStateAction } from 'react'
+import type { BannerImage } from '../types/campaign'
+import { SectionCard } from '../ui/campaign/SectionCard'
+import { CampaignUploadTile } from './CampaignUploadTile'
 
-import type { BannerImage } from '../types'
-import { SectionCard } from '../ui/SectionCard'
-import { UploadTile } from '../ui/UploadTile'
+const defaultTileHint = 'Paste image URL or select a file. Upload will happen when you save the campaign.'
 
-export function ImageListSection({
+export function CampaignImageListSection({
   title,
   subtitle,
   max,
   aspect,
   altPlaceholder,
+  labelPrefix = 'Image',
+  tileHint = defaultTileHint,
   images,
   setImages,
 }: {
@@ -18,15 +21,15 @@ export function ImageListSection({
   max: number
   aspect: 'banner' | 'wide' | 'square' | 'tall'
   altPlaceholder?: string
+  labelPrefix?: string
+  tileHint?: string
   images: BannerImage[]
   setImages: Dispatch<SetStateAction<BannerImage[]>>
 }) {
   return (
     <SectionCard title={title} subtitle={subtitle}>
       <div className="flex items-center justify-between gap-3">
-        <div className="text-xs text-gray-500">
-          {images.length}/{max} images
-        </div>
+        <div className="text-xs text-gray-500">{images.length}/{max} images</div>
         <button
           type="button"
           className={
@@ -43,10 +46,10 @@ export function ImageListSection({
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {images.map((b, idx) => (
-          <UploadTile
+          <CampaignUploadTile
             key={idx}
-            label={`Image ${idx + 1}`}
-            hint="Paste image URL or select a file. Upload will happen when you save the campaign."
+            label={`${labelPrefix} ${idx + 1}`}
+            hint={tileHint}
             aspect={aspect}
             uploadMode="defer"
             altPlaceholder={altPlaceholder}

@@ -48,3 +48,4 @@ export type FloorTabKey = string
 export type FloorRow = { configuration: string; carpetArea: string; floorRange: string; price: string }
 
 export type SocialInfraGroup = { title: string; items: { name: string; value: string }[] }
+

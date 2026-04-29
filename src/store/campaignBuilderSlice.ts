@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 
-import type { BannerImage, FloorRow, FloorTabKey, GalleryCell, MediaFile, OverviewFactsState, TemplateSectionKey } from '../pages/campaign/types'
+import type { BannerImage, FloorRow, FloorTabKey, GalleryCell, MediaFile, OverviewFactsState, TemplateSectionKey } from '../types/campaign'
 
 export type CampaignBuilderState = {
   activeSection: TemplateSectionKey

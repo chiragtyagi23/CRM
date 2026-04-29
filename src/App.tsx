@@ -1,5 +1,5 @@
 import { AppHeader } from './components/AppHeader'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { CampaignBuilder } from './pages/CampaignBuilder'
 import { CampaignList } from './pages/CampaignList'
 import { Dashboard } from './pages/Dashboard'
@@ -14,168 +14,122 @@ import { Signup } from './pages/Signup'
 import { Home } from './pages/Home'
 import { useAppDispatch, useAppSelector } from './store/hooks'
 import { authActions, hydrateAuth } from './store/authSlice'
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
 
-function useHashRoute() {
-  const [hash, setHash] = useState(() => window.location.hash || '#home')
+function CampaignEditRoute() {
+  const params = useParams()
+  const campaignId = params.id ? decodeURIComponent(params.id) : ''
+  if (!campaignId) return <Navigate to="/campaign" replace />
+  return <CampaignBuilder initialCampaignId={campaignId} />
+}
 
-  useEffect(() => {
-    const onChange = () => setHash(window.location.hash || '#dashboard')
-    window.addEventListener('hashchange', onChange)
-    return () => window.removeEventListener('hashchange', onChange)
-  }, [])
-
-  return hash
+function LeadDetailsRoute() {
+  const params = useParams()
+  const leadId = params.id ?? ''
+  if (!leadId) return <Navigate to="/leads" replace />
+  return <LeadDetails leadId={leadId} />
 }
 
 function App() {
   const dispatch = useAppDispatch()
   const { token, user } = useAppSelector((s) => s.auth)
-  const hash = useHashRoute()
-  const isHome = hash === '#home' || hash === ''
-  const isLogin = hash === '#login'
-  const isSignup = hash === '#signup'
-  const isCampaign = hash === '#campaign' || hash.startsWith('#campaign/')
-  const isLeads = hash === '#leads'
-  const isLeadsBulkUpload = hash === '#leads/bulk-upload'
-  const isLeadDetails = hash.startsWith('#leads/viewdetail/')
-  const isCaptureLead = hash === '#capture-lead'
-  const isSiteVisits = hash === '#site-visits'
-  const isReports = hash === '#reports'
-  const leadDetailsId = isLeadDetails ? hash.replace('#leads/viewdetail/', '') : ''
-  const campaignEditId = hash.startsWith('#campaign/edit/') ? hash.replace('#campaign/edit/', '') : ''
-  const isCampaignNew = hash === '#campaign/new'
-  const isCampaignEdit = hash.startsWith('#campaign/edit/') && campaignEditId.length > 0
+  const location = useLocation()
+  const navigate = useNavigate()
+  const pathname = location.pathname
 
   useEffect(() => {
     dispatch(hydrateAuth())
   }, [dispatch])
 
   useEffect(() => {
-    if (!isLeadsBulkUpload) return
+    if (pathname !== '/leads/bulk-upload') return
     if (!token || user?.role !== 'admin') {
-      window.location.hash = '#leads'
+      navigate('/leads', { replace: true })
     }
-  }, [isLeadsBulkUpload, token, user?.role])
+  }, [pathname, token, user?.role, navigate])
 
-  // Basic auth guard (UI-only): force login for app pages.
-  useEffect(() => {
-    if (!token && !isHome && !isLogin && !isSignup) window.location.hash = '#home'
-    if (token && (isLogin || isSignup) && (user?.role === 'admin' || user?.role === 'user')) window.location.hash = '#dashboard'
-    if (token && isHome && (user?.role === 'admin' || user?.role === 'user')) window.location.hash = '#dashboard'
-  }, [isHome, isLogin, isSignup, token, user?.role])
-
-  const isAdmin = user?.role === 'admin'
   const hasRole = user?.role === 'admin' || user?.role === 'user'
+  const isPublicRoute = pathname === '/' || pathname === '/login' || pathname === '/signup'
+  const isAdmin = user?.role === 'admin'
 
   return (
     <div className="app-shell">
-      {isHome || isLogin || isSignup ? null : hasRole ? <AppHeader /> : null}
-      {isHome ? (
-        <Home />
-      ) : isLogin ? (
-        <main className="app-main" id="login" style={{ backgroundColor: '#f6efe4' }}>
-          <Login />
-        </main>
-      ) : isSignup ? (
-        <main className="app-main" id="signup" style={{ backgroundColor: '#f6efe4' }}>
-          <Signup />
-        </main>
-      ) : token && !hasRole ? (
-        <main className="app-main" id="no-role" style={{ backgroundColor: '#f6efe4' }}>
-          <div className="mx-auto box-border w-full max-w-[900px] px-4 py-10">
-            <div className="rounded-2xl border border-gray-900/5 bg-[#FDFBF7] p-6 text-[13px] text-gray-600 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
-              <div className="text-[16px] font-semibold text-gray-900">No role assigned</div>
-              <div className="mt-1">
-                Your account is created, but you don’t have access yet. Please ask an admin to assign you a role (admin/user) in
-                the database.
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="inline-flex h-10 items-center justify-center rounded-xl bg-[#80654a] px-5 text-[12px] font-semibold text-white hover:bg-[#725940]"
-                  onClick={() => {
-                    dispatch(authActions.logout())
-                    window.location.hash = '#login'
-                  }}
-                >
-                  Logout
-                </button>
-              </div>
-              <div className="mt-3 text-[12px] font-medium text-gray-500">Error: you are not admin, not user.</div>
-            </div>
-          </div>
-        </main>
-      ) : isCampaign ? (
-        <main className="app-main" id="campaign" style={{ backgroundColor: '#f6efe4' }}>
-          {isAdmin ? (
-            isCampaignNew ? (
-              <CampaignBuilder />
-            ) : isCampaignEdit ? (
-              <CampaignBuilder initialCampaignId={decodeURIComponent(campaignEditId)} />
+      {!isPublicRoute && hasRole ? <AppHeader /> : null}
+      <Routes>
+        <Route path="/" element={token && hasRole ? <Navigate to="/dashboard" replace /> : <Home />} />
+        <Route
+          path="/login"
+          element={
+            token && hasRole ? (
+              <Navigate to="/dashboard" replace />
             ) : (
-              <CampaignList />
+              <main className="app-main" id="login" style={{ backgroundColor: '#f6efe4' }}>
+                <Login />
+              </main>
             )
-          ) : (
-            <div className="mx-auto box-border w-full max-w-[1280px] px-4 py-10">
-              <div className="rounded-2xl border border-gray-900/5 bg-[#FDFBF7] p-6 text-[13px] text-gray-600 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
-                <div className="text-[16px] font-semibold text-gray-900">Access restricted</div>
-                <div className="mt-1">Your role does not have access to Campaign.</div>
-                <button
-                  type="button"
-                  className="mt-4 inline-flex h-10 items-center justify-center rounded-xl bg-[#80654a] px-5 text-[12px] font-semibold text-white hover:bg-[#725940]"
-                  onClick={() => (window.location.hash = '#dashboard')}
-                >
-                  Go to Dashboard
-                </button>
-              </div>
-            </div>
-          )}
-        </main>
-      ) : isLeadDetails ? (
-        <main className="app-main" id="lead-details" style={{ backgroundColor: '#f6efe4' }}>
-          <LeadDetails leadId={leadDetailsId} />
-        </main>
-      ) : isLeadsBulkUpload && isAdmin ? (
-        <main className="app-main" id="leads-bulk-upload" style={{ backgroundColor: '#f6efe4' }}>
-          <BulkUploadLeads />
-        </main>
-      ) : isLeads ? (
-        <main className="app-main" id="leads" style={{ backgroundColor: '#f6efe4' }}>
-          <Leads />
-        </main>
-      ) : isCaptureLead ? (
-        <main className="app-main" id="capture-lead" style={{ backgroundColor: '#f6efe4' }}>
-          {isAdmin ? (
-            <CaptureLead />
-          ) : (
-            <div className="mx-auto box-border w-full max-w-[1280px] px-4 py-10">
-              <div className="rounded-2xl border border-gray-900/5 bg-[#FDFBF7] p-6 text-[13px] text-gray-600 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
-                <div className="text-[16px] font-semibold text-gray-900">Access restricted</div>
-                <div className="mt-1">Your role does not have access to Capture Lead.</div>
-                <button
-                  type="button"
-                  className="mt-4 inline-flex h-10 items-center justify-center rounded-xl bg-[#80654a] px-5 text-[12px] font-semibold text-white hover:bg-[#725940]"
-                  onClick={() => (window.location.hash = '#dashboard')}
-                >
-                  Go to Dashboard
-                </button>
-              </div>
-            </div>
-          )}
-        </main>
-      ) : isSiteVisits ? (
-        <main className="app-main" id="site-visits" style={{ backgroundColor: '#f6efe4' }}>
-          <SiteVisits />
-        </main>
-      ) : isReports ? (
-        <main className="app-main" id="reports" style={{ backgroundColor: '#f6efe4' }}>
-          <Reports />
-        </main>
-      ) : (
-        <main className="app-main" id="dashboard" style={{ backgroundColor: '#f6efe4' }}>
-          <Dashboard />
-        </main>
-      )}
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            token && hasRole ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <main className="app-main" id="signup" style={{ backgroundColor: '#f6efe4' }}>
+                <Signup />
+              </main>
+            )
+          }
+        />
+
+        {!token ? (
+          <Route path="*" element={<Navigate to="/" replace />} />
+        ) : !hasRole ? (
+          <Route
+            path="*"
+            element={
+              <main className="app-main" id="no-role" style={{ backgroundColor: '#f6efe4' }}>
+                <div className="mx-auto box-border w-full max-w-[900px] px-4 py-10">
+                  <div className="rounded-2xl border border-gray-900/5 bg-[#FDFBF7] p-6 text-[13px] text-gray-600 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
+                    <div className="text-[16px] font-semibold text-gray-900">No role assigned</div>
+                    <div className="mt-1">
+                      Your account is created, but you don’t have access yet. Please ask an admin to assign you a role (admin/user) in
+                      the database.
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className="inline-flex h-10 items-center justify-center rounded-xl bg-[#80654a] px-5 text-[12px] font-semibold text-white hover:bg-[#725940]"
+                        onClick={() => {
+                          dispatch(authActions.logout())
+                          navigate('/login', { replace: true })
+                        }}
+                      >
+                        Logout
+                      </button>
+                    </div>
+                    <div className="mt-3 text-[12px] font-medium text-gray-500">Error: you are not admin, not user.</div>
+                  </div>
+                </div>
+              </main>
+            }
+          />
+        ) : (
+          <>
+            <Route path="/dashboard" element={<main className="app-main" id="dashboard" style={{ backgroundColor: '#f6efe4' }}><Dashboard /></main>} />
+            <Route path="/campaign" element={isAdmin ? <main className="app-main" id="campaign" style={{ backgroundColor: '#f6efe4' }}><CampaignList /></main> : <Navigate to="/dashboard" replace />} />
+            <Route path="/campaign/new" element={isAdmin ? <main className="app-main" id="campaign" style={{ backgroundColor: '#f6efe4' }}><CampaignBuilder /></main> : <Navigate to="/dashboard" replace />} />
+            <Route path="/campaign/edit/:id" element={isAdmin ? <main className="app-main" id="campaign" style={{ backgroundColor: '#f6efe4' }}><CampaignEditRoute /></main> : <Navigate to="/dashboard" replace />} />
+            <Route path="/leads" element={<main className="app-main" id="leads" style={{ backgroundColor: '#f6efe4' }}><Leads /></main>} />
+            <Route path="/leads/viewdetail/:id" element={<main className="app-main" id="lead-details" style={{ backgroundColor: '#f6efe4' }}><LeadDetailsRoute /></main>} />
+            <Route path="/leads/bulk-upload" element={isAdmin ? <main className="app-main" id="leads-bulk-upload" style={{ backgroundColor: '#f6efe4' }}><BulkUploadLeads /></main> : <Navigate to="/leads" replace />} />
+            <Route path="/capture-lead" element={isAdmin ? <main className="app-main" id="capture-lead" style={{ backgroundColor: '#f6efe4' }}><CaptureLead /></main> : <Navigate to="/dashboard" replace />} />
+            <Route path="/site-visits" element={<main className="app-main" id="site-visits" style={{ backgroundColor: '#f6efe4' }}><SiteVisits /></main>} />
+            <Route path="/reports" element={<main className="app-main" id="reports" style={{ backgroundColor: '#f6efe4' }}><Reports /></main>} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </>
+        )}
+      </Routes>
     </div>
   )
 }

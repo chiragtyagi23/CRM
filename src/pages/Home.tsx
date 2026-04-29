@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 export function Home() {
   return (
     <main className="app-main" id="home" style={{ backgroundColor: '#f6efe4' }}>
@@ -9,18 +11,18 @@ export function Home() {
           </div>
 
           <div className="mt-7 flex flex-col gap-3 min-[520px]:flex-row">
-            <a
-              href="#login"
+            <Link
+              to="/login"
               className="inline-flex h-11 w-full items-center justify-center rounded-2xl bg-[#80654a] px-5 text-[13px] font-semibold text-white shadow-sm hover:bg-[#725940] min-[520px]:w-auto"
             >
               Login
-            </a>
-            <a
-              href="#signup"
+            </Link>
+            <Link
+              to="/signup"
               className="inline-flex h-11 w-full items-center justify-center rounded-2xl border border-gray-300 bg-white px-5 text-[13px] font-semibold text-gray-800 shadow-sm hover:bg-gray-50 min-[520px]:w-auto"
             >
               Signup
-            </a>
+            </Link>
           </div>
         </div>
       </section>

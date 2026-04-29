@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import {
   fetchDashboardCharts,
@@ -10,8 +11,8 @@ import {
 } from '../lib/dashboardDummyApi'
 import { fetchCaptureLeads, type CaptureLeadDTO } from '../lib/captureLeadsApi'
 import { fetchSiteVisits } from '../lib/captureSiteVisitApi'
-import { DashboardStatCard } from './DashboardStatCard'
-import { RecentLeadsTable } from './RecentLeadsTable' 
+import { DashboardStatCard } from '../components/DashboardStatCard'
+import { RecentLeadsTable } from '../components/RecentLeadsTable'
 import { BarChart } from '@mui/x-charts/BarChart'
 import { PieChart } from '@mui/x-charts'
 import { buildDashboardStats, dashboardSubtitle } from '../utils/dashboard'
@@ -19,6 +20,7 @@ import { isSameLocalDay, toMs } from '../utils/date'
 import { asRecentLeadScore, asRecentLeadStatus } from '../utils/leads'
 
 export function Dashboard() {
+  const navigate = useNavigate()
   const [range, setRange] = useState<DashboardRange>('week')
   const [stats, setStats] = useState<DashboardStatDTO[]>([])
   const [salesFunnel, setSalesFunnel] = useState<SalesFunnelPointDTO[]>([])
@@ -242,7 +244,7 @@ export function Dashboard() {
             type="button"
             className="text-xs font-semibold text-gray-500 hover:text-gray-700"
             onClick={() => {
-              window.location.hash = '#leads'
+              navigate('/leads')
             }}
           >
             View All

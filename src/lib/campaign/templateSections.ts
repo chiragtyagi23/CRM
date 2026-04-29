@@ -1,4 +1,4 @@
-import type { TemplateSectionKey } from './types'
+import type { TemplateSectionKey } from '../../types/campaign'
 
 export const TEMPLATE_SECTIONS: { key: TemplateSectionKey; label: string; helper: string }[] = [
   { key: 'images', label: 'Images', helper: 'Banners + Gallery images.' },
@@ -10,3 +10,4 @@ export const TEMPLATE_SECTIONS: { key: TemplateSectionKey; label: string; helper
   { key: 'benefits', label: 'Benefits', helper: 'Stats + benefits background images.' },
   { key: 'location', label: 'Social infrastructure', helper: 'Nearby places list (school, metro, hospital, etc.).' },
 ]
+

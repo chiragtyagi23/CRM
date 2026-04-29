@@ -1,9 +1,9 @@
 import { useEffect, useId, useMemo, useState, type ChangeEvent } from 'react'
 
-import { apiUploadVideo } from '../../../lib/crmApi'
-import { inputClassName } from './classNames'
+import { apiUploadVideo } from '../lib/crmApi'
+import { inputClassName } from '../ui/campaign/classNames'
 
-export function VideoTile({
+export function CampaignVideoTile({
   label,
   hint,
   value,
@@ -37,7 +37,6 @@ export function VideoTile({
     e.target.value = ''
     if (!file) return
     setUploadError(null)
-    // Defer actual upload to Save, like images.
     onChange({ url: value.url, file })
   }
 
@@ -49,8 +48,7 @@ export function VideoTile({
       const url = await apiUploadVideo(value.file)
       onChange({ url, file: undefined })
     } catch (err) {
-      const msg =
-        err && typeof err === 'object' && 'message' in err ? String((err as { message: unknown }).message) : 'Upload failed'
+      const msg = err && typeof err === 'object' && 'message' in err ? String((err as { message: unknown }).message) : 'Upload failed'
       setUploadError(msg)
     } finally {
       setUploading(false)
@@ -95,12 +93,7 @@ export function VideoTile({
       </div>
 
       <div className="mt-3 grid grid-cols-1 gap-2">
-        <input
-          className={inputClassName()}
-          placeholder="Video URL (paste or upload below)"
-          value={value.url}
-          onChange={(e) => onChange({ url: e.target.value, file: value.file })}
-        />
+        <input className={inputClassName()} placeholder="Video URL (paste or upload below)" value={value.url} onChange={(e) => onChange({ url: e.target.value, file: value.file })} />
       </div>
 
       <div className="mt-3 rounded-xl border border-gray-200 bg-white overflow-hidden">
@@ -113,9 +106,7 @@ export function VideoTile({
             <video className="h-full w-full" controls preload="metadata" src={directUrl} />
           </div>
         ) : directUrl ? (
-          <div className="px-3 py-3 text-xs text-gray-600">
-            Preview not available for this link. Use a direct video URL (mp4/webm) or upload a file.
-          </div>
+          <div className="px-3 py-3 text-xs text-gray-600">Preview not available for this link. Use a direct video URL (mp4/webm) or upload a file.</div>
         ) : (
           <div className="px-3 py-8 text-center text-xs text-gray-400">Preview</div>
         )}
@@ -138,4 +129,3 @@ export function VideoTile({
     </div>
   )
 }
-

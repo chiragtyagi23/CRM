@@ -1,8 +1,8 @@
 import type { Dispatch, SetStateAction } from 'react'
 
-import { SectionCard } from '../ui/SectionCard'
-import { UploadTile } from '../ui/UploadTile'
-import { inputClassName } from '../ui/classNames'
+import { CampaignUploadTile } from '../../../components/CampaignUploadTile'
+import { SectionCard } from '../../../ui/campaign/SectionCard'
+import { inputClassName } from '../../../ui/campaign/classNames'
 
 export function HighlightsSection({
   highlightItems,
@@ -75,7 +75,7 @@ export function HighlightsSection({
         <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
           <div className="text-sm font-semibold text-gray-900">Highlight cover image</div>
           <div className="mt-4">
-            <UploadTile label="Highlights image" hint="Optional cover image" aspect="wide" />
+            <CampaignUploadTile label="Highlights image" hint="Optional cover image" aspect="wide" />
           </div>
         </div>
       </div>

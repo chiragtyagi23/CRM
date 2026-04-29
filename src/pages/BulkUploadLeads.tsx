@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import * as XLSX from 'xlsx'
 import {
   FiAlertCircle,
@@ -88,6 +89,7 @@ async function parseLeadRowsWithPromiseAll(rows: Record<string, unknown>[], chun
 }
 
 export function BulkUploadLeads() {
+  const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const [campaigns, setCampaigns] = useState<CampaignRow[]>([])
   const [campaignsLoading, setCampaignsLoading] = useState(true)
@@ -237,7 +239,7 @@ export function BulkUploadLeads() {
         message: `Successfully uploaded ${res.count} lead(s).`,
       })
       window.setTimeout(() => {
-        window.location.hash = '#leads'
+        navigate('/leads')
       }, 800)
     } catch (e: unknown) {
       const err = e as { message?: string; body?: unknown }
@@ -293,7 +295,7 @@ export function BulkUploadLeads() {
           className="mb-4 inline-flex items-center gap-2 border-0 bg-transparent p-0 text-[13px] font-semibold text-[#80654a] hover:text-[#5c4835]"
           onClick={() => {
             if (dirty && !window.confirm(BULK_UPLOAD_LEAVE_MESSAGE)) return
-            window.location.hash = '#leads'
+            navigate('/leads')
           }}
         >
           <FiArrowLeft className="h-5 w-5" aria-hidden />

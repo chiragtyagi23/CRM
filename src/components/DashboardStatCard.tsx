@@ -126,3 +126,4 @@ export function DashboardStatCard({ stat }: Props) {
     </article>
   )
 }
+

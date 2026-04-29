@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { authActions, login } from '../store/authSlice'
 
@@ -14,6 +15,7 @@ function IconLock() {
 }
 
 export function Login() {
+  const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { loading, error } = useAppSelector((s) => s.auth)
   const [email, setEmail] = useState('')
@@ -71,7 +73,7 @@ export function Login() {
                   dispatch(authActions.logout())
                   return
                 }
-                window.location.hash = '#dashboard'
+                navigate('/dashboard')
               } catch {
                 // handled via state
               }
@@ -121,9 +123,9 @@ export function Login() {
 
             <div className="mt-1 text-center text-[12px] text-gray-500">
               Don’t have an account?{' '}
-              <a className="font-semibold text-[#80654a] hover:text-[#725940]" href="#signup">
+              <Link className="font-semibold text-[#80654a] hover:text-[#725940]" to="/signup">
                 Create one
-              </a>
+              </Link>
             </div>
           </form>
         </div>

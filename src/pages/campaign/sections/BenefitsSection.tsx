@@ -1,10 +1,10 @@
 import type { Dispatch, SetStateAction } from 'react'
 
-import type { BannerImage } from '../types'
-import { Field } from '../ui/Field'
-import { SectionCard } from '../ui/SectionCard'
-import { UploadTile } from '../ui/UploadTile'
-import { inputClassName, textareaClassName } from '../ui/classNames'
+import { CampaignUploadTile } from '../../../components/CampaignUploadTile'
+import type { BannerImage } from '../../../types/campaign'
+import { Field } from '../../../ui/campaign/Field'
+import { SectionCard } from '../../../ui/campaign/SectionCard'
+import { inputClassName, textareaClassName } from '../../../ui/campaign/classNames'
 
 export function BenefitsSection({
   benefitItems,
@@ -148,7 +148,7 @@ export function BenefitsSection({
               <div className="mt-1 text-xs text-gray-500">{benefitBackgroundImages.length}/5 images</div>
               <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
                 {benefitBackgroundImages.map((img, idx) => (
-                  <UploadTile
+                  <CampaignUploadTile
                     key={idx}
                     label={`Background ${idx + 1}`}
                     hint="Paste image URL (recommended)."

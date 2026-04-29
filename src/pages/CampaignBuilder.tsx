@@ -1,22 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-import { apiGet, apiSend, apiUploadImage, apiUploadVideo } from '../lib/crmApi'
+import { crmApiServices } from '../services/crmApiServices'
+import { CampaignSectionHeader } from '../components/CampaignSectionHeader'
+import { CampaignSidebar } from '../components/CampaignSidebar'
 import { campaignBuilderActions } from '../store/campaignBuilderSlice'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
-import { CampaignSectionHeader } from './campaign/CampaignSectionHeader'
-import { CampaignSidebar } from './campaign/CampaignSidebar'
-import { TEMPLATE_SECTIONS } from './campaign/constants'
-import {
-  AmenitiesSection,
-  BenefitsSection,
-  FloorplansSection,
-  HighlightsSection,
-  ImagesSection,
-  MediaSection,
-  OverviewSection,
-  SocialInfrastructureSection,
-} from './campaign/sections'
-import { type ExistingCampaign } from './campaign/types'
+import { buildCampaignPayload } from '../services/crmPayloadBuilder'
+import { TEMPLATE_SECTIONS } from '../lib/campaign/templateSections'
+import { AmenitiesSection } from './campaign/sections/AmenitiesSection'
+import { BenefitsSection } from './campaign/sections/BenefitsSection'
+import { FloorplansSection } from './campaign/sections/FloorplansSection'
+import { HighlightsSection } from './campaign/sections/HighlightsSection'
+import { ImagesSection } from './campaign/sections/ImagesSection'
+import { MediaSection } from './campaign/sections/MediaSection'
+import { OverviewSection } from './campaign/sections/OverviewSection'
+import { SocialInfrastructureSection } from './campaign/sections/SocialInfrastructureSection'
 
 function resolveSetState<T>(current: T, next: T | ((prev: T) => T)) {
   return typeof next === 'function' ? (next as (p: T) => T)(current) : next
@@ -97,7 +96,7 @@ async function materializeImagesForSave(builder: any) {
   const uploadIfNeeded = async (img: any): Promise<{ src: string; alt: string }> => {
     const file: File | undefined = img?.file
     if (file) {
-      const url = await apiUploadImage(file)
+      const url = await crmApiServices.uploads.image(file)
       return { src: url, alt: String(img?.alt ?? '') }
     }
     return { src: String(img?.src ?? ''), alt: String(img?.alt ?? '') }
@@ -155,7 +154,7 @@ async function materializeMediaForSave(builder: any) {
   const uploadIfNeeded = async (m: any): Promise<{ url: string }> => {
     const file: File | undefined = m?.file
     if (file) {
-      const url = await apiUploadVideo(file)
+      const url = await crmApiServices.uploads.video(file)
       return { url }
     }
     return { url: String(m?.url ?? '') }
@@ -204,6 +203,7 @@ function clearDraft() {
 }
 
 export function CampaignBuilder({ initialCampaignId }: { initialCampaignId?: string }) {
+  const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const builder = useAppSelector((s) => s.campaignBuilder)
   const isEditing = Boolean(builder.selectedCampaignId)
@@ -240,7 +240,7 @@ export function CampaignBuilder({ initialCampaignId }: { initialCampaignId?: str
     if (String(builder.selectedCampaignId || '') === String(initialCampaignId)) return
 
     setLoadingSelectedCampaign(true)
-    apiGet<any>(`/api/campaigns/${encodeURIComponent(String(initialCampaignId))}`)
+    crmApiServices.campaign.getById(String(initialCampaignId))
       .then((full) => {
         dispatch(campaignBuilderActions.setSelectedCampaignId(String(initialCampaignId)))
         dispatch(campaignBuilderActions.hydrateFromCampaignFull(full))
@@ -296,156 +296,9 @@ export function CampaignBuilder({ initialCampaignId }: { initialCampaignId?: str
       const updating = Boolean(builder.selectedCampaignId)
       const prevSelectedId = builder.selectedCampaignId ? String(builder.selectedCampaignId) : null
 
-      const payload = {
-        master: {
-          title: builderForSave.campaignName,
-          address: builderForSave.projectLocation,
-          reg_no: builderForSave.reraNo,
-          logo: builderForSave.logoUrl,
-          coverImage: builderForSave.coverImageUrl,
-          templateKey,
-        },
-        hero: {
-          backgroundImages: builderForSave.bannerImages.filter((b: any) => String(b?.src ?? '').trim().length > 0),
-          eyebrow: '',
-          titleLine1: '',
-          titleLine2Italic: '',
-          snapshotSummary: '',
-          locationLine: '',
-          metaCells: [],
-          primaryCta: { label: 'Book Site Visit', targetSectionId: 'enquiry' },
-          secondaryCta: { label: 'View Floor Plans', targetSectionId: 'residences' },
-          badge: builderForSave.possessionDate,
-        },
-        overview: {
-          sectionLabel: 'Project Overview',
-          title: { before: 'Everything You Need to ', italic: 'Know', after: '' },
-          facts: [
-            { key: 'Project Name', value: builderForSave.campaignName },
-            { key: 'Email', value: builderForSave.contactEmail },
-            { key: 'Mobile', value: builderForSave.contactMobile },
-            { key: 'Starting Price', value: builderForSave.startingPrice },
-            { key: 'Completion Date (CBT)', value: builderForSave.completionDate },
-            { key: 'RERA Registration Number', value: builderForSave.reraNo },
-            { key: 'BHK Range', value: builderForSave.bhkRange },
-            { key: 'Price Range', value: builderForSave.priceRange },
-            { key: 'Location', value: builderForSave.projectLocation },
-            { key: 'Total Floors', value: builderForSave.totalFloors },
-            { key: 'Square Feet Ranges', value: builderForSave.squareFeetRanges },
-            { key: 'Possession', value: builderForSave.possessionDate },
-            { key: 'Serial Number', value: builderForSave.overviewFacts.serialNumber },
-            { key: 'Code Name', value: builderForSave.overviewFacts.codeName },
-            { key: 'Location (detail)', value: builderForSave.overviewFacts.location },
-            { key: 'Land Parcel', value: builderForSave.overviewFacts.landParcel },
-            { key: 'Project', value: builderForSave.overviewFacts.project },
-            { key: 'Apartments', value: builderForSave.overviewFacts.apartments },
-            { key: 'Building', value: builderForSave.overviewFacts.building },
-            { key: 'Carpet Areas', value: builderForSave.overviewFacts.carpetAreas },
-          ].filter((f) => f.value.trim().length > 0),
-          certificationsTitle: 'Project Certifications & Registration',
-          certifications: [{ label: 'MahaRERA No.', value: builderForSave.reraNo }].filter((c) => c.value.trim().length > 0),
-        },
-        gallery: {
-          sectionLabel: 'Project Images',
-          title: { before: 'A Glimpse of ', italic: builderForSave.campaignName || 'Project', after: '' },
-          cells: builderForSave.galleryCells.map((c: any) => ({
-            tag: c.tag,
-            feature: c.feature,
-            wideBottom: c.wideBottom,
-            images: c.images.filter((img: any) => String(img?.src ?? '').trim().length > 0),
-          })),
-        },
-        floorplans: {
-          sectionLabel: 'Size & Floor Plans',
-          title: { before: 'Choose Your ', italic: 'Residence', after: '' },
-          blueprintImage: builderForSave.floorBlueprintImage,
-          defaultTabId: builderForSave.floorDefaultTab,
-          tabs: builderForSave.floorTabs,
-          panels: Object.fromEntries(
-            builderForSave.floorTabs.map((t: any) => [
-              t.id,
-              {
-                columns: ['Configuration', 'Carpet Area', 'Floor Range', 'Price'],
-                rows: (builderForSave.floorRows[t.id] ?? []).map((r: any) => [r.configuration, r.carpetArea, r.floorRange, r.price]),
-                floorPlanImages: (builderForSave.floorPlanImages[t.id] ?? []).map((i: any) => i.src).filter((s: any) => String(s).trim().length > 0),
-                priceLabel: 'Starting Price',
-                price: '',
-                priceNote: '',
-                planTag: t.label || t.id,
-                planInnerModifier: '',
-              },
-            ]),
-          ),
-        },
-        amenities: {
-          sectionLabel: 'Amenities',
-          title: { before: '', italic: 'Amenities', after: '' },
-          items: builderForSave.amenityItems
-            .map((a: any) => {
-              const iconUrls = Array.isArray(a?.icons)
-                ? a.icons.map((ic: any) => String(ic?.src ?? '')).filter((s: string) => s.trim().length > 0)
-                : []
-              return { name: a.name, icon: iconUrls.length ? JSON.stringify(iconUrls) : null }
-            })
-            .filter((a: any) => a.name.trim().length > 0),
-        },
-        benefits: {
-          sectionLabel: 'Benefits',
-          title: { before: 'Why Invest in ', italic: builderForSave.campaignName || 'Project', after: '' },
-          backgroundImages: builderForSave.benefitBackgroundImages.filter((b: any) => String(b?.src ?? '').trim().length > 0),
-          items: builderForSave.benefitItems
-            .filter((b: any) => b.heading.trim().length > 0 || b.description.trim().length > 0)
-            .map((b: any, idx: number) => ({
-              num: String(idx + 1).padStart(2, '0'),
-              title: b.heading.trim().length > 0 ? b.heading : `Benefit ${idx + 1}`,
-              text: b.description,
-            })),
-          stats: builderForSave.benefitStats.filter((s: any) => s.value.trim().length > 0 || s.label.trim().length > 0),
-        },
-        highlights: {
-          items: builder.highlightItems
-            .filter((h) => h.title.trim().length > 0)
-            .map((h, idx) => ({
-              num: String(idx + 1).padStart(2, '0'),
-              title: h.title,
-              text: h.description,
-            })),
-        },
-        documents: {
-          items: [
-            ...builderForSave.offerCreatives
-              .filter((img: any) => String(img?.src ?? '').trim().length > 0)
-              .map((img: any) => ({ url: String(img.src), type: 'offer_creative', alt: String(img?.alt ?? '') })),
-            ...builderForSave.uspImages
-              .filter((img: any) => String(img?.src ?? '').trim().length > 0)
-              .map((img: any) => ({ url: String(img.src), type: 'usp_image', alt: String(img?.alt ?? '') })),
-          ],
-        },
-        socialInfrastructure: {
-          groups: builder.socialInfrastructureGroups
-            .map((g) => ({
-              title: g.title.trim().length > 0 ? g.title : 'Untitled',
-              items: g.items
-                .filter((it) => it.name.trim().length > 0)
-                .map((it) => ({ name: it.name.trim(), value: it.value })),
-            }))
-            .filter((g) => g.items.length > 0 || g.title !== 'Untitled'),
-        },
-        media: {
-          items: [
-            { url: mediaForSave.videos.intro.url, kind: 'video_intro', sortOrder: 0 },
-            { url: mediaForSave.videos.walkthrough.url, kind: 'video_walkthrough', sortOrder: 1 },
-            { url: mediaForSave.videos.extra.url, kind: 'video_extra', sortOrder: 2 },
-            { url: mediaForSave.reels.reel1.url, kind: 'reel_1', sortOrder: 10 },
-            { url: mediaForSave.reels.reel2.url, kind: 'reel_2', sortOrder: 11 },
-            { url: mediaForSave.reels.reel3.url, kind: 'reel_3', sortOrder: 12 },
-          ].filter((it) => it.url.trim().length > 0),
-        },
-      }
+      const payload = buildCampaignPayload({ builder, builderForSave, mediaForSave, templateKey })
 
-      const saved = updating
-        ? await apiSend<ExistingCampaign>(`/api/campaigns/${builder.selectedCampaignId}/full`, 'PUT', payload)
-        : await apiSend<ExistingCampaign>('/api/campaigns/full', 'POST', payload)
+      const saved = await crmApiServices.campaign.saveFull(payload, builder.selectedCampaignId)
 
       const savedId = String((saved as unknown as { id: unknown }).id)
 
@@ -464,7 +317,7 @@ export function CampaignBuilder({ initialCampaignId }: { initialCampaignId?: str
       // If this was a create, go back to list.
       if (!updating || !prevSelectedId) {
         window.setTimeout(() => {
-          window.location.hash = '#campaign'
+          navigate('/campaign')
         }, 500)
       }
     } catch (e: unknown) {
@@ -494,7 +347,7 @@ export function CampaignBuilder({ initialCampaignId }: { initialCampaignId?: str
             <button
               type="button"
               className="inline-flex h-10 items-center justify-center rounded-2xl border border-gray-300 bg-white px-4 text-[13px] font-semibold text-gray-800 hover:bg-gray-50"
-              onClick={() => (window.location.hash = '#campaign')}
+              onClick={() => navigate('/campaign')}
             >
               Back
             </button>
@@ -511,7 +364,7 @@ export function CampaignBuilder({ initialCampaignId }: { initialCampaignId?: str
               className="inline-flex h-11 items-center justify-center rounded-2xl border border-gray-300 bg-white px-5 text-[13px] font-semibold text-gray-800 hover:bg-gray-50"
               onClick={() => {
                 dispatch(campaignBuilderActions.resetBuilder())
-                window.location.hash = '#campaign'
+                navigate('/campaign')
               }}
             >
               Cancel

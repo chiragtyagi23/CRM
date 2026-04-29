@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { BULK_UPLOAD_LEAVE_MESSAGE, isBulkUploadDirty } from '../lib/bulkUploadNavigation'
 import { useSiteSection } from '../lib/siteApi'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
@@ -90,11 +91,13 @@ function NavIconGlyph({ name }: { name: NavIcon }) {
 }
 
 export function AppHeader() {
+  const navigate = useNavigate()
+  const location = useLocation()
   const dispatch = useAppDispatch()
   const { user } = useAppSelector((s) => s.auth)
   const { data, error } = useSiteSection<NavPayload>('VITE_NAV_API_URL', '/demo-api/nav.json')
   const [menuOpen, setMenuOpen] = useState(false)
-  const [hash, setHash] = useState(() => window.location.hash || '#dashboard')
+  const path = location.pathname
 
   useEffect(() => {
     if (!menuOpen) return
@@ -120,21 +123,20 @@ export function AppHeader() {
     return () => mq.removeEventListener('change', onChange)
   }, [])
 
-  useEffect(() => {
-    const onChange = () => setHash(window.location.hash || '#dashboard')
-    window.addEventListener('hashchange', onChange)
-    onChange()
-    return () => window.removeEventListener('hashchange', onChange)
-  }, [])
-
   const onNavClick = () => {
     setMenuOpen(false)
   }
 
+  const toPath = (link: string) => {
+    if (link === '#home') return '/'
+    if (!link.startsWith('#')) return link
+    return `/${link.slice(1)}`
+  }
+
   const isActiveLink = (link: string) => {
-    if (!link.startsWith('#')) return false
-    if (link === '#campaign') return hash === '#campaign' || hash.startsWith('#campaign/')
-    return hash === link
+    const target = toPath(link)
+    if (target === '/campaign') return path === '/campaign' || path.startsWith('/campaign/')
+    return path === target
   }
 
   const visibleMenuItems = data
@@ -180,7 +182,14 @@ export function AppHeader() {
       ) : null}
 
       <div className="app-header__bar">
-        <a href="/" className="app-header__brand" onClick={(e) => e.preventDefault()}>
+        <a
+          href="/"
+          className="app-header__brand"
+          onClick={(e) => {
+            e.preventDefault()
+            navigate(user ? '/dashboard' : '/')
+          }}
+        >
           <span className="app-header__logo-mark" aria-hidden>
             <IconGrid />
           </span>
@@ -197,10 +206,14 @@ export function AppHeader() {
               return (
                 <li key={item.id}>
                   <a
-                    href={item.link}
+                    href={toPath(item.link)}
                     className={`app-header__link${active ? ' app-header__link--active' : ''}`}
                     aria-current={active ? 'page' : undefined}
-                    onClick={onNavClick}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      navigate(toPath(item.link))
+                      onNavClick()
+                    }}
                   >
                     <NavIconGlyph name={item.icon} />
                     <span>{item.label}</span>
@@ -221,11 +234,11 @@ export function AppHeader() {
                 type="button"
                 className="inline-flex h-9 items-center justify-center rounded-xl border border-gray-300 bg-white px-4 text-[12px] font-semibold text-gray-700 hover:bg-gray-50"
                 onClick={() => {
-                  if (window.location.hash === '#leads/bulk-upload' && isBulkUploadDirty()) {
+                  if (location.pathname === '/leads/bulk-upload' && isBulkUploadDirty()) {
                     if (!window.confirm(BULK_UPLOAD_LEAVE_MESSAGE)) return
                   }
                   dispatch(authActions.logout())
-                  window.location.hash = '#login'
+                  navigate('/login')
                 }}
               >
                 Logout
@@ -264,10 +277,14 @@ export function AppHeader() {
             return (
               <li key={item.id}>
                 <a
-                  href={item.link}
+                  href={toPath(item.link)}
                   className={`app-header__link app-header__link--mobile${active ? ' app-header__link--active' : ''}`}
                   aria-current={active ? 'page' : undefined}
-                  onClick={onNavClick}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    navigate(toPath(item.link))
+                    onNavClick()
+                  }}
                 >
                   <NavIconGlyph name={item.icon} />
                   <span>{item.label}</span>
@@ -282,12 +299,12 @@ export function AppHeader() {
                 type="button"
                 className="app-header__link app-header__link--mobile"
                 onClick={() => {
-                  if (window.location.hash === '#leads/bulk-upload' && isBulkUploadDirty()) {
+                  if (location.pathname === '/leads/bulk-upload' && isBulkUploadDirty()) {
                     if (!window.confirm(BULK_UPLOAD_LEAVE_MESSAGE)) return
                   }
                   dispatch(authActions.logout())
                   setMenuOpen(false)
-                  window.location.hash = '#login'
+                  navigate('/login')
                 }}
               >
                 <span className="app-header__nav-icon" aria-hidden>

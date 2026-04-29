@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import {
   type LeadDTO,
@@ -123,6 +124,7 @@ function ActionBtn({
 }
 
 export function LeadDetails({ leadId }: { leadId: string }) {
+  const navigate = useNavigate()
   const [lead, setLead] = useState<LeadDTO | null>(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<LeadDetailsTab>('overview')
@@ -159,7 +161,7 @@ export function LeadDetails({ leadId }: { leadId: string }) {
         type="button"
         className="inline-flex items-center gap-2 px-1 py-2 text-[12px] font-medium text-gray-500 hover:text-gray-700"
         onClick={() => {
-          window.location.hash = '#leads'
+          navigate('/leads')
         }}
       >
         <IconChevronLeft />
@@ -244,7 +246,7 @@ export function LeadDetails({ leadId }: { leadId: string }) {
               leadId={leadId}
               onClose={() => setScheduleOpen(false)}
               onScheduled={() => {
-                window.location.hash = '#site-visits'
+                navigate('/site-visits')
               }}
             />
 

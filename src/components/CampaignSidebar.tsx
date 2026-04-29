@@ -1,6 +1,6 @@
-import { TEMPLATE_SECTIONS } from './constants'
-import type { TemplateSectionKey } from './types'
-import { SidebarButton } from './ui/SidebarButton'
+import { TEMPLATE_SECTIONS } from '../lib/campaign/templateSections'
+import type { TemplateSectionKey } from '../types/campaign'
+import { SidebarButton } from '../ui/campaign/SidebarButton'
 
 export function CampaignSidebar({
   activeSection,
@@ -26,3 +26,4 @@ export function CampaignSidebar({
     </aside>
   )
 }
+

@@ -1,5 +1,5 @@
 import type { RecentLeadDTO } from '../lib/dashboardDummyApi'
-import { DynamicTable, type TableColumnDef } from '../components/DynamicTable'
+import { DynamicTable, type TableColumnDef } from './DynamicTable'
 import type React from 'react'
 
 function Pill({

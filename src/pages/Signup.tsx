@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { authActions, signup } from '../store/authSlice'
 
@@ -16,6 +17,7 @@ function IconUserPlus() {
 }
 
 export function Signup() {
+  const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { loading, error } = useAppSelector((s) => s.auth)
   const [name, setName] = useState('')
@@ -68,10 +70,10 @@ export function Signup() {
                 if (role !== 'admin' && role !== 'user') {
                   window.alert('You are not authorised to access CRM portal. Role is not set (admin/user). Admin will assign it in database.')
                   dispatch(authActions.logout())
-                  window.location.hash = '#login'
+                  navigate('/login')
                   return
                 }
-                window.location.hash = '#dashboard'
+                navigate('/dashboard')
               } catch {
                 // handled by state
               }
@@ -135,9 +137,9 @@ export function Signup() {
 
             <div className="mt-1 text-center text-[12px] text-gray-500">
               Already have an account?{' '}
-              <a className="font-semibold text-[#80654a] hover:text-[#725940]" href="#login">
+              <Link className="font-semibold text-[#80654a] hover:text-[#725940]" to="/login">
                 Login
-              </a>
+              </Link>
             </div>
           </form>
         </div>
