@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import type { LeadScoreDTO, LeadStatusDTO } from '../lib/dashboardDummyApi'
 import { LeadCard } from '../components/LeadCard'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
+import { crmPayloadBuilder } from '../services/crmPayloadBuilder'
 import { loadCaptureLeads, updateCaptureLead } from '../store/captureLeadsSlice'
 import { fetchUsers } from '../lib/usersApi'
 import { ALL_LEAD_SCORES, ALL_LEAD_STATUSES, toLeadRow } from '../utils/leadMapping'
@@ -13,7 +14,6 @@ export function Leads() {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { items, loading } = useAppSelector((s) => s.captureLeads)
-  const isAdmin = useAppSelector((s) => s.auth.user?.role === 'admin')
 
   const rows = useMemo(() => items.map(toLeadRow), [items])
   const [overrides, setOverrides] = useState<Record<string, { score?: LeadScoreDTO; status?: LeadStatusDTO; assignedTo?: string }>>({})
@@ -66,8 +66,7 @@ export function Leads() {
   const [teamMembers, setTeamMembers] = useState<string[]>([])
 
   useEffect(() => {
-    if (!isAdmin) return
-    fetchUsers({ role: 'user' })
+    fetchUsers()
       .then((res) => {
         const names = (res.items ?? [])
           .map((u) => String(u.name || '').trim())
@@ -77,7 +76,7 @@ export function Leads() {
       .catch(() => {
         setTeamMembers([])
       })
-  }, [isAdmin])
+  }, [])
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
@@ -91,27 +90,21 @@ export function Leads() {
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
-              {isAdmin ? (
-                <button
-                  type="button"
-                  className="inline-flex h-10 w-45 items-center justify-center gap-2 rounded-lg border border-[#8B7355] px-6 text-[13px] font-semibold text-[#8B7355] transition-colors hover:bg-[#F5EFE7]"
-                  onClick={() => {
-                    navigate('/leads/bulk-upload')
-                  }}
-                >
-                  <FiUpload className="h-4 w-4 shrink-0" aria-hidden />
-                  Bulk Upload
-                </button>
-              ) : null}
+              <button
+                type="button"
+                className="inline-flex h-10 w-45 items-center justify-center gap-2 rounded-lg border border-[#8B7355] px-6 text-[13px] font-semibold text-[#8B7355] transition-colors hover:bg-[#F5EFE7]"
+                onClick={() => {
+                  navigate('/leads/bulk-upload')
+                }}
+              >
+                <FiUpload className="h-4 w-4 shrink-0" aria-hidden />
+                Bulk Upload
+              </button>
               <button
                 type="button"
                 className="inline-flex h-10 w-46 items-center justify-center gap-2 rounded-lg bg-[#8B7355] px-6 text-[13px] font-semibold text-white transition-colors hover:bg-[#6d5a43]"
                 onClick={() => {
-                  if (isAdmin) {
-                    navigate('/capture-lead')
-                    return
-                  }
-                  window.alert('Add New Lead (dummy)')
+                  navigate('/capture-lead')
                 }}
               >
                 <FiTrendingUp className="h-4 w-4 shrink-0" aria-hidden />
@@ -232,10 +225,9 @@ export function Leads() {
                 onChangeStatus={(next) => {
                   setOverrides((s) => ({ ...s, [lead.id]: { ...(s[lead.id] ?? {}), status: next } }))
                 }}
-                canEditAssignee={isAdmin}
+                canEditAssignee
                 assigneeOptions={teamMembers}
                 onChangeAssignee={(next) => {
-                  if (!isAdmin) return
                   setOverrides((s) => ({ ...s, [lead.id]: { ...(s[lead.id] ?? {}), assignedTo: next } }))
                 }}
                 dirty={(() => {
@@ -246,15 +238,10 @@ export function Leads() {
                 onUpdate={() => {
                   const base = baseById.get(lead.id)
                   if (!base) return
-                  const patch: Record<string, unknown> = {}
-                  if (base.score !== lead.score) patch.status = lead.score.toUpperCase()
-                  if (base.status !== lead.status) patch.status = lead.status
-                  if (isAdmin && base.assignedTo !== lead.assignedTo) patch.callBy = lead.assignedTo
-
-                  if (!isAdmin && base.assignedTo !== lead.assignedTo) {
-                    window.alert('Only admin can change Assigned To.')
-                    return
-                  }
+                  const patch = crmPayloadBuilder.captureLead.buildLeadListCardPatch({
+                    base: { score: base.score, status: base.status, assignedTo: base.assignedTo },
+                    lead: { score: lead.score, status: lead.status, assignedTo: lead.assignedTo },
+                  })
 
                   dispatch(updateCaptureLead({ id: lead.id, patch })).then(() => {
                     setOverrides((s) => {

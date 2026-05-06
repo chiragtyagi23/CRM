@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react'
 
-import type { SocialInfraGroup } from '../../../types/campaign'
+import type { SocialInfraGroup } from '../../../types/dtos'
 import { Field } from '../../../ui/campaign/Field'
 import { SectionCard } from '../../../ui/campaign/SectionCard'
 import { inputClassName } from '../../../ui/campaign/classNames'

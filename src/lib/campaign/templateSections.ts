@@ -1,4 +1,4 @@
-import type { TemplateSectionKey } from '../../types/campaign'
+import type { TemplateSectionKey } from '../../types/dtos'
 
 export const TEMPLATE_SECTIONS: { key: TemplateSectionKey; label: string; helper: string }[] = [
   { key: 'images', label: 'Images', helper: 'Banners + Gallery images.' },

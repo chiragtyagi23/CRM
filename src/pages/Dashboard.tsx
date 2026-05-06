@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import {
@@ -15,7 +15,7 @@ import { DashboardStatCard } from '../components/DashboardStatCard'
 import { RecentLeadsTable } from '../components/RecentLeadsTable'
 import { BarChart } from '@mui/x-charts/BarChart'
 import { PieChart } from '@mui/x-charts'
-import { buildDashboardStats, dashboardSubtitle } from '../utils/dashboard'
+import { buildDashboardStats, dashboardSubtitle } from '../utils/uiConfig'
 import { isSameLocalDay, toMs } from '../utils/date'
 import { asRecentLeadScore, asRecentLeadStatus } from '../utils/leads'
 
@@ -105,10 +105,6 @@ export function Dashboard() {
     }
   }, [range])
 
-  const subtitle = useMemo(() => {
-    return dashboardSubtitle(range)
-  }, [range])
-
   const rangeBtn = (active: boolean) =>
     [
       'rounded-xl px-3.5 py-2 text-xs font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgba(157,122,86,0.45)]',
@@ -122,7 +118,7 @@ export function Dashboard() {
       <header className="flex items-end justify-between gap-4 py-1 pb-3">
         <div>
           <h2 className="m-0 text-[28px] font-bold tracking-[-0.03em] text-gray-900">Dashboard</h2>
-          <p className="mt-1 text-[14px] font-medium text-gray-500">{subtitle}</p>
+          <p className="mt-1 text-[14px] font-medium text-gray-500">{dashboardSubtitle(range)}</p>
         </div>
       </header>
 

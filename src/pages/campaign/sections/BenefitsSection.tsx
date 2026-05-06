@@ -1,7 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react'
 
 import { CampaignUploadTile } from '../../../components/CampaignUploadTile'
-import type { BannerImage } from '../../../types/campaign'
+import type { BannerImage } from '../../../types/dtos'
 import { Field } from '../../../ui/campaign/Field'
 import { SectionCard } from '../../../ui/campaign/SectionCard'
 import { inputClassName, textareaClassName } from '../../../ui/campaign/classNames'

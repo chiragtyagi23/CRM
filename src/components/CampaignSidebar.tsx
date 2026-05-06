@@ -1,5 +1,5 @@
 import { TEMPLATE_SECTIONS } from '../lib/campaign/templateSections'
-import type { TemplateSectionKey } from '../types/campaign'
+import type { TemplateSectionKey } from '../types/dtos'
 import { SidebarButton } from '../ui/campaign/SidebarButton'
 
 export function CampaignSidebar({

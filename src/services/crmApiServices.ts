@@ -1,5 +1,5 @@
 import { apiGet, apiSend, apiUploadImage, apiUploadVideo } from '../lib/crmApi'
-import type { ExistingCampaign } from '../types/campaign'
+import type { ExistingCampaign } from '../types/dtos'
 
 export const crmApiServices = {
   campaign: {

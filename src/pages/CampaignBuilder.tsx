@@ -6,7 +6,7 @@ import { CampaignSectionHeader } from '../components/CampaignSectionHeader'
 import { CampaignSidebar } from '../components/CampaignSidebar'
 import { campaignBuilderActions } from '../store/campaignBuilderSlice'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
-import { buildCampaignPayload } from '../services/crmPayloadBuilder'
+import { crmPayloadBuilder } from '../services/crmPayloadBuilder'
 import { TEMPLATE_SECTIONS } from '../lib/campaign/templateSections'
 import { AmenitiesSection } from './campaign/sections/AmenitiesSection'
 import { BenefitsSection } from './campaign/sections/BenefitsSection'
@@ -296,7 +296,7 @@ export function CampaignBuilder({ initialCampaignId }: { initialCampaignId?: str
       const updating = Boolean(builder.selectedCampaignId)
       const prevSelectedId = builder.selectedCampaignId ? String(builder.selectedCampaignId) : null
 
-      const payload = buildCampaignPayload({ builder, builderForSave, mediaForSave, templateKey })
+      const payload = crmPayloadBuilder.campaign.buildFullPayload({ builder, builderForSave, mediaForSave, templateKey })
 
       const saved = await crmApiServices.campaign.saveFull(payload, builder.selectedCampaignId)
 

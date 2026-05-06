@@ -17,6 +17,7 @@ import {
   registerBulkUploadDirty,
 } from '../lib/bulkUploadNavigation'
 import { createCaptureLeadsBulk } from '../lib/captureLeadsApi'
+import { crmPayloadBuilder } from '../services/crmPayloadBuilder'
 import { useAppDispatch } from '../store/hooks'
 import { loadCaptureLeads } from '../store/captureLeadsSlice'
 
@@ -220,14 +221,16 @@ export function BulkUploadLeads() {
     const sourceLabel = selectedCampaignTitle || 'Bulk upload'
 
     try {
-      const res = await createCaptureLeadsBulk({
-        source: sourceLabel,
-        leads: uploadedLeads.map((lead) => ({
-          name: lead.name,
-          number: lead.phone,
-          email: lead.email,
-        })),
-      })
+      const res = await createCaptureLeadsBulk(
+        crmPayloadBuilder.captureLeadsBulk.buildPayload(
+          sourceLabel,
+          uploadedLeads.map((lead) => ({
+            name: lead.name,
+            phone: lead.phone,
+            email: lead.email,
+          })),
+        ),
+      )
 
       await dispatch(loadCaptureLeads()).unwrap()
       setUploadedLeads([])

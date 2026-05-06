@@ -1,34 +1,20 @@
 import { apiGet, apiSend } from './crmApi'
+import type {
+  BulkCaptureLeadRow,
+  BulkCaptureLeadsResponse,
+  CaptureLeadCreatePayload,
+  CaptureLeadDTO,
+  CaptureLeadPatchPayload,
+} from '../types/dtos'
 
-export type CaptureLeadDTO = {
-  id: string
-  source: string | null
-  firstCallDate: string | null
-  callBy: string | null
-  name: string
-  number: string
-  email: string | null
-  whatsappNumber: string | null
-  bhk: string | null
-  budget: string | null
-  resiLocation: string | null
-  propertyOwnership: string | null
-  workLocation: string | null
-  workProfile: string | null
-  industryType: string | null
-  preferredLocation: string[]
-  possessionDate: string | null
-  status: string | null
-  propertyBuyingStage: string | null
-  callbackDate: string | null
-  /** Local time string from `<input type="time">`, e.g. `14:30` */
-  callbackTime: string | null
-  created_at?: string
-  updated_at?: string
-}
-
-export type CaptureLeadCreatePayload = Omit<CaptureLeadDTO, 'id' | 'created_at' | 'updated_at'>
-export type CaptureLeadPatchPayload = Partial<CaptureLeadCreatePayload>
+export type {
+  BulkCaptureLeadRow,
+  BulkCaptureLeadsResponse,
+  BulkCaptureLeadsValidationFailure,
+  CaptureLeadCreatePayload,
+  CaptureLeadDTO,
+  CaptureLeadPatchPayload,
+} from '../types/dtos'
 
 export async function fetchCaptureLeads(): Promise<{ items: CaptureLeadDTO[] }> {
   return await apiGet<{ items: CaptureLeadDTO[] }>('/api/capture-leads')
@@ -42,18 +28,6 @@ export async function createCaptureLead(payload: CaptureLeadCreatePayload): Prom
   return await apiSend<CaptureLeadDTO>('/api/capture-leads', 'POST', payload)
 }
 
-export type BulkCaptureLeadRow = { name: string; number: string; email: string }
-
-export type BulkCaptureLeadsResponse = { count: number; items: CaptureLeadDTO[] }
-
-export type BulkCaptureLeadsValidationFailure = {
-  rowNumber: number
-  name: string
-  phone: string
-  email: string
-  errors: string[]
-}
-
 export async function createCaptureLeadsBulk(payload: {
   source: string
   leads: BulkCaptureLeadRow[]
@@ -64,4 +38,3 @@ export async function createCaptureLeadsBulk(payload: {
 export async function patchCaptureLead(id: string, payload: CaptureLeadPatchPayload): Promise<CaptureLeadDTO> {
   return await apiSend<CaptureLeadDTO>(`/api/capture-leads/${id}`, 'PATCH', payload)
 }
-

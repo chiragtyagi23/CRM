@@ -1,4 +1,117 @@
+import type {
+  BulkCaptureLeadRow,
+  CaptureLeadCreatePayload,
+  CaptureLeadPatchPayload,
+  SiteVisitCreatePayload,
+} from '../types/dtos'
+
 type TemplateKey = 'luxury-template' | 'affordable-template'
+
+/** Raw form / page state for “Add New Lead” → {@link CaptureLeadCreatePayload}. */
+export type CaptureLeadCreateInput = {
+  selectedSource: string | null
+  firstCallDate: string
+  callBy: string
+  fullName: string
+  num: string
+  whatsapp: string
+  email: string
+  bhk: string
+  budget: string
+  resiLocation: string
+  ownership: NonNullable<CaptureLeadCreatePayload['propertyOwnership']>
+  workLocation: string
+  workProfile: NonNullable<CaptureLeadCreatePayload['workProfile']>
+  industry: string
+  preferredResolved: string
+  possessionBy: string
+  leadStatus: NonNullable<CaptureLeadCreatePayload['status']>
+  buyingStage: NonNullable<CaptureLeadCreatePayload['propertyBuyingStage']>
+  callbackDate: string
+  callbackTime: string
+}
+
+export function buildCaptureLeadCreatePayload(input: CaptureLeadCreateInput): CaptureLeadCreatePayload {
+  const {
+    selectedSource,
+    firstCallDate,
+    callBy,
+    fullName,
+    num,
+    whatsapp,
+    email,
+    bhk,
+    budget,
+    resiLocation,
+    ownership,
+    workLocation,
+    workProfile,
+    industry,
+    preferredResolved,
+    possessionBy,
+    leadStatus,
+    buyingStage,
+    callbackDate,
+    callbackTime,
+  } = input
+
+  return {
+    source: selectedSource,
+    firstCallDate: firstCallDate || null,
+    callBy: callBy || null,
+    name: fullName,
+    number: num,
+    whatsappNumber: whatsapp || null,
+    email: email || null,
+    bhk: bhk || null,
+    budget: budget || null,
+    resiLocation: resiLocation || null,
+    propertyOwnership: ownership,
+    workLocation: workLocation || null,
+    workProfile,
+    industryType: industry || null,
+    preferredLocation: preferredResolved ? [preferredResolved] : [],
+    possessionDate: possessionBy || null,
+    status: leadStatus,
+    propertyBuyingStage: buyingStage,
+    callbackDate: callbackDate || null,
+    callbackTime: callbackTime.trim() || null,
+  }
+}
+
+export function buildBulkCaptureLeadsPayload(
+  source: string,
+  rows: { name: string; phone: string; email: string }[],
+): { source: string; leads: BulkCaptureLeadRow[] } {
+  return {
+    source,
+    leads: rows.map((r) => ({
+      name: r.name,
+      number: r.phone,
+      email: r.email,
+    })),
+  }
+}
+
+export function buildSiteVisitCreatePayload(input: SiteVisitCreatePayload): SiteVisitCreatePayload {
+  return {
+    ...input,
+    notes: (input.notes ?? '').trim(),
+  }
+}
+
+/** Inline edits on the leads list card (matches previous patch merge order). */
+export function buildCaptureLeadLeadListCardPatch(input: {
+  base: { score: string; status: string; assignedTo: string }
+  lead: { score: string; status: string; assignedTo: string }
+}): CaptureLeadPatchPayload {
+  const { base, lead } = input
+  const patch: CaptureLeadPatchPayload = {}
+  if (base.score !== lead.score) patch.status = lead.score.toUpperCase()
+  if (base.status !== lead.status) patch.status = lead.status
+  if (base.assignedTo !== lead.assignedTo) patch.callBy = lead.assignedTo
+  return patch
+}
 
 export function buildCampaignPayload({
   builder,
@@ -163,5 +276,15 @@ export const crmPayloadBuilder = {
   campaign: {
     buildFullPayload: buildCampaignPayload,
   },
-}
+  captureLead: {
+    buildCreatePayload: buildCaptureLeadCreatePayload,
+    buildLeadListCardPatch: buildCaptureLeadLeadListCardPatch,
+  },
+  captureLeadsBulk: {
+    buildPayload: buildBulkCaptureLeadsPayload,
+  },
+  siteVisit: {
+    buildCreatePayload: buildSiteVisitCreatePayload,
+  },
+} as const
 

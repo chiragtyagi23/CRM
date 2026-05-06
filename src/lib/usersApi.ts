@@ -1,14 +1,8 @@
 import { apiGet } from './crmApi'
+import type { CrmUserDTO } from '../types/dtos'
 
-export type CrmUserDTO = {
-  id: string
-  name: string
-  email: string
-  role: string
+export type { CrmUserDTO } from '../types/dtos'
+
+export async function fetchUsers(): Promise<{ items: CrmUserDTO[] }> {
+  return await apiGet<{ items: CrmUserDTO[] }>('/api/auth/users')
 }
-
-export async function fetchUsers(params?: { role?: string }): Promise<{ items: CrmUserDTO[] }> {
-  const q = params?.role ? `?role=${encodeURIComponent(params.role)}` : ''
-  return await apiGet<{ items: CrmUserDTO[] }>(`/api/auth/users${q}`)
-}
-

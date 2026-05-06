@@ -4,7 +4,6 @@ import { login as apiLogin, signup as apiSignup, type AuthResponseDTO, type Auth
 
 const LS_TOKEN = 'crm_token'
 const LS_USER = 'crm_user'
-const NO_ROLE: AuthUserDTO['role'] = 'no-role'
 
 function readJson<T>(key: string): T | null {
   try {
@@ -20,10 +19,6 @@ function writeJson(key: string, value: unknown) {
   window.localStorage.setItem(key, JSON.stringify(value))
 }
 
-function withRole(user: AuthUserDTO): AuthUserDTO {
-  return { ...user, role: user.role ?? NO_ROLE }
-}
-
 export type AuthState = {
   token: string | null
   user: AuthUserDTO | null
@@ -31,22 +26,29 @@ export type AuthState = {
   error: string | null
 }
 
+/** Read session from localStorage on store init so the first paint has the token (refresh keeps /profile, etc.). */
+function readStoredAuth(): Pick<AuthState, 'token' | 'user'> {
+  if (typeof window === 'undefined') return { token: null, user: null }
+  try {
+    const raw = window.localStorage.getItem(LS_TOKEN)
+    const token = raw && raw.trim().length > 0 ? raw : null
+    const user = readJson<AuthUserDTO>(LS_USER)
+    return { token, user: user ?? null }
+  } catch {
+    return { token: null, user: null }
+  }
+}
+
 const initialState: AuthState = {
-  token: null,
-  user: null,
+  ...readStoredAuth(),
   loading: false,
   error: null,
 }
 
-export const hydrateAuth = createAsyncThunk('auth/hydrate', async () => {
-  const token = window.localStorage.getItem(LS_TOKEN)
-  const user = readJson<AuthUserDTO>(LS_USER)
-  return { token: token ?? null, user: user ? withRole(user) : null }
-})
+export const hydrateAuth = createAsyncThunk('auth/hydrate', async () => readStoredAuth())
 
 export const signup = createAsyncThunk('auth/signup', async (payload: { name: string; email: string; password: string }) => {
-  // Do not set role on signup. Role should be assigned by an admin in the database.
-  const res = await apiSignup(payload)
+  const res = await apiSignup({ ...payload, role: null })
   return res
 })
 
@@ -73,7 +75,7 @@ const slice = createSlice({
     // Admins can create other users later (optional)
     setAuth(state, action: { payload: AuthResponseDTO }) {
       state.token = action.payload.token
-      state.user = withRole(action.payload.user)
+      state.user = action.payload.user
       state.error = null
       writeJson(LS_USER, state.user)
       window.localStorage.setItem(LS_TOKEN, action.payload.token)
@@ -98,7 +100,7 @@ const slice = createSlice({
     b.addCase(signup.fulfilled, (state, action) => {
       state.loading = false
       state.token = action.payload.token
-      state.user = withRole(action.payload.user)
+      state.user = action.payload.user
       state.error = null
       writeJson(LS_USER, state.user)
       window.localStorage.setItem(LS_TOKEN, action.payload.token)
@@ -109,7 +111,7 @@ const slice = createSlice({
     b.addCase(login.fulfilled, (state, action) => {
       state.loading = false
       state.token = action.payload.token
-      state.user = withRole(action.payload.user)
+      state.user = action.payload.user
       state.error = null
       writeJson(LS_USER, state.user)
       window.localStorage.setItem(LS_TOKEN, action.payload.token)

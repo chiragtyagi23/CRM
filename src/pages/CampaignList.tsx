@@ -6,7 +6,7 @@ import { campaignBuilderActions } from '../store/campaignBuilderSlice'
 import { useAppDispatch } from '../store/hooks'
 import { CampaignListTable } from '../components/CampaignListTable'
 import { CampaignTemplateModal } from '../components/CampaignTemplateModal'
-import type { CampaignListResponse, ExistingCampaign } from '../types/campaign'
+import type { CampaignListResponse, ExistingCampaign } from '../types/dtos'
 
 export function CampaignList() {
   const navigate = useNavigate()

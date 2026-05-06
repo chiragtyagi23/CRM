@@ -1,4 +1,4 @@
-import type { ExistingCampaign } from '../types/campaign'
+import type { ExistingCampaign } from '../types/dtos'
 
 export function CampaignListTable({
   campaigns,

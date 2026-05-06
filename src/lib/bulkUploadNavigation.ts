@@ -14,3 +14,11 @@ export function registerBulkUploadDirty(getter: () => boolean) {
 export function isBulkUploadDirty() {
   return getDirty?.() ?? false
 }
+
+/** Call before navigating away from the app or logging out from Bulk Upload. */
+export function confirmLeaveFromBulkUploadIfNeeded(pathname: string): boolean {
+  if (pathname === '/leads/bulk-upload' && isBulkUploadDirty()) {
+    return window.confirm(BULK_UPLOAD_LEAVE_MESSAGE)
+  }
+  return true
+}

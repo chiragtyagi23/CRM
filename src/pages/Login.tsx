@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
-import { authActions, login } from '../store/authSlice'
+import { login } from '../store/authSlice'
 
 function IconLock() {
   return (
@@ -66,13 +66,7 @@ export function Login() {
               e.preventDefault()
               if (!canSubmit) return
               try {
-                const res = await dispatch(login({ email, password })).unwrap()
-                const role = res.user.role
-                if (role !== 'admin' && role !== 'user') {
-                  window.alert('You are not authorised for this CRM portal. Please ask admin to assign role (admin/user) in database.')
-                  dispatch(authActions.logout())
-                  return
-                }
+                await dispatch(login({ email, password })).unwrap()
                 navigate('/dashboard')
               } catch {
                 // handled via state

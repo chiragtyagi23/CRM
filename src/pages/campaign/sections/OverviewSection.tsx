@@ -1,6 +1,6 @@
 import { useState, type Dispatch, type SetStateAction } from 'react'
 
-import type { OverviewFactsState } from '../../../types/campaign'
+import type { OverviewFactsState } from '../../../types/dtos'
 import { apiUploadImage } from '../../../lib/crmApi'
 import { Field } from '../../../ui/campaign/Field'
 import { SectionCard } from '../../../ui/campaign/SectionCard'

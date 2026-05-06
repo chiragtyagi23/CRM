@@ -1,3 +1,7 @@
+import type { ApiUploadImageOptions, UploadImageResponse } from '../types/dtos'
+
+export type { ApiUploadImageOptions, UploadImageResponse } from '../types/dtos'
+
 export type ApiError = { message: string; status?: number; body?: unknown }
 
 function baseUrl() {
@@ -38,15 +42,6 @@ export async function apiSend<T>(path: string, method: 'POST' | 'PATCH' | 'PUT' 
   if (res.status === 204) return undefined as T
   return (await res.json()) as T
 }
-
-
-export type UploadImageResponse = {
-  message: string
-  url: string
-  file: { filename: string; mimetype: string; size: number }
-}
-
-export type ApiUploadImageOptions = { /** Store on API disk only; use {@link promoteLocalDraftImageUrl} or save-time upload for S3. */ draft?: boolean }
 
 /** POST multipart file field `image`. Returns absolute URL you can store as `src`. Pass `{ draft: true }` while editing; omit on final save to send to S3 when configured. */
 export async function apiUploadImage(file: File, opts?: ApiUploadImageOptions): Promise<string> {

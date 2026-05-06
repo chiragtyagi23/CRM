@@ -1,7 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react'
 
 import { CampaignUploadTile } from '../../../components/CampaignUploadTile'
-import type { BannerImage, FloorRow, FloorTabKey } from '../../../types/campaign'
+import type { BannerImage, FloorRow, FloorTabKey } from '../../../types/dtos'
 import { SectionCard } from '../../../ui/campaign/SectionCard'
 import { inputClassName } from '../../../ui/campaign/classNames'
 

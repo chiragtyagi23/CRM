@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react'
-import type { BannerImage } from '../types/campaign'
+import type { BannerImage } from '../types/dtos'
 import { SectionCard } from '../ui/campaign/SectionCard'
 import { CampaignUploadTile } from './CampaignUploadTile'
 

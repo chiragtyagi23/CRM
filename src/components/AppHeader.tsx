@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { BULK_UPLOAD_LEAVE_MESSAGE, isBulkUploadDirty } from '../lib/bulkUploadNavigation'
+import { confirmLeaveFromBulkUploadIfNeeded } from '../lib/bulkUploadNavigation'
 import { useSiteSection } from '../lib/siteApi'
-import { useAppDispatch, useAppSelector } from '../store/hooks'
-import { authActions } from '../store/authSlice'
+import { useAppSelector } from '../store/hooks'
 
 type NavIcon = 'grid' | 'user' | 'userPlus' | 'pin' | 'chart'
 
@@ -93,7 +92,6 @@ function NavIconGlyph({ name }: { name: NavIcon }) {
 export function AppHeader() {
   const navigate = useNavigate()
   const location = useLocation()
-  const dispatch = useAppDispatch()
   const { user } = useAppSelector((s) => s.auth)
   const { data, error } = useSiteSection<NavPayload>('VITE_NAV_API_URL', '/demo-api/nav.json')
   const [menuOpen, setMenuOpen] = useState(false)
@@ -139,13 +137,7 @@ export function AppHeader() {
     return path === target
   }
 
-  const visibleMenuItems = data
-    ? data.menuItems.filter((i) => {
-        if (i.link === '#capture-lead') return user?.role === 'admin'
-        if (i.link === '#campaign') return user?.role === 'admin'
-        return true
-      })
-    : []
+  const visibleMenuItems = data ? data.menuItems : []
 
   if (error) {
     return <div className="site-api-error site-api-error--nav">Navigation: {error}</div>
@@ -227,21 +219,16 @@ export function AppHeader() {
         <div className="ml-auto hidden items-center gap-2 min-[901px]:flex">
           {user ? (
             <>
-              <span className="text-[12px] font-semibold text-gray-500">
-                {user.name} · {user.role ?? 'no-role'}
-              </span>
+              <span className="text-[12px] font-semibold text-gray-500">{user.name}</span>
               <button
                 type="button"
                 className="inline-flex h-9 items-center justify-center rounded-xl border border-gray-300 bg-white px-4 text-[12px] font-semibold text-gray-700 hover:bg-gray-50"
                 onClick={() => {
-                  if (location.pathname === '/leads/bulk-upload' && isBulkUploadDirty()) {
-                    if (!window.confirm(BULK_UPLOAD_LEAVE_MESSAGE)) return
-                  }
-                  dispatch(authActions.logout())
-                  navigate('/login')
+                  if (!confirmLeaveFromBulkUploadIfNeeded(location.pathname)) return
+                  navigate('/profile')
                 }}
               >
-                Logout
+                Profile
               </button>
             </>
           ) : null}
@@ -299,18 +286,13 @@ export function AppHeader() {
                 type="button"
                 className="app-header__link app-header__link--mobile"
                 onClick={() => {
-                  if (location.pathname === '/leads/bulk-upload' && isBulkUploadDirty()) {
-                    if (!window.confirm(BULK_UPLOAD_LEAVE_MESSAGE)) return
-                  }
-                  dispatch(authActions.logout())
+                  if (!confirmLeaveFromBulkUploadIfNeeded(location.pathname)) return
                   setMenuOpen(false)
-                  navigate('/login')
+                  navigate('/profile')
                 }}
               >
-                <span className="app-header__nav-icon" aria-hidden>
-                  ⇥
-                </span>
-                <span>Logout</span>
+                <IconUser className="app-header__nav-icon" />
+                <span>Profile</span>
               </button>
             </li>
           ) : null}

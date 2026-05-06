@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 import { CampaignImageListSection } from '../../../components/CampaignImageListSection'
-import type { BannerImage, GalleryCell } from '../../../types/campaign'
+import type { BannerImage, GalleryCell } from '../../../types/dtos'
 import { GallerySection } from './GallerySection'
 
 type ImagesTab = 'banners' | 'offers' | 'usp' | 'gallery'

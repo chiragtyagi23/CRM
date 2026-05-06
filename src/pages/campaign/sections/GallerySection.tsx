@@ -1,7 +1,7 @@
 import { useId, useMemo, useState, type Dispatch, type SetStateAction } from 'react'
 
 import { buildImageValueFromFile, CampaignUploadTile } from '../../../components/CampaignUploadTile'
-import type { GalleryCell } from '../../../types/campaign'
+import type { GalleryCell } from '../../../types/dtos'
 import { Field } from '../../../ui/campaign/Field'
 import { SectionCard } from '../../../ui/campaign/SectionCard'
 import { inputClassName } from '../../../ui/campaign/classNames'

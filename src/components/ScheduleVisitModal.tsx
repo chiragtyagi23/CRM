@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import { fetchProjects, type ProjectDTO } from '../lib/dashboardDummyApi'
-import type { SiteVisitCreatePayload } from '../lib/captureSiteVisitApi'
+import { crmPayloadBuilder } from '../services/crmPayloadBuilder'
 import { fetchUsers, type CrmUserDTO } from '../lib/usersApi'
 import { useAppDispatch } from '../store/hooks'
 import { submitSiteVisit } from '../store/siteVisit.slice'
@@ -76,8 +76,8 @@ export function ScheduleVisitModal({
 
   useEffect(() => {
     if (!open) return
-    // Best-effort: load internal handlers (role=user). If forbidden/unavailable, we still allow manual typing.
-    fetchUsers({ role: 'user' })
+    // Best-effort: load internal handlers. If unavailable, we still allow manual typing.
+    fetchUsers()
       .then((res) => {
         setHandlers(res.items ?? [])
         setHandlerName((prev) => {
@@ -307,7 +307,13 @@ export function ScheduleVisitModal({
               setSaving(true)
               try {
                 for (const projectId of projectIds) {
-                  const payload: SiteVisitCreatePayload = { leadId, projectId, date, time, notes: combinedNotes }
+                  const payload = crmPayloadBuilder.siteVisit.buildCreatePayload({
+                    leadId,
+                    projectId,
+                    date,
+                    time,
+                    notes: combinedNotes,
+                  })
                   await dispatch(submitSiteVisit(payload)).unwrap()
                 }
                 onClose()

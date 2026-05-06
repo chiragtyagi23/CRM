@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
-import { authActions, signup } from '../store/authSlice'
+import { signup } from '../store/authSlice'
 
 function IconUserPlus() {
   return (
@@ -65,15 +65,8 @@ export function Signup() {
               e.preventDefault()
               if (!canSubmit || loading) return
               try {
-                const res = await dispatch(signup({ name, email, password })).unwrap()
-                const role = res.user.role
-                if (role !== 'admin' && role !== 'user') {
-                  window.alert('You are not authorised to access CRM portal. Role is not set (admin/user). Admin will assign it in database.')
-                  dispatch(authActions.logout())
-                  navigate('/login')
-                  return
-                }
-                navigate('/dashboard')
+                await dispatch(signup({ name, email, password })).unwrap()
+                navigate('/login')
               } catch {
                 // handled by state
               }
