@@ -16,8 +16,9 @@ export type {
   CaptureLeadPatchPayload,
 } from '../types/dtos'
 
-export async function fetchCaptureLeads(): Promise<{ items: CaptureLeadDTO[] }> {
-  return await apiGet<{ items: CaptureLeadDTO[] }>('/api/capture-leads')
+export async function fetchCaptureLeads(campaignId?: string): Promise<{ items: CaptureLeadDTO[] }> {
+  const q = campaignId ? `?campaignId=${encodeURIComponent(campaignId)}` : ''
+  return await apiGet<{ items: CaptureLeadDTO[] }>(`/api/capture-leads${q}`)
 }
 
 export async function fetchCaptureLeadById(id: string): Promise<CaptureLeadDTO> {

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { d } from '../lib/designClasses'
 
 /** Label + left icon gutter for inputs (capture lead form). */
 export function IconInsetField({
@@ -14,16 +15,19 @@ export function IconInsetField({
 }) {
   return (
     <label className="block">
-      <div className="mb-2 text-[11px] font-semibold text-gray-500">
-        {label} {required ? <span className="text-rose-500">*</span> : null}
+      <div className={d.label}>
+        {label} {required ? <span className="text-[#D96B6B]">*</span> : null}
       </div>
       <div className="relative">
-        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">{icon}</span>
+        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8B7355]">{icon}</span>
         {children}
       </div>
     </label>
   )
 }
+
+export const fieldInputClass =
+  'h-11 w-full rounded-lg border border-[#E8DCCB] bg-white pl-11 pr-3 text-sm text-[#2E2E2E] placeholder:text-[#8B7355]/60 focus:border-[#8B7355] focus:outline-none'
 
 export function TogglePills<T extends string>({
   label,
@@ -40,8 +44,8 @@ export function TogglePills<T extends string>({
 }) {
   return (
     <div>
-      <div className="mb-2 text-[11px] font-semibold text-gray-500">
-        {label} {required ? <span className="text-rose-500">*</span> : null}
+      <div className={d.label}>
+        {label} {required ? <span className="text-[#D96B6B]">*</span> : null}
       </div>
       <div className="grid grid-cols-2 gap-4">
         {options.map((o) => {
@@ -52,8 +56,10 @@ export function TogglePills<T extends string>({
               type="button"
               onClick={() => onChange(o.value)}
               className={[
-                'h-11 rounded-xl border text-[12px] font-semibold tracking-wide',
-                active ? 'border-[#cdb89f] bg-[#faf6ef] text-[#80654a]' : 'border-gray-200 bg-white text-gray-600',
+                'rounded-lg border-2 px-4 py-2 text-sm font-semibold transition-all',
+                active
+                  ? 'border-[#8B7355] bg-[#E8DCCB]/30 text-[#2E2E2E]'
+                  : 'border-[#E8DCCB] text-[#8B7355] hover:border-[#8B7355]/50',
               ].join(' ')}
               aria-pressed={active}
             >

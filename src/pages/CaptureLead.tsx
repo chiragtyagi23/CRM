@@ -18,7 +18,9 @@ import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { submitCaptureLead } from '../store/captureLeadsSlice'
 import { fetchUsers, type CrmUserDTO } from '../lib/usersApi'
 import { crmPayloadBuilder } from '../services/crmPayloadBuilder'
-import { IconInsetField, TogglePills } from '../components/uiPrimitives'
+import { IconInsetField, TogglePills, fieldInputClass } from '../components/uiPrimitives'
+import { PageHeader } from '../components/PageHeader'
+import { d } from '../lib/designClasses'
 import {
   BHK_SELECT_OPTIONS,
   BUDGET_SELECT_OPTIONS,
@@ -116,62 +118,62 @@ export function CaptureLead() {
   }
 
   return (
-    <section className="mx-auto box-border w-full max-w-[980px]">
-      <header className="py-2 pb-4">
-        <h2 className="m-0 text-[28px] font-bold tracking-[-0.03em] text-gray-900">Add New Lead</h2>
-        <p className="mt-1 text-[14px] font-medium text-gray-500">Complete all required fields to capture lead information</p>
-      </header>
+    <section className="w-full">
+      <PageHeader
+        title="Add New Lead"
+        subtitle="Complete all required fields to capture lead information"
+      />
 
-      <div className="flex flex-col gap-6">
-      <section className="rounded-2xl border border-gray-900/5 bg-white p-5 sm:p-7 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
-        <div className="text-[12px] font-semibold tracking-[0.02em] text-gray-800">
-          SOURCE <span className="text-rose-500">*</span>
-        </div>
+      <div className={d.stack}>
+      <section className={d.cardP6}>
+        <h2 className={d.sectionTitle}>
+          SOURCE <span className="text-[#D96B6B]">*</span>
+        </h2>
 
-        <div className="mt-5 grid grid-cols-2 gap-4 min-[760px]:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {CAPTURE_LEAD_SOURCE_TILE_OPTIONS.map((s) => {
             const active = selected === s.id
             const Icon = s.icon
             const iconToneClass =
               s.tone === 'mint'
-                ? 'text-emerald-600'
+                ? 'text-[#6FAF8F]'
                 : s.tone === 'rose'
-                  ? 'text-rose-600'
+                  ? 'text-[#D96B6B]'
                   : s.tone === 'slate'
-                    ? 'text-slate-600'
-                    : 'text-[#80654a]'
+                    ? 'text-[#8B7355]'
+                    : 'text-[#8B7355]'
             return (
               <button
                 key={s.id}
                 type="button"
                 onClick={() => setSelected(s.id)}
                 className={[
-                  'flex h-[86px] flex-col items-center justify-center gap-2 rounded-xl border px-5 text-[12px] font-semibold transition-colors cursor-pointer',
+                  'flex flex-col items-center justify-center gap-2 rounded-xl border-2 p-4 text-sm transition-all cursor-pointer',
                   active
-                    ? 'border-[#80654a] bg-[#faf6ef] text-gray-900 shadow-[inset_0_0_0_2px_rgba(128,101,74,0.2)]'
-                    : 'border-gray-200 bg-white text-gray-800 hover:border-gray-300 hover:bg-gray-50',
+                    ? 'border-[#8B7355] bg-[#E8DCCB]/30 text-[#2E2E2E]'
+                    : 'border-[#E8DCCB] bg-white text-[#2E2E2E] hover:border-[#8B7355]/50',
                 ].join(' ')}
                 aria-pressed={active}
               >
                 <span className={`grid h-10 w-10 place-items-center ${iconToneClass}`}>
                   <Icon size={22} />
                 </span>
-                <span className={`text-[12px] font-semibold ${active ? 'text-gray-900' : 'text-gray-700'}`}>{s.label}</span>
+                <span className={`text-[12px] font-semibold ${active ? 'text-[#2E2E2E]' : 'text-[#2E2E2E]'}`}>{s.label}</span>
               </button>
             )
           })}
         </div>
       </section>
 
-      <section className="rounded-2xl border border-gray-900/5 bg-white p-5 sm:p-7 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
-        <div className="text-[18px] font-bold text-gray-900">Contact Details</div>
+      <section className={d.cardP6}>
+        <h2 className={d.sectionTitle}>Contact Details</h2>
 
-        <div className="mt-5 grid grid-cols-1 gap-5 min-[900px]:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <IconInsetField label="1st CALL DATE" required icon={<FaCalendarDays className={fieldIconCls} aria-hidden />}>
             <input
               value={firstCallDate}
               onChange={(e) => setFirstCallDate(e.target.value)}
-              className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-[13px] text-gray-700 placeholder:text-gray-400 focus:border-[#cdb89f] focus:outline-none"
+              className={fieldInputClass}
             />
           </IconInsetField>
 
@@ -179,7 +181,7 @@ export function CaptureLead() {
             <select
               value={callBy}
               onChange={(e) => setCallBy(e.target.value)}
-              className="h-11 w-full appearance-none rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-[13px] text-gray-700 focus:border-[#cdb89f] focus:outline-none"
+              className={`${fieldInputClass} appearance-none`}
             >
               <option value="" disabled>
                 Select team member
@@ -197,7 +199,7 @@ export function CaptureLead() {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="Full Name"
-              className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-[13px] text-gray-700 placeholder:text-gray-400 focus:border-[#cdb89f] focus:outline-none"
+              className={fieldInputClass}
             />
           </IconInsetField>
 
@@ -205,7 +207,7 @@ export function CaptureLead() {
             <input
               value={num}
               onChange={(e) => setNum(e.target.value)}
-              className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-[13px] text-gray-700 placeholder:text-gray-400 focus:border-[#cdb89f] focus:outline-none"
+              className={fieldInputClass}
             />
           </IconInsetField>
 
@@ -213,7 +215,7 @@ export function CaptureLead() {
             <input
               value={whatsapp}
               onChange={(e) => setWhatsapp(e.target.value)}
-              className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-[13px] text-gray-700 placeholder:text-gray-400 focus:border-[#cdb89f] focus:outline-none"
+              className={fieldInputClass}
             />
           </IconInsetField>
 
@@ -221,21 +223,21 @@ export function CaptureLead() {
             <input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-[13px] text-gray-700 placeholder:text-gray-400 focus:border-[#cdb89f] focus:outline-none"
+              className={fieldInputClass}
             />
           </IconInsetField>
         </div>
       </section>
 
-      <section className="rounded-2xl border border-gray-900/5 bg-white p-5 sm:p-7 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
-        <div className="text-[18px] font-bold text-gray-900">Property Requirements</div>
+      <section className={d.cardP6}>
+        <h2 className={d.sectionTitle}>Property Requirements</h2>
 
-        <div className="mt-5 grid grid-cols-1 gap-5 min-[900px]:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <IconInsetField label="BHK" required icon={<FaHouse className={fieldIconCls} aria-hidden />}>
             <select
               value={bhk}
               onChange={(e) => setBhk(e.target.value)}
-              className="h-11 w-full appearance-none rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-[13px] text-gray-700 focus:border-[#cdb89f] focus:outline-none"
+              className={`${fieldInputClass} appearance-none`}
             >
               <option value="" disabled>
                 Select BHK
@@ -252,7 +254,7 @@ export function CaptureLead() {
             <select
               value={budget}
               onChange={(e) => setBudget(e.target.value)}
-              className="h-11 w-full appearance-none rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-[13px] text-gray-700 focus:border-[#cdb89f] focus:outline-none"
+              className={`${fieldInputClass} appearance-none`}
             >
               <option value="" disabled>
                 Select budget range
@@ -267,16 +269,16 @@ export function CaptureLead() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-gray-900/5 bg-white p-5 sm:p-7 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
-        <div className="text-[18px] font-bold text-gray-900">Current Residence</div>
+      <section className={d.cardP6}>
+        <h2 className={d.sectionTitle}>Current Residence</h2>
 
-        <div className="mt-5 grid grid-cols-1 gap-5 min-[900px]:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <IconInsetField label="RESI Location" required icon={<FaLocationDot className={fieldIconCls} aria-hidden />}>
             <input
               value={resiLocation}
               onChange={(e) => setResiLocation(e.target.value)}
               placeholder="Current residential location"
-              className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-[13px] text-gray-700 placeholder:text-gray-400 focus:border-[#cdb89f] focus:outline-none"
+              className={fieldInputClass}
             />
           </IconInsetField>
 
@@ -290,16 +292,16 @@ export function CaptureLead() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-gray-900/5 bg-white p-5 sm:p-7 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
-        <div className="text-[18px] font-bold text-gray-900">Work Information</div>
+      <section className={d.cardP6}>
+        <h2 className={d.sectionTitle}>Work Information</h2>
 
-        <div className="mt-5 grid grid-cols-1 gap-5 min-[900px]:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <IconInsetField label="WORK Location" required icon={<FaBriefcase className={fieldIconCls} aria-hidden />}>
             <input
               value={workLocation}
               onChange={(e) => setWorkLocation(e.target.value)}
               placeholder="Work location"
-              className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-[13px] text-gray-700 placeholder:text-gray-400 focus:border-[#cdb89f] focus:outline-none"
+              className={fieldInputClass}
             />
           </IconInsetField>
 
@@ -317,24 +319,24 @@ export function CaptureLead() {
                 value={industry}
                 onChange={(e) => setIndustry(e.target.value)}
                 placeholder="e.g., IT Services, Manufacturing, Banking, etc."
-                className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-[13px] text-gray-700 placeholder:text-gray-400 focus:border-[#cdb89f] focus:outline-none"
+                className={fieldInputClass}
               />
             </IconInsetField>
           </div>
         </div>
       </section>
 
-      <section className="rounded-2xl border border-gray-900/5 bg-white p-5 sm:p-7 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
-        <div className="text-[18px] font-bold text-gray-800">
-          Preferred Locations <span className="text-rose-500">*</span>
-        </div>
+      <section className={d.cardP6}>
+        <h2 className={d.sectionTitle}>
+          Preferred Locations <span className="text-[#D96B6B]">*</span>
+        </h2>
 
-        <div className="mt-5 space-y-4">
+        <div className="space-y-4">
           <IconInsetField label="Preferred Location" required icon={<FaLocationDot className={fieldIconCls} aria-hidden />}>
             <select
               value={preferredLocation}
               onChange={(e) => setPreferredLocation(e.target.value)}
-              className="h-11 w-full appearance-none rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-[13px] text-gray-700 focus:border-[#cdb89f] focus:outline-none"
+              className={`${fieldInputClass} appearance-none`}
             >
               {PREFERRED_LOCATIONS.map((loc) => (
                 <option key={loc} value={loc}>
@@ -350,46 +352,46 @@ export function CaptureLead() {
                 value={preferredLocationOther}
                 onChange={(e) => setPreferredLocationOther(e.target.value)}
                 placeholder="e.g., Belapur, Seawoods, Airoli…"
-                className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-[13px] text-gray-700 placeholder:text-gray-400 focus:border-[#cdb89f] focus:outline-none"
+                className={fieldInputClass}
               />
             </IconInsetField>
           ) : null}
         </div>
       </section>
 
-      <section className="rounded-2xl border border-gray-900/5 bg-white p-5 sm:p-7 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
-        <div className="text-[18px] font-bold text-gray-900">Timeline &amp; Status</div>
+      <section className={d.cardP6}>
+        <h2 className={d.sectionTitle}>Timeline &amp; Status</h2>
 
-        <div className="mt-5 grid grid-cols-1 gap-5 min-[900px]:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <IconInsetField label="POSSESSION BY" required icon={<FaCalendarDays className={fieldIconCls} aria-hidden />}>
             <input
               value={possessionBy}
               onChange={(e) => setPossessionBy(e.target.value)}
               placeholder="e.g., Dec 2026"
-              className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-[13px] text-gray-700 placeholder:text-gray-400 focus:border-[#cdb89f] focus:outline-none"
+              className={fieldInputClass}
             />
           </IconInsetField>
 
           <div>
-            <div className="mb-2 text-[11px] font-semibold text-gray-500">
-              STATUS <span className="text-rose-500">*</span>
+            <div className={d.label}>
+              STATUS <span className="text-[#D96B6B]">*</span>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="flex gap-3">
               {LEAD_STATUS_OPTIONS.map((s) => {
                 const active = s === leadStatus
                 const activeCls =
                   s === 'HOT'
-                    ? 'border-rose-300 bg-rose-100 text-rose-700'
+                    ? 'border-[#D96B6B] bg-[#D96B6B]/20 text-[#D96B6B]'
                     : s === 'WARM'
-                      ? 'border-[#cdb89f] bg-[#faf6ef] text-[#80654a]'
-                      : 'border-gray-300 bg-white text-gray-600'
+                      ? 'border-[#8B7355] bg-[#E8DCCB]/30 text-[#8B7355]'
+                      : 'border-[#8B7355] bg-[#F5EFE7] text-[#8B7355]'
                 return (
                   <button
                     key={s}
                     type="button"
                     className={[
-                      'h-11 rounded-xl border text-[12px] font-semibold tracking-wide',
-                      active ? activeCls : 'border-gray-200 bg-white text-gray-600',
+                      'flex-1 rounded-lg border-2 px-4 py-2 text-sm font-medium transition-all',
+                      active ? activeCls : 'border-[#E8DCCB] text-[#8B7355] hover:border-[#8B7355]/50',
                     ].join(' ')}
                     aria-pressed={active}
                     onClick={() => setLeadStatus(s)}
@@ -403,12 +405,12 @@ export function CaptureLead() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-gray-900/5 bg-white p-5 sm:p-7 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
-        <div className="text-[12px] font-semibold tracking-[0.02em] text-gray-800">
-          PROPERTY BUYING STAGE <span className="text-rose-500">*</span>
-        </div>
+      <section className={d.cardP6}>
+        <h2 className={d.sectionTitle}>
+          PROPERTY BUYING STAGE <span className="text-[#D96B6B]">*</span>
+        </h2>
 
-        <div className="mt-5 grid grid-cols-2 gap-4 min-[760px]:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {BUYING_STAGE_OPTIONS.map((s) => {
             const active = s === buyingStage
             return (
@@ -416,8 +418,10 @@ export function CaptureLead() {
                 key={s}
                 type="button"
                 className={[
-                  'h-11 rounded-xl border px-3 text-[12px] font-semibold tracking-wide',
-                  active ? 'border-[#cdb89f] bg-[#faf6ef] text-[#80654a]' : 'border-gray-200 bg-white text-gray-600',
+                  'rounded-lg border-2 px-4 py-3 text-sm transition-all',
+                  active
+                    ? 'border-[#8B7355] bg-[#E8DCCB]/30 text-[#2E2E2E] font-medium'
+                    : 'border-[#E8DCCB] text-[#8B7355] hover:border-[#8B7355]/50',
                 ].join(' ')}
                 aria-pressed={active}
                 onClick={() => setBuyingStage(s)}
@@ -429,22 +433,22 @@ export function CaptureLead() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-gray-900/5 bg-white p-5 sm:p-7 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
-        <div className="text-[18px] font-bold text-gray-900">Additional Information</div>
+      <section className={d.cardP6}>
+        <h2 className={d.sectionTitle}>Additional Information</h2>
 
-        <div className="mt-5 grid grid-cols-1 gap-6 min-[900px]:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <label className="block min-[900px]:col-span-2">
-            <div className="mb-2 inline-flex items-center gap-2 text-[11px] font-semibold text-gray-500">
-              <span className="text-gray-400">
+            <div className="mb-2 inline-flex items-center gap-2 text-[11px] font-semibold text-[#8B7355]">
+              <span className="text-[#8B7355]">
                 <MdChat className={fieldIconCls} aria-hidden />
               </span>
-              REMARKS <span className="text-rose-500">*</span>
+              REMARKS <span className="text-[#D96B6B]">*</span>
             </div>
             <textarea
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
               placeholder="Add any additional remarks or notes about the lead..."
-              className="min-h-[140px] w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-[13px] text-gray-700 placeholder:text-gray-400 focus:border-[#cdb89f] focus:outline-none"
+              className="min-h-[140px] w-full resize-none rounded-lg border border-[#E8DCCB] bg-white px-4 py-2 text-sm text-[#2E2E2E] placeholder:text-[#8B7355]/60 focus:border-[#8B7355] focus:outline-none"
             />
           </label>
 
@@ -453,7 +457,7 @@ export function CaptureLead() {
               value={callbackDate}
               onChange={(e) => setCallbackDate(e.target.value)}
               placeholder="dd-mm-yyyy or yyyy-mm-dd"
-              className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-[13px] text-gray-700 placeholder:text-gray-400 focus:border-[#cdb89f] focus:outline-none"
+              className={fieldInputClass}
             />
           </IconInsetField>
 
@@ -462,25 +466,19 @@ export function CaptureLead() {
               type="time"
               value={callbackTime}
               onChange={(e) => setCallbackTime(e.target.value)}
-              className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-[13px] text-gray-700 focus:border-[#cdb89f] focus:outline-none"
+              className={fieldInputClass}
             />
           </IconInsetField>
         </div>
       </section>
 
-      <div className="grid grid-cols-1 gap-4 min-[760px]:grid-cols-2">
-        <button
-          type="button"
-          className="h-12 w-full rounded-2xl border border-[#e7ddcf] bg-[#faf6ef] text-[13px] font-semibold text-gray-700 hover:bg-[#f6f0e6]"
-          onClick={() => {
-            window.history.back()
-          }}
-        >
+      <div className="flex gap-4">
+        <button type="button" className={`flex-1 ${d.btnSecondary}`} onClick={() => window.history.back()}>
           Cancel
         </button>
         <button
           type="button"
-          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#80654a] text-[13px] font-semibold text-white shadow-sm hover:bg-[#725940]"
+          className={`flex-1 ${d.btnPrimary}`}
           disabled={
             creating ||
             !fullName.trim() ||

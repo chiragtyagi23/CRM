@@ -56,15 +56,15 @@ export function CampaignVideoTile({
   }
 
   return (
-    <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4">
+    <div className="rounded-xl border border-dashed border-[#E8DCCB] bg-gray-50 p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className="text-sm font-semibold text-gray-900">{label}</div>
-          <div className="mt-1 text-xs text-gray-600">{hint}</div>
+          <div className="text-sm font-semibold text-[#2E2E2E]">{label}</div>
+          <div className="mt-1 text-xs text-[#8B7355]">{hint}</div>
           {value.file ? (
-            <div className="mt-2 text-[11px] font-semibold text-gray-700">
+            <div className="mt-2 text-[11px] font-semibold text-[#2E2E2E]">
               Selected file: <span className="font-mono font-medium">{value.file.name}</span>
-              <span className="ml-2 font-normal text-gray-500">(uploads on Save)</span>
+              <span className="ml-2 font-normal text-[#8B7355]">(uploads on Save)</span>
             </div>
           ) : null}
         </div>
@@ -72,7 +72,7 @@ export function CampaignVideoTile({
           {value.file ? (
             <button
               type="button"
-              className="h-8 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50"
+              className="h-8 px-3 rounded-lg border border-[#E8DCCB] bg-white text-[#2E2E2E] text-xs font-semibold hover:bg-[#F5EFE7]"
               onClick={() => onChange({ url: value.url, file: undefined })}
               disabled={uploading}
             >
@@ -82,7 +82,7 @@ export function CampaignVideoTile({
           {value.file ? (
             <button
               type="button"
-              className="h-8 px-3 rounded-lg bg-[#80654a] text-white text-xs font-semibold hover:bg-[#725940] disabled:opacity-60"
+              className="h-8 px-3 rounded-lg bg-[#8B7355] text-white text-xs font-semibold hover:bg-[#6d5a43] disabled:opacity-60"
               onClick={uploadNow}
               disabled={uploading}
             >
@@ -96,7 +96,7 @@ export function CampaignVideoTile({
         <input className={inputClassName()} placeholder="Video URL (paste or upload below)" value={value.url} onChange={(e) => onChange({ url: e.target.value, file: value.file })} />
       </div>
 
-      <div className="mt-3 rounded-xl border border-gray-200 bg-white overflow-hidden">
+      <div className="mt-3 rounded-xl border border-[#E8DCCB] bg-white overflow-hidden">
         {localPreviewUrl ? (
           <div className="aspect-video bg-black">
             <video className="h-full w-full" controls preload="metadata" src={localPreviewUrl} />
@@ -106,9 +106,9 @@ export function CampaignVideoTile({
             <video className="h-full w-full" controls preload="metadata" src={directUrl} />
           </div>
         ) : directUrl ? (
-          <div className="px-3 py-3 text-xs text-gray-600">Preview not available for this link. Use a direct video URL (mp4/webm) or upload a file.</div>
+          <div className="px-3 py-3 text-xs text-[#8B7355]">Preview not available for this link. Use a direct video URL (mp4/webm) or upload a file.</div>
         ) : (
-          <div className="px-3 py-8 text-center text-xs text-gray-400">Preview</div>
+          <div className="px-3 py-8 text-center text-xs text-[#8B7355]">Preview</div>
         )}
       </div>
 
@@ -118,13 +118,13 @@ export function CampaignVideoTile({
           htmlFor={inputId}
           className={
             uploading
-              ? 'inline-flex items-center justify-center h-9 px-3 rounded-lg border border-gray-200 bg-gray-100 text-gray-500 text-sm font-semibold cursor-wait'
-              : 'inline-flex items-center justify-center h-9 px-3 rounded-lg border border-gray-300 bg-white text-sm font-semibold text-gray-900 hover:bg-gray-50 cursor-pointer'
+              ? 'inline-flex items-center justify-center h-9 px-3 rounded-lg border border-[#E8DCCB] bg-gray-100 text-[#8B7355] text-sm font-semibold cursor-wait'
+              : 'inline-flex items-center justify-center h-9 px-3 rounded-lg border border-[#E8DCCB] bg-white text-sm font-semibold text-[#2E2E2E] hover:bg-[#F5EFE7] cursor-pointer'
           }
         >
           Select video file
         </label>
-        {uploadError ? <div className="mt-2 text-xs text-rose-600">{uploadError}</div> : null}
+        {uploadError ? <div className="mt-2 text-xs text-[#D96B6B]">{uploadError}</div> : null}
       </div>
     </div>
   )

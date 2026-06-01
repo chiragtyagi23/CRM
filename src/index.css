@@ -1,38 +1,6 @@
 @import 'tailwindcss';
-
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
-
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
-}
-
-/* Forced light theme (no auto-dark) */
+@import './styles/theme.css';
+@import './styles/crm-components.css';
 
 #root {
   width: 100%;
@@ -48,104 +16,63 @@ body {
   margin: 0;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
-}
-
-/* —— PropCRM shell + header (API-driven, matches demo nav.json) —— */
+/* —— App shell + header (Lead Management design) —— */
 .app-shell {
   display: flex;
   flex-direction: column;
   min-height: 100svh;
   text-align: left;
+  background: var(--background);
 }
 
+/* Padding applied on .app-main in AppMain.tsx: p-4 sm:p-6 lg:p-8 */
 .app-main {
   flex: 1;
-  padding: 24px 28px 40px;
-  background: #fafafa;
-}
-
-.app-main__placeholder {
-  margin: 0;
-  color: #6b7280;
-  font-size: 15px;
+  background: #faf7f2;
 }
 
 .site-api-error {
   padding: 12px 20px;
-  background: #fef2f2;
-  color: #b91c1c;
+  background: rgba(217, 107, 107, 0.12);
+  color: var(--destructive);
   font-size: 14px;
 }
 
 .site-api-error--nav {
-  border-bottom: 1px solid #fecaca;
+  border-bottom: 1px solid rgba(217, 107, 107, 0.25);
 }
 
 .app-header {
-  --ah-tan: #9d7a56;
-  --ah-pill: #efe6db;
-  --ah-text: #111827;
-  --ah-muted: #6b7280;
+  --ah-primary: #8b7355;
+  --ah-active: #e8dccb;
+  --ah-secondary: #f5efe7;
+  --ah-text: #2e2e2e;
+  --ah-muted: #8b7355;
   --ah-bar-bg: #ffffff;
-  --ah-border: #e8e4df;
+  --ah-border: rgba(139, 115, 85, 0.2);
   background: var(--ah-bar-bg);
   border-bottom: 1px solid var(--ah-border);
-  position: relative;
-  z-index: 40;
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
 
 .app-header__bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 16px;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 14px 24px;
-  min-height: 56px;
+  padding: 12px 16px;
+  min-height: 64px;
   box-sizing: border-box;
+}
+
+@media (min-width: 1024px) {
+  .app-header__bar {
+    padding: 12px 32px;
+  }
 }
 
 .app-header__brand {
@@ -163,9 +90,9 @@ code {
   justify-content: center;
   width: 40px;
   height: 40px;
-  border-radius: 10px;
-  background: var(--ah-tan);
-  color: #fff;
+  border-radius: 8px;
+  background: var(--ah-primary);
+  color: #faf7f2;
   flex-shrink: 0;
 }
 
@@ -183,8 +110,7 @@ code {
 }
 
 .app-header__name {
-  font-family: var(--heading);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 1.125rem;
   letter-spacing: -0.02em;
   color: var(--ah-text);
@@ -208,28 +134,29 @@ code {
   padding: 0;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .app-header__link {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
-  border-radius: 999px;
+  padding: 8px 16px;
+  border-radius: 8px;
   text-decoration: none;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--ah-text);
+  color: var(--ah-muted);
   transition: background 0.15s ease, color 0.15s ease;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
 }
 
 .app-header__link:hover {
-  background: rgba(157, 122, 86, 0.08);
-}
-
-.app-header__link--active {
-  background: var(--ah-pill);
+  background: var(--ah-secondary);
   color: var(--ah-text);
 }
 
@@ -237,6 +164,34 @@ code {
   flex-shrink: 0;
   color: currentColor;
   opacity: 0.92;
+  width: 18px;
+  height: 18px;
+}
+
+.app-header__user-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--ah-muted);
+}
+
+.app-header__profile-btn {
+  display: inline-flex;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid var(--ah-border);
+  background: #fff;
+  padding: 0 16px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ah-text);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.app-header__profile-btn:hover {
+  background: var(--ah-secondary);
 }
 
 .app-header__mobile-toggle {
@@ -251,14 +206,14 @@ code {
   height: 44px;
   padding: 0;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   background: transparent;
-  color: var(--ah-text);
+  color: var(--ah-primary);
   cursor: pointer;
 }
 
 .app-header__burger:hover {
-  background: rgba(157, 122, 86, 0.08);
+  background: var(--ah-secondary);
 }
 
 .app-header__burger-lines {
@@ -282,7 +237,7 @@ code {
   border: none;
   padding: 0;
   margin: 0;
-  background: rgba(17, 24, 39, 0.35);
+  background: rgba(46, 46, 46, 0.35);
   cursor: pointer;
 }
 
@@ -310,11 +265,11 @@ code {
 }
 
 .app-header__link--mobile {
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 12px 16px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1023px) {
   .app-header__nav--desktop {
     display: none;
   }
@@ -322,6 +277,14 @@ code {
   .app-header__mobile-toggle {
     display: block;
   }
+
+  .app-header__user-desktop {
+    display: none;
+  }
 }
 
-/* (Removed dark overrides) */
+@media (min-width: 1024px) {
+  .app-header__nav--desktop {
+    display: flex;
+  }
+}

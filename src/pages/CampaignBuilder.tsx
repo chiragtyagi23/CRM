@@ -334,9 +334,9 @@ export function CampaignBuilder({ initialCampaignId }: { initialCampaignId?: str
   }
 
   return (
-    <section className="mx-auto box-border w-full max-w-[1280px] py-2 pb-6">
+    <section className="w-full py-2 pb-6">
       {flash ? (
-        <div className="fixed right-4 top-4 z-9999 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] font-semibold text-emerald-900 shadow-[0_12px_28px_rgba(16,185,129,0.18)]">
+        <div className="fixed right-4 top-4 z-9999 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] font-semibold text-emerald-900 shadow-[0_12px_28px_rgba(16,185,129,0.18)]">
           {flash.message}
         </div>
       ) : null}
@@ -346,22 +346,22 @@ export function CampaignBuilder({ initialCampaignId }: { initialCampaignId?: str
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="inline-flex h-10 items-center justify-center rounded-2xl border border-gray-300 bg-white px-4 text-[13px] font-semibold text-gray-800 hover:bg-gray-50"
+              className="inline-flex h-10 items-center justify-center rounded-xl border border-[#E8DCCB] bg-white px-4 text-[13px] font-semibold text-[#2E2E2E] hover:bg-[#F5EFE7]"
               onClick={() => navigate('/campaign')}
             >
               Back
             </button>
-            <h2 className="m-0 text-[28px] font-bold tracking-[-0.03em] text-gray-900">
+            <h2 className="m-0 text-3xl font-semibold text-[#2E2E2E]">
               {isEditing ? 'Edit campaign' : 'Create campaign'}
             </h2>
           </div>
-          <p className="mt-1 text-[14px] font-medium text-gray-500">Fill the form to generate your microsite.</p>
+          <p className="mt-1 text-[14px] font-medium text-[#8B7355]">Fill the form to generate your microsite.</p>
         </div>
         <div className="flex items-center gap-2">
           {isEditing ? (
             <button
               type="button"
-              className="inline-flex h-11 items-center justify-center rounded-2xl border border-gray-300 bg-white px-5 text-[13px] font-semibold text-gray-800 hover:bg-gray-50"
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-[#E8DCCB] bg-white px-5 text-[13px] font-semibold text-[#2E2E2E] hover:bg-[#F5EFE7]"
               onClick={() => {
                 dispatch(campaignBuilderActions.resetBuilder())
                 navigate('/campaign')
@@ -372,7 +372,7 @@ export function CampaignBuilder({ initialCampaignId }: { initialCampaignId?: str
           ) : null}
           <button
             type="button"
-            className="inline-flex h-11 items-center justify-center rounded-2xl bg-[#80654a] px-5 text-[13px] font-semibold text-white shadow-sm hover:bg-[#725940]"
+            className="inline-flex h-11 items-center justify-center rounded-xl bg-[#8B7355] px-5 text-[13px] font-semibold text-white shadow-sm hover:bg-[#6d5a43]"
             onClick={onSaveClick}
           >
             {saveState.type === 'saving' ? 'Saving…' : saveState.type === 'saved' ? 'Saved' : 'Save campaign'}
@@ -381,13 +381,13 @@ export function CampaignBuilder({ initialCampaignId }: { initialCampaignId?: str
       </header>
 
       {builder.selectedCampaignId ? (
-        <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-[13px] font-semibold text-violet-900">
+        <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-[13px] font-semibold text-violet-900">
           You are editing: <span className="font-bold">{builder.campaignName || 'Untitled campaign'}</span>
           <span className="ml-2 text-[12px] font-medium text-violet-700">({builder.selectedCampaignId})</span>
           {loadingSelectedCampaign ? <span className="ml-2 text-[12px] font-medium text-violet-700">Loading full data…</span> : null}
         </div>
       ) : (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] font-semibold text-amber-900">
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] font-semibold text-amber-900">
           You are creating a new campaign.
         </div>
       )}
@@ -395,7 +395,7 @@ export function CampaignBuilder({ initialCampaignId }: { initialCampaignId?: str
       
 
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-5 items-start">
-        <section className="rounded-2xl border border-gray-900/5 bg-[#FDFBF7] p-4 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
+        <section className="rounded-xl border border-[#8B7355]/10 bg-[#FFFFFF] p-4 ">
           <CampaignSidebar
             activeSection={builder.activeSection}
             onSectionChange={(k) => {
@@ -416,7 +416,7 @@ export function CampaignBuilder({ initialCampaignId }: { initialCampaignId?: str
           />
         </section>
 
-        <section className="rounded-2xl border border-gray-900/5 bg-[#FDFBF7] p-4 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
+        <section className="rounded-xl border border-[#8B7355]/10 bg-[#FFFFFF] p-4 ">
           <div className="flex flex-col gap-4">
             <CampaignSectionHeader
               label={sectionMeta.label}

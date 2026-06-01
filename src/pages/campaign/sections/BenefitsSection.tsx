@@ -25,19 +25,19 @@ export function BenefitsSection({
     <>
       <SectionCard title="Benefits *" subtitle="Add benefit items (heading + description), stats, and background images.">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-            <div className="text-sm font-semibold text-gray-900">Benefit items</div>
+          <div className="rounded-xl border border-[#E8DCCB] bg-gray-50 p-4">
+            <div className="text-sm font-semibold text-[#2E2E2E]">Benefit items</div>
             <div className="mt-3 grid grid-cols-1 gap-3">
               {benefitItems.map((b, idx) => (
-                <div key={idx} className="rounded-xl border border-gray-200 bg-white p-3">
+                <div key={idx} className="rounded-xl border border-[#E8DCCB] bg-white p-3">
                   <div className="flex items-start justify-between gap-3">
-                    <div className="text-xs font-semibold text-gray-500">#{String(idx + 1).padStart(2, '0')}</div>
+                    <div className="text-xs font-semibold text-[#8B7355]">#{String(idx + 1).padStart(2, '0')}</div>
                     <button
                       type="button"
                       className={
                         benefitItems.length <= 1
-                          ? 'h-8 px-3 rounded-lg bg-gray-100 text-gray-400 text-xs font-semibold cursor-not-allowed'
-                          : 'h-8 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50'
+                          ? 'h-8 px-3 rounded-lg bg-gray-100 text-[#8B7355] text-xs font-semibold cursor-not-allowed'
+                          : 'h-8 px-3 rounded-lg border border-[#E8DCCB] bg-white text-[#2E2E2E] text-xs font-semibold hover:bg-[#F5EFE7]'
                       }
                       disabled={benefitItems.length <= 1}
                       onClick={() => setBenefitItems((prev) => prev.filter((_, i) => i !== idx))}
@@ -73,7 +73,7 @@ export function BenefitsSection({
             <div className="mt-3 flex justify-end">
               <button
                 type="button"
-                className="h-9 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50"
+                className="h-9 px-3 rounded-lg border border-[#E8DCCB] bg-white text-[#2E2E2E] text-xs font-semibold hover:bg-[#F5EFE7]"
                 onClick={() => setBenefitItems((prev) => [...prev, { heading: '', description: '' }])}
               >
                 Add benefit
@@ -82,12 +82,12 @@ export function BenefitsSection({
           </div>
 
           <div className="flex flex-col gap-4">
-            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <div className="rounded-xl border border-[#E8DCCB] bg-gray-50 p-4">
               <div className="flex items-center justify-between gap-3">
-                <div className="text-sm font-semibold text-gray-900">Stats</div>
+                <div className="text-sm font-semibold text-[#2E2E2E]">Stats</div>
                 <button
                   type="button"
-                  className="h-9 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50"
+                  className="h-9 px-3 rounded-lg border border-[#E8DCCB] bg-white text-[#2E2E2E] text-xs font-semibold hover:bg-[#F5EFE7]"
                   onClick={() => setBenefitStats((prev) => [...prev, { value: '', label: '' }])}
                 >
                   Add stat
@@ -116,8 +116,8 @@ export function BenefitsSection({
                       type="button"
                       className={
                         benefitStats.length <= 1
-                          ? 'h-10 px-3 rounded-lg bg-gray-100 text-gray-400 text-xs font-semibold cursor-not-allowed'
-                          : 'h-10 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50'
+                          ? 'h-10 px-3 rounded-lg bg-gray-100 text-[#8B7355] text-xs font-semibold cursor-not-allowed'
+                          : 'h-10 px-3 rounded-lg border border-[#E8DCCB] bg-white text-[#2E2E2E] text-xs font-semibold hover:bg-[#F5EFE7]'
                       }
                       disabled={benefitStats.length <= 1}
                       onClick={() => setBenefitStats((prev) => prev.filter((_, i) => i !== idx))}
@@ -129,15 +129,15 @@ export function BenefitsSection({
               </div>
             </div>
 
-            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <div className="rounded-xl border border-[#E8DCCB] bg-gray-50 p-4">
               <div className="flex items-center justify-between gap-3">
-                <div className="text-sm font-semibold text-gray-900">Background images</div>
+                <div className="text-sm font-semibold text-[#2E2E2E]">Background images</div>
                 <button
                   type="button"
                   className={
                     benefitBackgroundImages.length >= 5
-                      ? 'h-9 px-3 rounded-lg bg-gray-100 text-gray-400 text-xs font-semibold cursor-not-allowed'
-                      : 'h-9 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50'
+                      ? 'h-9 px-3 rounded-lg bg-gray-100 text-[#8B7355] text-xs font-semibold cursor-not-allowed'
+                      : 'h-9 px-3 rounded-lg border border-[#E8DCCB] bg-white text-[#2E2E2E] text-xs font-semibold hover:bg-[#F5EFE7]'
                   }
                   disabled={benefitBackgroundImages.length >= 5}
                   onClick={() => setBenefitBackgroundImages((prev) => (prev.length >= 5 ? prev : [...prev, { src: '', alt: '' }]))}
@@ -145,7 +145,7 @@ export function BenefitsSection({
                   Add image
                 </button>
               </div>
-              <div className="mt-1 text-xs text-gray-500">{benefitBackgroundImages.length}/5 images</div>
+              <div className="mt-1 text-xs text-[#8B7355]">{benefitBackgroundImages.length}/5 images</div>
               <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
                 {benefitBackgroundImages.map((img, idx) => (
                   <CampaignUploadTile

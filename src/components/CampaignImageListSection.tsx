@@ -29,13 +29,13 @@ export function CampaignImageListSection({
   return (
     <SectionCard title={title} subtitle={subtitle}>
       <div className="flex items-center justify-between gap-3">
-        <div className="text-xs text-gray-500">{images.length}/{max} images</div>
+        <div className="text-xs text-[#8B7355]">{images.length}/{max} images</div>
         <button
           type="button"
           className={
             images.length >= max
-              ? 'h-10 px-4 rounded-lg bg-gray-100 text-gray-400 text-sm font-semibold cursor-not-allowed'
-              : 'h-10 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 text-sm font-semibold hover:bg-gray-50'
+              ? 'h-10 px-4 rounded-lg bg-gray-100 text-[#8B7355] text-sm font-semibold cursor-not-allowed'
+              : 'h-10 px-4 rounded-lg border border-[#E8DCCB] bg-white text-[#2E2E2E] text-sm font-semibold hover:bg-[#F5EFE7]'
           }
           disabled={images.length >= max}
           onClick={() => setImages((prev) => (prev.length >= max ? prev : [...prev, { src: '', alt: '' }]))}

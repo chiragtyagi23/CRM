@@ -627,7 +627,7 @@ const DUMMY_CHARTS_BY_RANGE: Record<DashboardRange, DashboardChartsResponse> = {
       { stage: 'Closed Won', value: 1 },
     ],
     leadSources: [
-      { id: 0, value: 17, label: '99acres', color: '#80654a' },
+      { id: 0, value: 17, label: '99acres', color: '#8B7355' },
       { id: 1, value: 17, label: 'QR Code', color: '#9b7a54' },
       { id: 2, value: 17, label: 'Walk-in', color: '#e07a79' },
       { id: 3, value: 17, label: 'Website', color: '#f3ede3' },
@@ -647,7 +647,7 @@ const DUMMY_CHARTS_BY_RANGE: Record<DashboardRange, DashboardChartsResponse> = {
       { stage: 'Closed Won', value: 3 },
     ],
     leadSources: [
-      { id: 0, value: 17, label: '99acres', color: '#80654a' },
+      { id: 0, value: 17, label: '99acres', color: '#8B7355' },
       { id: 1, value: 17, label: 'QR Code', color: '#9b7a54' },
       { id: 2, value: 17, label: 'Walk-in', color: '#e07a79' },
       { id: 3, value: 17, label: 'Website', color: '#f3ede3' },
@@ -667,7 +667,7 @@ const DUMMY_CHARTS_BY_RANGE: Record<DashboardRange, DashboardChartsResponse> = {
       { stage: 'Closed Won', value: 9 },
     ],
     leadSources: [
-      { id: 0, value: 22, label: '99acres', color: '#80654a' },
+      { id: 0, value: 22, label: '99acres', color: '#8B7355' },
       { id: 1, value: 18, label: 'QR Code', color: '#9b7a54' },
       { id: 2, value: 16, label: 'Walk-in', color: '#e07a79' },
       { id: 3, value: 15, label: 'Website', color: '#f3ede3' },

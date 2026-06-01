@@ -17,11 +17,11 @@ export function SocialInfrastructureSection({
       title="Social infrastructure"
       subtitle="Create cards like Transportation, Education, Healthcare. Each card has sub-items (name + value) with add/remove."
     >
-      <div className="text-xs text-gray-500">{socialInfrastructureGroups.length} cards</div>
+      <div className="text-xs text-[#8B7355]">{socialInfrastructureGroups.length} cards</div>
 
       <div className="mt-4 grid grid-cols-1 gap-4">
         {socialInfrastructureGroups.map((group, groupIdx) => (
-          <div key={groupIdx} className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+          <div key={groupIdx} className="rounded-xl border border-[#E8DCCB] bg-gray-50 p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
                 <Field label="Main heading" required>
@@ -41,8 +41,8 @@ export function SocialInfrastructureSection({
                 type="button"
                 className={
                   socialInfrastructureGroups.length <= 1
-                    ? 'h-9 px-3 rounded-lg bg-gray-100 text-gray-400 text-xs font-semibold cursor-not-allowed'
-                    : 'h-9 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50'
+                    ? 'h-9 px-3 rounded-lg bg-gray-100 text-[#8B7355] text-xs font-semibold cursor-not-allowed'
+                    : 'h-9 px-3 rounded-lg border border-[#E8DCCB] bg-white text-[#2E2E2E] text-xs font-semibold hover:bg-[#F5EFE7]'
                 }
                 disabled={socialInfrastructureGroups.length <= 1}
                 onClick={() => setSocialInfrastructureGroups((prev) => prev.filter((_, i) => i !== groupIdx))}
@@ -52,10 +52,10 @@ export function SocialInfrastructureSection({
             </div>
 
             <div className="mt-4 flex items-center justify-between gap-3">
-              <div className="text-xs text-gray-500">{group.items.length} items</div>
+              <div className="text-xs text-[#8B7355]">{group.items.length} items</div>
               <button
                 type="button"
-                className="h-9 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50"
+                className="h-9 px-3 rounded-lg border border-[#E8DCCB] bg-white text-[#2E2E2E] text-xs font-semibold hover:bg-[#F5EFE7]"
                 onClick={() =>
                   setSocialInfrastructureGroups((prev) =>
                     prev.map((g, i) => (i === groupIdx ? { ...g, items: [...g.items, { name: '', value: '' }] } : g)),
@@ -107,8 +107,8 @@ export function SocialInfrastructureSection({
                     type="button"
                     className={
                       group.items.length <= 1
-                        ? 'h-10 px-3 rounded-lg bg-gray-100 text-gray-400 text-xs font-semibold cursor-not-allowed'
-                        : 'h-10 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50'
+                        ? 'h-10 px-3 rounded-lg bg-gray-100 text-[#8B7355] text-xs font-semibold cursor-not-allowed'
+                        : 'h-10 px-3 rounded-lg border border-[#E8DCCB] bg-white text-[#2E2E2E] text-xs font-semibold hover:bg-[#F5EFE7]'
                     }
                     disabled={group.items.length <= 1}
                     onClick={() =>
@@ -131,7 +131,7 @@ export function SocialInfrastructureSection({
       <div className="mt-4 flex justify-end">
         <button
           type="button"
-          className="h-10 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 text-sm font-semibold hover:bg-gray-50"
+          className="h-10 px-4 rounded-lg border border-[#E8DCCB] bg-white text-[#2E2E2E] text-sm font-semibold hover:bg-[#F5EFE7]"
           onClick={() =>
             setSocialInfrastructureGroups((prev) => [...prev, { title: '', items: [{ name: '', value: '' }] }])
           }

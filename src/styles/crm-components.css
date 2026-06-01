@@ -1,0 +1,300 @@
+/* Exact match: Lead Management System Design */
+
+/* —— Page —— */
+.crm-page {
+  width: 100%;
+}
+
+.crm-page-header {
+  margin-bottom: 2rem; /* mb-8 */
+}
+
+.crm-page-header-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .crm-page-header-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.crm-page-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.875rem; /* text-3xl */
+  font-weight: 600;
+  line-height: 1.2;
+  color: #2e2e2e;
+}
+
+.crm-page-subtitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 400;
+  color: #8b7355;
+}
+
+/* —— Cards —— */
+.crm-card {
+  background: #fff;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(139, 115, 85, 0.1);
+}
+
+.crm-card-padded {
+  background: #fff;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(139, 115, 85, 0.1);
+  padding: 1.5rem;
+}
+
+.crm-card-padded-sm {
+  background: #fff;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(139, 115, 85, 0.1);
+  padding: 1rem;
+}
+
+.crm-card-hover {
+  transition: box-shadow 0.2s ease;
+}
+
+.crm-card-hover:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+}
+
+.crm-section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2e2e2e;
+  margin: 0 0 1rem;
+}
+
+.crm-section-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #8b7355;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* —— Buttons —— */
+.crm-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  border: none;
+  background: #8b7355;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.crm-btn-primary:hover {
+  background: #6d5a43;
+}
+
+.crm-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.crm-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid #8b7355;
+  background: transparent;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #8b7355;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.crm-btn-secondary:hover {
+  background: #f5efe7;
+}
+
+/* —— Form —— */
+.crm-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #8b7355;
+}
+
+.crm-input,
+.crm-select,
+.crm-textarea {
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid #e8dccb;
+  background: #fff;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #2e2e2e;
+}
+
+.crm-input::placeholder,
+.crm-textarea::placeholder {
+  color: rgba(139, 115, 85, 0.6);
+}
+
+.crm-input:focus,
+.crm-select:focus,
+.crm-textarea:focus {
+  border-color: #8b7355;
+  outline: none;
+}
+
+.crm-textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+/* —— Time range (dashboard) —— */
+.crm-range-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.crm-range-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  border: 1px solid rgba(139, 115, 85, 0.2);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.crm-range-btn--active {
+  background: #8b7355;
+  color: #fff;
+  border-color: #8b7355;
+}
+
+.crm-range-btn--idle {
+  background: #fff;
+  color: #8b7355;
+}
+
+.crm-range-btn--idle:hover {
+  background: #f5efe7;
+}
+
+/* —— Stat card —— */
+.crm-stat-card {
+  background: #fff;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(139, 115, 85, 0.1);
+  padding: 1.5rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.crm-stat-card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+}
+
+/* —— Table —— */
+.crm-table-card {
+  background: #fff;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(139, 115, 85, 0.1);
+  overflow-x: auto;
+}
+
+.crm-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.crm-table thead tr {
+  border-bottom: 1px solid #e8dccb;
+}
+
+.crm-table th {
+  text-align: left;
+  padding: 1rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #8b7355;
+}
+
+.crm-table td {
+  padding: 1rem 1.5rem;
+  font-size: 0.875rem;
+  color: #2e2e2e;
+}
+
+.crm-table tbody tr {
+  border-bottom: 1px solid #e8dccb;
+}
+
+.crm-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+/* —— Auth card (login/signup/home) —— */
+.crm-auth-card {
+  width: 100%;
+  max-width: 28rem;
+  margin-left: auto;
+  margin-right: auto;
+  background: #fff;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(139, 115, 85, 0.1);
+  padding: 2rem;
+}
+
+@media (min-width: 520px) {
+  .crm-auth-card {
+    padding: 2.25rem;
+  }
+}
+
+/* —— Source tile (capture lead) —— */
+.crm-source-tile {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 2px solid #e8dccb;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  background: #fff;
+}
+
+.crm-source-tile:hover {
+  border-color: rgba(139, 115, 85, 0.5);
+}
+
+.crm-source-tile--active {
+  border-color: #8b7355;
+  background: rgba(232, 220, 203, 0.3);
+}
+
+/* —— Stack spacing —— */
+.crm-stack-6 > * + * {
+  margin-top: 1.5rem;
+}
+
+.crm-stack-4 > * + * {
+  margin-top: 1rem;
+}

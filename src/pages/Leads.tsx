@@ -8,11 +8,15 @@ import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { crmPayloadBuilder } from '../services/crmPayloadBuilder'
 import { loadCaptureLeads, updateCaptureLead } from '../store/captureLeadsSlice'
 import { fetchUsers } from '../lib/usersApi'
+import { useACL } from '../acl/useACL'
 import { ALL_LEAD_SCORES, ALL_LEAD_STATUSES, toLeadRow } from '../utils/leadMapping'
 
 export function Leads() {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
+  const { hasAccess } = useACL()
+  const canAssign = hasAccess('leads.assignto')
+  const canDelete = hasAccess('leads.delete')
   const { items, loading } = useAppSelector((s) => s.captureLeads)
 
   const rows = useMemo(() => items.map(toLeadRow), [items])
@@ -79,20 +83,19 @@ export function Leads() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-8">
+    <div className="crm-page">
+        <div className="crm-page-header">
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="m-0 text-[28px] font-semibold tracking-[-0.03em] text-gray-900">Lead Management</p>
-              <p className="mt-1 text-[14px] font-medium text-[#8B7355]">
+              <h1 className="crm-page-title">Lead Management</h1>
+              <p className="crm-page-subtitle">
                 Manage and track all your leads in one place
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
               <button
                 type="button"
-                className="inline-flex h-10 w-45 items-center justify-center gap-2 rounded-lg border border-[#8B7355] px-6 text-[13px] font-semibold text-[#8B7355] transition-colors hover:bg-[#F5EFE7]"
+                className="crm-btn-secondary h-10"
                 onClick={() => {
                   navigate('/leads/bulk-upload')
                 }}
@@ -102,7 +105,7 @@ export function Leads() {
               </button>
               <button
                 type="button"
-                className="inline-flex h-10 w-46 items-center justify-center gap-2 rounded-lg bg-[#8B7355] px-6 text-[13px] font-semibold text-white transition-colors hover:bg-[#6d5a43]"
+                className="crm-btn-primary h-10"
                 onClick={() => {
                   navigate('/capture-lead')
                 }}
@@ -125,7 +128,7 @@ export function Leads() {
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   placeholder="Search by name, phone, email, or location..."
-                  className="w-full rounded-lg border border-[#E8DCCB] bg-white py-2 pl-10 pr-4 text-[13px] text-gray-900 placeholder:text-[#8B7355]/70 focus:border-[#8B7355] focus:outline-none"
+                  className="w-full rounded-lg border border-[#E8DCCB] bg-white py-2 pl-10 pr-4 text-[13px] text-[#2E2E2E] placeholder:text-[#8B7355]/70 focus:border-[#8B7355] focus:outline-none"
                 />
               </div>
               <button
@@ -157,7 +160,7 @@ export function Leads() {
                     id="lead-filter-status"
                     value={status}
                     onChange={(e) => setStatus(e.target.value as (typeof ALL_LEAD_STATUSES)[number])}
-                    className="w-full rounded-lg border border-[#E8DCCB] bg-white px-3 py-2 text-[13px] text-gray-900 focus:border-[#8B7355] focus:outline-none"
+                    className="w-full rounded-lg border border-[#E8DCCB] bg-white px-3 py-2 text-[13px] text-[#2E2E2E] focus:border-[#8B7355] focus:outline-none"
                   >
                     {ALL_LEAD_STATUSES.map((s) => (
                       <option key={s} value={s}>
@@ -174,7 +177,7 @@ export function Leads() {
                     id="lead-filter-score"
                     value={score}
                     onChange={(e) => setScore(e.target.value as (typeof ALL_LEAD_SCORES)[number])}
-                    className="w-full rounded-lg border border-[#E8DCCB] bg-white px-3 py-2 text-[13px] text-gray-900 focus:border-[#8B7355] focus:outline-none"
+                    className="w-full rounded-lg border border-[#E8DCCB] bg-white px-3 py-2 text-[13px] text-[#2E2E2E] focus:border-[#8B7355] focus:outline-none"
                   >
                     {ALL_LEAD_SCORES.map((s) => (
                       <option key={s} value={s}>
@@ -191,7 +194,7 @@ export function Leads() {
                     id="lead-filter-source"
                     value={source}
                     onChange={(e) => setSource(e.target.value)}
-                    className="w-full rounded-lg border border-[#E8DCCB] bg-white px-3 py-2 text-[13px] text-gray-900 focus:border-[#8B7355] focus:outline-none"
+                    className="w-full rounded-lg border border-[#E8DCCB] bg-white px-3 py-2 text-[13px] text-[#2E2E2E] focus:border-[#8B7355] focus:outline-none"
                   >
                     {allSources.map((s) => (
                       <option key={s} value={s}>
@@ -225,8 +228,14 @@ export function Leads() {
                 onChangeStatus={(next) => {
                   setOverrides((s) => ({ ...s, [lead.id]: { ...(s[lead.id] ?? {}), status: next } }))
                 }}
-                canEditAssignee
+                canEditAssignee={canAssign}
                 assigneeOptions={teamMembers}
+                canDelete={canDelete}
+                onDelete={() => {
+                  if (window.confirm(`Delete lead "${lead.name}"?`)) {
+                    window.alert('Delete requires API wiring (module: leads.delete)')
+                  }
+                }}
                 onChangeAssignee={(next) => {
                   setOverrides((s) => ({ ...s, [lead.id]: { ...(s[lead.id] ?? {}), assignedTo: next } }))
                 }}
@@ -265,7 +274,6 @@ export function Leads() {
             <p className="mt-2 text-[13px] text-[#8B7355]/90">Try adjusting your search or filter criteria.</p>
           </div>
         ) : null}
-      </div>
     </div>
   )
 }

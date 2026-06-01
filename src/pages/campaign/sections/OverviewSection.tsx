@@ -75,8 +75,8 @@ export function OverviewSection({
   return (
     <SectionCard title="Overview" subtitle="Main overview description and key points.">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-          <div className="text-sm font-semibold text-gray-900">Basic project info</div>
+        <div className="rounded-xl border border-[#E8DCCB] bg-gray-50 p-4">
+          <div className="text-sm font-semibold text-[#2E2E2E]">Basic project info</div>
           <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
             <Field label="Project name" required>
               <input className={inputClassName()} value={campaignName} onChange={(e) => setCampaignName(e.target.value)} placeholder="Project Name" />
@@ -103,17 +103,17 @@ export function OverviewSection({
                     }
                   }}
                 />
-                <div className="text-xs text-gray-500">{logoUploading ? 'Uploading…' : 'Used as project logo in template.'}</div>
+                <div className="text-xs text-[#8B7355]">{logoUploading ? 'Uploading…' : 'Used as project logo in template.'}</div>
                 {logoError ? <div className="text-xs font-semibold text-red-700">{logoError}</div> : null}
                 {logoUrl.trim().length > 0 ? (
-                  <div className="flex items-center justify-between gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2">
+                  <div className="flex items-center justify-between gap-2 rounded-xl border border-[#E8DCCB] bg-white px-3 py-2">
                     <div className="flex items-center gap-2 min-w-0">
-                      <img src={logoUrl} alt="" className="h-8 w-8 rounded object-cover border border-gray-200" />
-                      <div className="truncate text-[11px] font-medium text-gray-500">{logoUrl}</div>
+                      <img src={logoUrl} alt="" className="h-8 w-8 rounded object-cover border border-[#E8DCCB]" />
+                      <div className="truncate text-[11px] font-medium text-[#8B7355]">{logoUrl}</div>
                     </div>
                     <button
                       type="button"
-                      className="h-8 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50"
+                      className="h-8 px-3 rounded-lg border border-[#E8DCCB] bg-white text-[#2E2E2E] text-xs font-semibold hover:bg-[#F5EFE7]"
                       onClick={() => setLogoUrl('')}
                       disabled={logoUploading}
                     >
@@ -147,20 +147,20 @@ export function OverviewSection({
                       }
                     }}
                   />
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-[#8B7355]">
                     {coverUploading ? 'Uploading…' : 'This image is used on the Upcoming Projects card.'}
                   </div>
                   {coverError ? <div className="text-xs font-semibold text-red-700">{coverError}</div> : null}
                 </div>
 
                 {coverImageUrl.trim().length > 0 ? (
-                  <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                  <div className="overflow-hidden rounded-xl border border-[#E8DCCB] bg-white">
                     <img src={coverImageUrl} alt="" className="block h-[140px] w-full object-cover" />
                     <div className="flex items-center justify-between gap-2 px-3 py-2">
-                      <div className="truncate text-[11px] font-medium text-gray-500">{coverImageUrl}</div>
+                      <div className="truncate text-[11px] font-medium text-[#8B7355]">{coverImageUrl}</div>
                       <button
                         type="button"
-                        className="h-8 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50"
+                        className="h-8 px-3 rounded-lg border border-[#E8DCCB] bg-white text-[#2E2E2E] text-xs font-semibold hover:bg-[#F5EFE7]"
                         onClick={() => setCoverImageUrl('')}
                         disabled={coverUploading}
                       >
@@ -206,8 +206,8 @@ export function OverviewSection({
             </Field>
           </div>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-          <div className="text-sm font-semibold text-gray-900">Additional overview fields</div>
+        <div className="rounded-xl border border-[#E8DCCB] bg-gray-50 p-4">
+          <div className="text-sm font-semibold text-[#2E2E2E]">Additional overview fields</div>
           <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
             <Field label="Serial Number">
               <input className={inputClassName()} value={overviewFacts.serialNumber} onChange={(e) => setOverviewFacts((p) => ({ ...p, serialNumber: e.target.value }))} />

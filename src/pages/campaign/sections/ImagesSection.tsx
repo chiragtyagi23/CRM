@@ -29,13 +29,13 @@ export function ImagesSection({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-gray-200 bg-white p-2 shadow-sm">
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#E8DCCB] bg-white p-2 shadow-sm">
         <button
           type="button"
           className={
             tab === 'banners'
               ? 'h-9 px-4 rounded-xl bg-violet-600 text-white text-xs font-semibold'
-              : 'h-9 px-4 rounded-xl border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50'
+              : 'h-9 px-4 rounded-xl border border-[#E8DCCB] bg-white text-[#2E2E2E] text-xs font-semibold hover:bg-[#F5EFE7]'
           }
           onClick={() => setTab('banners')}
         >
@@ -46,7 +46,7 @@ export function ImagesSection({
           className={
             tab === 'offers'
               ? 'h-9 px-4 rounded-xl bg-violet-600 text-white text-xs font-semibold'
-              : 'h-9 px-4 rounded-xl border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50'
+              : 'h-9 px-4 rounded-xl border border-[#E8DCCB] bg-white text-[#2E2E2E] text-xs font-semibold hover:bg-[#F5EFE7]'
           }
           onClick={() => setTab('offers')}
         >
@@ -57,7 +57,7 @@ export function ImagesSection({
           className={
             tab === 'usp'
               ? 'h-9 px-4 rounded-xl bg-violet-600 text-white text-xs font-semibold'
-              : 'h-9 px-4 rounded-xl border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50'
+              : 'h-9 px-4 rounded-xl border border-[#E8DCCB] bg-white text-[#2E2E2E] text-xs font-semibold hover:bg-[#F5EFE7]'
           }
           onClick={() => setTab('usp')}
         >
@@ -68,7 +68,7 @@ export function ImagesSection({
           className={
             tab === 'gallery'
               ? 'h-9 px-4 rounded-xl bg-violet-600 text-white text-xs font-semibold'
-              : 'h-9 px-4 rounded-xl border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50'
+              : 'h-9 px-4 rounded-xl border border-[#E8DCCB] bg-white text-[#2E2E2E] text-xs font-semibold hover:bg-[#F5EFE7]'
           }
           onClick={() => setTab('gallery')}
         >

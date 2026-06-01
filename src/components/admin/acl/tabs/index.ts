@@ -1,0 +1,5 @@
+export { RolesTab, type RolesTabProps } from './RolesTab'
+export { ModulesTab, type ModulesTabProps } from './ModulesTab'
+export { MatrixTab, type MatrixTabProps } from './MatrixTab'
+export { UsersTab, type UsersTabProps } from './UsersTab'
+export { OverridesTab, type OverridesTabProps } from './OverridesTab'

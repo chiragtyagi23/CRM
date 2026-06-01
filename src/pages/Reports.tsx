@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { CanAccess } from '../acl/CanAccess'
 
 import {
   fetchReportsSummary,
@@ -15,42 +16,25 @@ import {
 import { LineChart } from '@mui/x-charts/LineChart'
 import { PieChart } from '@mui/x-charts/PieChart'
 import { BarChart } from '@mui/x-charts/BarChart'
+import { FiActivity, FiBarChart2, FiCheckCircle, FiDownload, FiPhoneCall, FiTrendingUp } from 'react-icons/fi'
 
 type StatTone = 'sand' | 'rose' | 'mint' | 'amber'
-
-function IconDownload() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M9 2.25a.75.75 0 0 1 .75.75v6.44l1.72-1.72a.75.75 0 1 1 1.06 1.06l-3 3a.75.75 0 0 1-1.06 0l-3-3a.75.75 0 0 1 1.06-1.06l1.72 1.72V3A.75.75 0 0 1 9 2.25zM3.75 12a.75.75 0 0 1 .75.75v.75c0 .14.11.25.25.25h8.5a.25.25 0 0 0 .25-.25v-.75a.75.75 0 0 1 1.5 0v.75A1.75 1.75 0 0 1 13.25 15h-8.5A1.75 1.75 0 0 1 3 13.5v-.75a.75.75 0 0 1 .75-.75z"
-      />
-    </svg>
-  )
-}
-
-function IconArrowUpRight() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 18 18" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M11.25 3.75h3a.75.75 0 0 1 .75.75v3a.75.75 0 0 1-1.5 0V6.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06l5.47-5.47H11.25a.75.75 0 0 1 0-1.5z"
-      />
-    </svg>
-  )
-}
 
 function StatIcon({ tone }: { tone: StatTone }) {
   const cls =
     tone === 'sand'
-      ? 'bg-[#f6efe4] text-[#80654a]'
+      ? 'bg-[#FAF7F2] text-[#8B7355]'
       : tone === 'rose'
-        ? 'bg-rose-100 text-rose-600'
+        ? 'bg-rose-100 text-[#D96B6B]'
         : tone === 'mint'
-          ? 'bg-emerald-100 text-emerald-700'
+          ? 'bg-[#6FAF8F]/20 text-[#6FAF8F]'
           : 'bg-amber-100 text-amber-700'
 
-  return <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${cls}`}>⌁</div>
+  return (
+    <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${cls}`}>
+      {tone === 'sand' ? <FiBarChart2 size={16} aria-hidden /> : tone === 'rose' ? <FiActivity size={16} aria-hidden /> : tone === 'mint' ? <FiTrendingUp size={16} aria-hidden /> : <FiCheckCircle size={16} aria-hidden />}
+    </div>
+  )
 }
 
 function StatCard({
@@ -65,50 +49,17 @@ function StatCard({
   delta: string
 }) {
   return (
-    <div className="rounded-2xl border border-gray-900/5 bg-white p-5 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
+    <div className="rounded-xl border border-[#8B7355]/10 bg-white p-5 ">
       <div className="flex items-start justify-between gap-4">
         <StatIcon tone={tone} />
-        <div className="text-emerald-600">
-          <IconArrowUpRight />
+        <div className="text-[#6FAF8F]">
+          <FiTrendingUp size={16} aria-hidden />
         </div>
       </div>
-      <div className="mt-4 text-[11px] font-semibold text-gray-400">{title}</div>
-      <div className="mt-2 text-[28px] font-bold tracking-[-0.02em] text-gray-900">{value}</div>
-      <div className="mt-2 text-[11px] font-medium text-emerald-700">{delta}</div>
+      <div className="mt-4 text-[11px] font-semibold text-[#8B7355]">{title}</div>
+      <div className="mt-2 text-3xl font-semibold text-[#2E2E2E]">{value}</div>
+      <div className="mt-2 text-[11px] font-medium text-[#6FAF8F]">{delta}</div>
     </div>
-  )
-}
-
-function IconPhone() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M6.1 3.25c.3-.3.78-.33 1.12-.07l1.65 1.25c.3.23.41.63.27.98l-.6 1.52c-.08.2-.06.42.06.6.55.82 1.27 1.54 2.1 2.1.18.12.4.14.6.06l1.52-.6c.35-.14.75-.03.98.27l1.25 1.65c.26.34.23.82-.07 1.12l-.86.86c-.46.46-1.14.64-1.77.46-2.35-.68-4.51-2.06-6.22-3.77C4.72 9.2 3.35 7.04 2.66 4.69c-.18-.63 0-1.31.46-1.77l.86-.86z"
-      />
-    </svg>
-  )
-}
-
-function IconBars() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M3.5 14.75a.75.75 0 0 1-.75-.75V3.75a.75.75 0 0 1 1.5 0V14a.75.75 0 0 1-.75.75zm4.5 0a.75.75 0 0 1-.75-.75V7a.75.75 0 0 1 1.5 0v7a.75.75 0 0 1-.75.75zm4.5 0a.75.75 0 0 1-.75-.75V5.25a.75.75 0 0 1 1.5 0V14a.75.75 0 0 1-.75.75z"
-      />
-    </svg>
-  )
-}
-
-function IconBadge() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M9 2.25c2.2 0 4 1.8 4 4 0 1.66-1.02 3.09-2.47 3.68l.55 5.02a.75.75 0 0 1-1.15.7L9 14.55l-1.93 1.1a.75.75 0 0 1-1.15-.7l.55-5.02A3.99 3.99 0 0 1 5 6.25c0-2.2 1.8-4 4-4zm0 1.5A2.5 2.5 0 1 0 9 8.75a2.5 2.5 0 0 0 0-5z"
-      />
-    </svg>
   )
 }
 
@@ -130,17 +81,17 @@ function KpiCard({
       ? 'bg-gradient-to-br from-[#6b5a45] to-[#8a7356] text-white'
       : tone === 'green'
         ? 'bg-gradient-to-br from-[#5aa37f] to-[#78b693] text-white'
-        : 'bg-gradient-to-br from-[#e9decf] to-[#f6efe4] text-gray-900'
+        : 'bg-gradient-to-br from-[#e9decf] to-[#FAF7F2] text-[#2E2E2E]'
 
-  const subtle = tone === 'sand' ? 'text-gray-700/80' : 'text-white/80'
+  const subtle = tone === 'sand' ? 'text-[#2E2E2E]/80' : 'text-white/80'
 
   return (
-    <div className={`rounded-2xl p-5 shadow-[0_10px_24px_rgba(17,24,39,0.10)] ${cls}`}>
+    <div className={`rounded-xl p-5 shadow-[0_10px_24px_rgba(17,24,39,0.10)] ${cls}`}>
       <div className="flex items-start gap-3">
-        <div className={tone === 'sand' ? 'text-gray-800/80' : 'text-white/85'}>{icon}</div>
+        <div className={tone === 'sand' ? 'text-[#2E2E2E]/80' : 'text-white/85'}>{icon}</div>
         <div className="mt-0.5 text-[11px] font-semibold">{title}</div>
       </div>
-      <div className="mt-2 text-[28px] font-bold tracking-[-0.02em]">{value}</div>
+      <div className="mt-2 text-3xl font-semibold">{value}</div>
       <div className={`mt-1 text-[11px] font-medium ${subtle}`}>{note}</div>
     </div>
   )
@@ -224,26 +175,27 @@ export function Reports() {
   const sourceClosed = useMemo(() => (charts?.sourcePerformance.closedWon ?? []).map((v) => v / sourceMax), [charts, sourceMax])
 
   return (
-    <section className="mx-auto box-border w-full max-w-[1280px]">
+    <section className="w-full">
       <header className="flex flex-col gap-3 py-2 pb-4 min-[760px]:flex-row min-[760px]:items-start min-[760px]:justify-between">
         <div>
-          <h2 className="m-0 text-[28px] font-bold tracking-[-0.03em] text-gray-900">Reports &amp; Analytics</h2>
-          <p className="mt-1 text-[14px] font-medium text-gray-500">
+          <h2 className="m-0 text-3xl font-semibold text-[#2E2E2E]">Reports &amp; Analytics</h2>
+          <p className="mt-1 text-[14px] font-medium text-[#8B7355]">
             Comprehensive insights into your sales performance
           </p>
         </div>
 
-        <button
-          type="button"
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-[#80654a] px-5 text-[13px] font-semibold text-white shadow-sm hover:bg-[#725940]"
-          onClick={() => {
-            // Dummy action – in real app this would export a file.
-            window.alert('Export started (dummy)')
-          }}
-        >
-          <IconDownload />
-          Export Report
-        </button>
+        <CanAccess moduleKey="admin_acl">
+          <button
+            type="button"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#8B7355] px-5 text-[13px] font-semibold text-white shadow-sm hover:bg-[#6d5a43]"
+            onClick={() => {
+              window.alert('Export started (dummy)')
+            }}
+          >
+            <FiDownload size={18} aria-hidden />
+            Export Report
+          </button>
+        </CanAccess>
       </header>
 
       <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -255,8 +207,8 @@ export function Reports() {
               type="button"
               className={
                 active
-                  ? 'h-9 rounded-xl bg-[#80654a] px-4 text-[12px] font-semibold text-white shadow-sm'
-                  : 'h-9 rounded-xl border border-[#e7ddcf] bg-white px-4 text-[12px] font-semibold text-[#80654a] hover:bg-[#faf6ef]'
+                  ? 'h-9 rounded-xl bg-[#8B7355] px-4 text-[12px] font-semibold text-white shadow-sm'
+                  : 'h-9 rounded-xl border border-[#e7ddcf] bg-white px-4 text-[12px] font-semibold text-[#8B7355] hover:bg-[#F5EFE7]'
               }
               aria-pressed={active}
               onClick={() => setTab(t.id)}
@@ -272,9 +224,9 @@ export function Reports() {
           ? Array.from({ length: 4 }).map((_, idx) => (
               <div
                 key={`sk-${idx}`}
-                className="h-[138px] rounded-2xl border border-gray-900/5 bg-white p-5 shadow-[0_10px_24px_rgba(17,24,39,0.06)]"
+                className="h-[138px] rounded-xl border border-[#8B7355]/10 bg-white p-5 "
               >
-                <div className="h-9 w-9 rounded-xl bg-[#f6efe4]" />
+                <div className="h-9 w-9 rounded-xl bg-[#FAF7F2]" />
                 <div className="mt-5 h-3 w-24 rounded bg-gray-100" />
                 <div className="mt-4 h-7 w-16 rounded bg-gray-100" />
                 <div className="mt-4 h-3 w-28 rounded bg-emerald-50" />
@@ -284,15 +236,15 @@ export function Reports() {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 min-[900px]:grid-cols-2" aria-busy={loadingCharts}>
-        <section className="rounded-2xl border border-gray-900/5 bg-white p-5 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
-          <div className="text-sm font-semibold text-gray-800">Lead Funnel Progression</div>
+        <section className="rounded-xl border border-[#8B7355]/10 bg-white p-5 ">
+          <div className="text-sm font-semibold text-[#2E2E2E]">Lead Funnel Progression</div>
           <div className="mt-3">
             {loadingCharts ? (
-              <p className="m-0 px-1 py-5 text-[13px] text-gray-400">Loading chart…</p>
+              <p className="m-0 px-1 py-5 text-[13px] text-[#8B7355]">Loading chart…</p>
             ) : (
               <LineChart
                 series={[
-                  { data: newLeads, label: 'New Leads', color: '#80654a' },
+                  { data: newLeads, label: 'New Leads', color: '#8B7355' },
                   { data: contacted, label: 'Contacted', color: '#6aa88a' },
                   { data: qualified, label: 'Qualified', color: '#e9decf' },
                   { data: closedWon, label: 'Closed Won', color: '#d96a6a' },
@@ -314,11 +266,11 @@ export function Reports() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-gray-900/5 bg-white p-5 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
-          <div className="text-sm font-semibold text-gray-800">Lead Status Distribution</div>
+        <section className="rounded-xl border border-[#8B7355]/10 bg-white p-5 ">
+          <div className="text-sm font-semibold text-[#2E2E2E]">Lead Status Distribution</div>
           <div className="mt-3 flex items-center justify-center">
             {loadingCharts ? (
-              <p className="m-0 px-1 py-5 text-[13px] text-gray-400">Loading chart…</p>
+              <p className="m-0 px-1 py-5 text-[13px] text-[#8B7355]">Loading chart…</p>
             ) : (
               <PieChart
                 height={280}
@@ -348,21 +300,21 @@ export function Reports() {
         <div className="grid grid-cols-1 gap-6 min-[900px]:grid-cols-3">
           <KpiCard
             tone="brown"
-            icon={<IconPhone />}
+            icon={<FiPhoneCall size={18} aria-hidden />}
             title="Total Calls Made"
             value={conversionKpis ? String(conversionKpis.totalCallsMade.value) : '—'}
             note={conversionKpis ? conversionKpis.totalCallsMade.note : ''}
           />
           <KpiCard
             tone="green"
-            icon={<IconBars />}
+            icon={<FiBarChart2 size={18} aria-hidden />}
             title="Site Visits Completed"
             value={conversionKpis ? String(conversionKpis.siteVisitsCompleted.value) : '—'}
             note={conversionKpis ? conversionKpis.siteVisitsCompleted.note : ''}
           />
           <KpiCard
             tone="sand"
-            icon={<IconBadge />}
+            icon={<FiCheckCircle size={18} aria-hidden />}
             title="Deals Closed"
             value={conversionKpis ? String(conversionKpis.dealsClosed.value) : '—'}
             note={conversionKpis ? conversionKpis.dealsClosed.note : ''}
@@ -371,13 +323,13 @@ export function Reports() {
       </section>
 
       <section
-        className="mt-6 rounded-2xl border border-gray-900/5 bg-white p-5 shadow-[0_10px_24px_rgba(17,24,39,0.06)]"
+        className="mt-6 rounded-xl border border-[#8B7355]/10 bg-white p-5 "
         aria-busy={loadingCharts}
       >
-        <div className="text-sm font-semibold text-gray-800">Lead Source Performance</div>
+        <div className="text-sm font-semibold text-[#2E2E2E]">Lead Source Performance</div>
         <div className="mt-3">
           {loadingCharts ? (
-            <p className="m-0 px-1 py-5 text-[13px] text-gray-400">Loading chart…</p>
+            <p className="m-0 px-1 py-5 text-[13px] text-[#8B7355]">Loading chart…</p>
           ) : (
             <BarChart
               height={280}
@@ -390,7 +342,7 @@ export function Reports() {
               ]}
               yAxis={[{ min: 0, max: 1, width: 40 }]}
               series={[
-                { label: 'Total Leads', data: sourceTotal, color: '#80654a' },
+                { label: 'Total Leads', data: sourceTotal, color: '#8B7355' },
                 { label: 'Hot Leads', data: sourceHot, color: '#d96a6a' },
                 { label: 'Closed Won', data: sourceClosed, color: '#6aa88a' },
               ]}
@@ -409,26 +361,26 @@ export function Reports() {
       </section>
 
       {tab === 'team' ? (
-        <section className="mt-6 rounded-2xl border border-gray-900/5 bg-white p-6 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
-          <div className="text-[16px] font-semibold text-gray-900">Team Performance</div>
+        <section className="mt-6 rounded-xl border border-[#8B7355]/10 bg-white p-6 ">
+          <div className="text-[16px] font-semibold text-[#2E2E2E]">Team Performance</div>
 
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[880px] border-collapse">
               <thead>
-                <tr className="border-b border-gray-900/10">
-                  <th className="px-3 py-3 text-left text-[11px] font-semibold text-gray-500">Team Member</th>
-                  <th className="px-3 py-3 text-left text-[11px] font-semibold text-gray-500">Total Leads</th>
-                  <th className="px-3 py-3 text-left text-[11px] font-semibold text-gray-500">Hot Leads</th>
-                  <th className="px-3 py-3 text-left text-[11px] font-semibold text-gray-500">Contacted</th>
-                  <th className="px-3 py-3 text-left text-[11px] font-semibold text-gray-500">Closed Won</th>
-                  <th className="px-3 py-3 text-left text-[11px] font-semibold text-gray-500">Conversion Rate</th>
+                <tr className="border-b border-[#8B7355]/10">
+                  <th className="px-3 py-3 text-left text-[11px] font-semibold text-[#8B7355]">Team Member</th>
+                  <th className="px-3 py-3 text-left text-[11px] font-semibold text-[#8B7355]">Total Leads</th>
+                  <th className="px-3 py-3 text-left text-[11px] font-semibold text-[#8B7355]">Hot Leads</th>
+                  <th className="px-3 py-3 text-left text-[11px] font-semibold text-[#8B7355]">Contacted</th>
+                  <th className="px-3 py-3 text-left text-[11px] font-semibold text-[#8B7355]">Closed Won</th>
+                  <th className="px-3 py-3 text-left text-[11px] font-semibold text-[#8B7355]">Conversion Rate</th>
                 </tr>
               </thead>
               <tbody aria-busy={loadingTeam}>
                 {loadingTeam
                   ? Array.from({ length: 3 }).map((_, idx) => {
                       return (
-                        <tr key={`sk-row-${idx}`} className="border-b border-gray-900/5 last:border-b-0">
+                        <tr key={`sk-row-${idx}`} className="border-b border-[#8B7355]/10 last:border-b-0">
                           <td className="px-3 py-4">
                             <div className="h-4 w-32 rounded bg-gray-100" />
                           </td>
@@ -453,26 +405,26 @@ export function Reports() {
                   : teamRows.map((r) => {
                       const pct = Math.max(0, Math.min(100, r.conversionPct))
                       return (
-                        <tr key={r.id} className="border-b border-gray-900/5 last:border-b-0">
-                          <td className="px-3 py-4 text-[12px] font-medium text-gray-900">{r.name}</td>
-                          <td className="px-3 py-4 text-[12px] text-gray-700">{r.totalLeads}</td>
+                        <tr key={r.id} className="border-b border-[#8B7355]/10 last:border-b-0">
+                          <td className="px-3 py-4 text-[12px] font-medium text-[#2E2E2E]">{r.name}</td>
+                          <td className="px-3 py-4 text-[12px] text-[#2E2E2E]">{r.totalLeads}</td>
                           <td className="px-3 py-4">
-                            <span className="inline-flex h-6 items-center justify-center rounded-full bg-rose-100 px-2.5 text-[11px] font-semibold text-rose-600">
+                            <span className="inline-flex h-6 items-center justify-center rounded-full bg-rose-100 px-2.5 text-[11px] font-semibold text-[#D96B6B]">
                               {r.hotLeads}
                             </span>
                           </td>
-                          <td className="px-3 py-4 text-[12px] text-gray-700">{r.contacted}</td>
+                          <td className="px-3 py-4 text-[12px] text-[#2E2E2E]">{r.contacted}</td>
                           <td className="px-3 py-4">
-                            <span className="inline-flex h-6 items-center justify-center rounded-full bg-emerald-100 px-2.5 text-[11px] font-semibold text-emerald-700">
+                            <span className="inline-flex h-6 items-center justify-center rounded-full bg-[#6FAF8F]/20 px-2.5 text-[11px] font-semibold text-[#6FAF8F]">
                               {r.closedWon}
                             </span>
                           </td>
                           <td className="px-3 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="h-2 w-[160px] rounded-full bg-[#f6efe4]">
-                                <div className="h-2 rounded-full bg-[#80654a]" style={{ width: `${pct}%` }} />
+                              <div className="h-2 w-[160px] rounded-full bg-[#FAF7F2]">
+                                <div className="h-2 rounded-full bg-[#8B7355]" style={{ width: `${pct}%` }} />
                               </div>
-                              <div className="text-[11px] font-semibold text-gray-700">{pct}%</div>
+                              <div className="text-[11px] font-semibold text-[#2E2E2E]">{pct}%</div>
                             </div>
                           </td>
                         </tr>

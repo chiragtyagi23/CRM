@@ -15,6 +15,7 @@ import { DashboardStatCard } from '../components/DashboardStatCard'
 import { RecentLeadsTable } from '../components/RecentLeadsTable'
 import { BarChart } from '@mui/x-charts/BarChart'
 import { PieChart } from '@mui/x-charts'
+import { CanAccess } from '../acl/CanAccess'
 import { buildDashboardStats, dashboardSubtitle } from '../utils/uiConfig'
 import { isSameLocalDay, toMs } from '../utils/date'
 import { asRecentLeadScore, asRecentLeadStatus } from '../utils/leads'
@@ -106,27 +107,16 @@ export function Dashboard() {
   }, [range])
 
   const rangeBtn = (active: boolean) =>
-    [
-      'rounded-xl px-3.5 py-2 text-xs font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgba(157,122,86,0.45)]',
-      active
-        ? 'bg-white text-gray-900 shadow-sm'
-        : 'cursor-pointer border-0 bg-transparent text-gray-500 hover:bg-gray-900/5 hover:text-gray-700',
-    ].join(' ')
+    ['crm-range-btn', active ? 'crm-range-btn--active' : 'crm-range-btn--idle'].join(' ')
 
   return (
-    <section className="mx-auto box-border w-full max-w-[1280px]">
-      <header className="flex items-end justify-between gap-4 py-1 pb-3">
-        <div>
-          <h2 className="m-0 text-[28px] font-bold tracking-[-0.03em] text-gray-900">Dashboard</h2>
-          <p className="mt-1 text-[14px] font-medium text-gray-500">{dashboardSubtitle(range)}</p>
-        </div>
+    <section className="crm-page w-full">
+      <header className="crm-page-header">
+        <h1 className="crm-page-title">Dashboard</h1>
+        <p className="crm-page-subtitle">{dashboardSubtitle(range)}</p>
       </header>
 
-      <div
-        className="my-2.5 mb-[18px] inline-flex items-center gap-1 rounded-[14px] border border-gray-900/6 bg-gray-900/4 p-1.5"
-        role="tablist"
-        aria-label="Dashboard range"
-      >
+      <div className="crm-range-group mb-6" role="tablist" aria-label="Dashboard range">
         <button
           type="button"
           className={rangeBtn(range === 'today')}
@@ -157,24 +147,25 @@ export function Dashboard() {
       </div>
 
       <div
-        className="grid grid-cols-1 gap-[18px] min-[560px]:grid-cols-2 min-[1100px]:grid-cols-4"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8"
         role="region"
         aria-label="Summary cards"
         aria-busy={loadingSummary}
       >
         {loadingSummary ? (
-          <p className="col-span-full m-0 px-1 py-5 text-[13px] text-gray-400">Loading summary…</p>
+          <p className="col-span-full m-0 px-1 py-5 text-[13px] text-[#8B7355]">Loading summary…</p>
         ) : (
           stats.map((stat) => <DashboardStatCard key={stat.id} stat={stat} />)
         )}
       </div>
 
+      <CanAccess moduleKey="reports" fallback={<p className="text-sm text-[#8B7355]">Analytics charts require Reports access.</p>}>
       <div className="mt-6 grid grid-cols-1 gap-6 min-[900px]:grid-cols-2">
-        <section className="rounded-2xl bg-white p-5 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
-          <div className="text-sm font-semibold text-gray-800">Sales Funnel</div>
+        <section className="crm-card p-5">
+          <div className="text-sm font-semibold text-[#2E2E2E]">Sales Funnel</div>
           <div className="mt-3" aria-busy={loadingCharts}>
             {loadingCharts ? (
-              <p className="m-0 px-1 py-5 text-[13px] text-gray-400">Loading chart…</p>
+              <p className="m-0 px-1 py-5 text-[13px] text-[#8B7355]">Loading chart…</p>
             ) : (
               <BarChart
                 xAxis={[
@@ -187,7 +178,7 @@ export function Dashboard() {
                 series={[
                   {
                     data: salesFunnel.map((p) => p.value),
-                    color: '#80654a',
+                    color: '#8B7355',
                   },
                 ]}
                 height={280}
@@ -204,11 +195,11 @@ export function Dashboard() {
           </div>
         </section>
 
-        <section className="rounded-2xl bg-white p-5 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
-          <div className="text-sm font-semibold text-gray-800">Lead Sources</div>
+        <section className="crm-card p-5">
+          <div className="text-sm font-semibold text-[#2E2E2E]">Lead Sources</div>
           <div className="mt-3 flex items-center justify-center" aria-busy={loadingCharts}>
             {loadingCharts ? (
-              <p className="m-0 px-1 py-5 text-[13px] text-gray-400">Loading chart…</p>
+              <p className="m-0 px-1 py-5 text-[13px] text-[#8B7355]">Loading chart…</p>
             ) : (
               <PieChart
                 height={280}
@@ -232,13 +223,14 @@ export function Dashboard() {
           </div>
         </section>
       </div>
+      </CanAccess>
 
-      <section className="mt-6 rounded-2xl bg-white p-5 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
+      <section className="crm-card mt-6 p-5">
         <div className="flex items-center justify-between gap-4">
-          <div className="text-sm font-semibold text-gray-800">Recent Leads</div>
+          <div className="text-sm font-semibold text-[#2E2E2E]">Recent Leads</div>
           <button
             type="button"
-            className="text-xs font-semibold text-gray-500 hover:text-gray-700"
+            className="text-xs font-semibold text-[#8B7355] hover:text-[#2E2E2E]"
             onClick={() => {
               navigate('/leads')
             }}
@@ -249,7 +241,7 @@ export function Dashboard() {
 
         <div className="mt-3" aria-busy={loadingLeads}>
           {loadingLeads ? (
-            <p className="m-0 px-1 py-5 text-[13px] text-gray-400">Loading recent leads…</p>
+            <p className="m-0 px-1 py-5 text-[13px] text-[#8B7355]">Loading recent leads…</p>
           ) : (
             <RecentLeadsTable rows={recentLeads} />
           )}

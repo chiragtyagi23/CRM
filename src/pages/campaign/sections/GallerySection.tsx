@@ -47,7 +47,7 @@ export function GallerySection({
               className={
                 part === 'external'
                   ? 'h-9 px-4 rounded-xl bg-violet-600 text-white text-xs font-semibold'
-                  : 'h-9 px-4 rounded-xl border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50'
+                  : 'h-9 px-4 rounded-xl border border-[#E8DCCB] bg-white text-[#2E2E2E] text-xs font-semibold hover:bg-[#F5EFE7]'
               }
               onClick={() => setPart('external')}
             >
@@ -58,7 +58,7 @@ export function GallerySection({
               className={
                 part === 'internal'
                   ? 'h-9 px-4 rounded-xl bg-violet-600 text-white text-xs font-semibold'
-                  : 'h-9 px-4 rounded-xl border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50'
+                  : 'h-9 px-4 rounded-xl border border-[#E8DCCB] bg-white text-[#2E2E2E] text-xs font-semibold hover:bg-[#F5EFE7]'
               }
               onClick={() => setPart('internal')}
             >
@@ -68,7 +68,7 @@ export function GallerySection({
 
           <button
             type="button"
-            className="h-10 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 text-sm font-semibold hover:bg-gray-50"
+            className="h-10 px-4 rounded-lg border border-[#E8DCCB] bg-white text-[#2E2E2E] text-sm font-semibold hover:bg-[#F5EFE7]"
             onClick={() =>
               setGalleryCells((prev) => [
                 ...prev,
@@ -88,7 +88,7 @@ export function GallerySection({
 
         <div className="mt-4 grid grid-cols-1 gap-4">
           {visible.map(({ c: cell, idx: cellIdx }) => (
-            <div key={cellIdx} className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+            <div key={cellIdx} className="rounded-xl border border-[#E8DCCB] bg-gray-50 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
                   <Field label="Group tag" required>
@@ -100,14 +100,14 @@ export function GallerySection({
                         setGalleryCells((prev) => prev.map((c, i) => (i === cellIdx ? { ...c, tag: e.target.value } : c)))
                       }
                     />
-                    <div className="mt-2 text-[11px] font-medium text-gray-500">
+                    <div className="mt-2 text-[11px] font-medium text-[#8B7355]">
                       {part === 'external'
                         ? 'External order: Exterior → Amenities - Swimming pool → Garden → Gym → Clubhouse'
                         : 'Internal order: Interiors - Living Room → Kitchen → Bedroom → Bathroom (optional)'}
                     </div>
                   </Field>
                   <div className="grid grid-cols-2 gap-3 items-end">
-                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <label className="flex items-center gap-2 text-sm text-[#2E2E2E]">
                       <input
                         type="checkbox"
                         checked={cell.feature}
@@ -119,7 +119,7 @@ export function GallerySection({
                       />
                       Featured
                     </label>
-                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <label className="flex items-center gap-2 text-sm text-[#2E2E2E]">
                       <input
                         type="checkbox"
                         checked={cell.wideBottom}
@@ -137,8 +137,8 @@ export function GallerySection({
                   type="button"
                   className={
                     galleryCells.length <= 1
-                      ? 'h-9 px-3 rounded-lg bg-gray-100 text-gray-400 text-xs font-semibold cursor-not-allowed'
-                      : 'h-9 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50'
+                      ? 'h-9 px-3 rounded-lg bg-gray-100 text-[#8B7355] text-xs font-semibold cursor-not-allowed'
+                      : 'h-9 px-3 rounded-lg border border-[#E8DCCB] bg-white text-[#2E2E2E] text-xs font-semibold hover:bg-[#F5EFE7]'
                   }
                   disabled={galleryCells.length <= 1}
                   onClick={() => setGalleryCells((prev) => prev.filter((_, i) => i !== cellIdx))}
@@ -148,7 +148,7 @@ export function GallerySection({
               </div>
 
               <div className="mt-4 flex items-center justify-between gap-3">
-                <div className="text-xs text-gray-500">{cell.images.length} images</div>
+                <div className="text-xs text-[#8B7355]">{cell.images.length} images</div>
                 <div className="flex flex-wrap items-center justify-end gap-2">
                   <input
                     id={`${multiIds}-g-${cellIdx}`}
@@ -172,13 +172,13 @@ export function GallerySection({
                   />
                   <label
                     htmlFor={`${multiIds}-g-${cellIdx}`}
-                    className="h-9 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50 cursor-pointer inline-flex items-center justify-center"
+                    className="h-9 px-3 rounded-lg border border-[#E8DCCB] bg-white text-[#2E2E2E] text-xs font-semibold hover:bg-[#F5EFE7] cursor-pointer inline-flex items-center justify-center"
                   >
                     Add multiple
                   </label>
                   <button
                     type="button"
-                    className="h-9 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50"
+                    className="h-9 px-3 rounded-lg border border-[#E8DCCB] bg-white text-[#2E2E2E] text-xs font-semibold hover:bg-[#F5EFE7]"
                     onClick={() =>
                       setGalleryCells((prev) =>
                         prev.map((c, i) =>

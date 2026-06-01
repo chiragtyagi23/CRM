@@ -34,21 +34,21 @@ function alignClasses(align: TableAlign | undefined): string {
 
 export function DynamicTable<T>({ ariaLabel, columns, rows, getRowKey, dense }: Props<T>) {
   const tableId = useId()
-  const cellPad = dense ? 'py-2.5' : 'py-3'
+  const cellPad = dense ? 'py-3' : 'py-4'
 
   return (
     <div className="w-full overflow-x-auto">
-      <table className="min-w-[900px] w-full border-separate border-spacing-0" aria-label={ariaLabel} id={tableId}>
+      <table className="min-w-[900px] w-full border-collapse" aria-label={ariaLabel} id={tableId}>
         <thead>
-          <tr className="text-xs text-gray-400">
+          <tr className="border-b border-[#E8DCCB]">
             {columns.map((c) => (
               <th
                 key={c.key}
                 scope="col"
                 className={[
-                  'sticky top-0 z-1 bg-white px-4',
+                  'sticky top-0 z-1 bg-white px-6',
                   cellPad,
-                  'font-semibold',
+                  'text-sm font-medium text-[#8B7355]',
                   alignClasses(c.align),
                   c.headerClassName ?? '',
                 ].join(' ')}
@@ -58,14 +58,14 @@ export function DynamicTable<T>({ ariaLabel, columns, rows, getRowKey, dense }: 
             ))}
           </tr>
         </thead>
-        <tbody className="text-[13px] text-gray-700">
+        <tbody className="text-sm text-[#2E2E2E]">
           {rows.map((row, idx) => (
-            <tr key={getRowKey(row, idx)} className="border-t border-gray-100">
+            <tr key={getRowKey(row, idx)} className="border-b border-[#E8DCCB] last:border-0">
               {columns.map((c) => (
                 <td
                   key={c.key}
                   className={[
-                    'px-4',
+                    'px-6',
                     cellPad,
                     'whitespace-nowrap',
                     alignClasses(c.align),
@@ -82,4 +82,3 @@ export function DynamicTable<T>({ ariaLabel, columns, rows, getRowKey, dense }: 
     </div>
   )
 }
-

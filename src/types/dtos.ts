@@ -59,6 +59,7 @@ export type SocialInfraGroup = { title: string; items: { name: string; value: st
 
 export type CaptureLeadDTO = {
   id: string
+  campaignId: string | null
   source: string | null
   firstCallDate: string | null
   callBy: string | null
@@ -120,16 +121,46 @@ export type SiteVisitCreatePayload = Omit<SiteVisitDTO, 'id' | 'created_at' | 'u
 // Auth
 // ---------------------------------------------------------------------------
 
+export type AuthRoleDTO = {
+  id: string
+  name: string
+  description?: string | null
+}
+
 export type AuthUserDTO = {
   id: string
   name: string
   email: string
-  role?: string | null
+  role?: string | AuthRoleDTO | null
+}
+
+export type AclModuleDTO = {
+  id: string
+  module_key: string
+  name: string
+  route: string
+  icon?: string | null
+  parent_id?: string | null
+  sort_order?: number
+}
+
+export type AclOverrideDTO = {
+  id: string
+  module_id: string
+  module_key: string
+  effect: 'ALLOW' | 'DENY'
+  reason?: string | null
+}
+
+export type AuthAccessDTO = {
+  modules: AclModuleDTO[]
+  overrides?: AclOverrideDTO[]
 }
 
 export type AuthResponseDTO = {
   token: string
   user: AuthUserDTO
+  access?: AuthAccessDTO
 }
 
 // ---------------------------------------------------------------------------

@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import type React from 'react'
+import { FiCalendar, FiChevronDown, FiClock } from 'react-icons/fi'
+
+import { PageHeader } from '../components/PageHeader'
+import { d } from '../lib/designClasses'
 
 import { fetchProjects, type ProjectDTO } from '../lib/dashboardDummyApi'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
@@ -64,53 +68,22 @@ function StatCard({
   icon: React.ReactNode
 }) {
   return (
-    <div className="rounded-2xl border border-gray-900/5 bg-white p-5 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="text-[11px] font-semibold text-gray-400">{title}</div>
-          <div className="mt-2 text-[28px] font-bold tracking-[-0.02em] text-gray-900">{value}</div>
-          <div className="mt-1 text-[11px] font-medium text-gray-400">{note}</div>
-        </div>
-        <div className="text-gray-400">{icon}</div>
+    <div className={d.cardP6}>
+      <div className="mb-2 flex items-center gap-3">
+        <span className="text-[#8B7355]">{icon}</span>
+        <span className="text-sm text-[#8B7355]">{title}</span>
       </div>
+      <p className="text-3xl font-semibold text-[#2E2E2E]">{value}</p>
+      <p className="mt-1 text-xs text-[#6FAF8F]">{note}</p>
     </div>
   )
 }
 
-function IconCalendar() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M5.25 2.5a.75.75 0 0 1 .75.75V4h6v-.75a.75.75 0 0 1 1.5 0V4h.75A1.75 1.75 0 0 1 16 5.75v8.5A1.75 1.75 0 0 1 14.25 16H3.75A1.75 1.75 0 0 1 2 14.25v-8.5A1.75 1.75 0 0 1 3.75 4h.75v-.75a.75.75 0 0 1 .75-.75zM3.5 7v7.25c0 .14.11.25.25.25h10.5a.25.25 0 0 0 .25-.25V7h-11z"
-      />
-    </svg>
-  )
-}
-
-function IconClock() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M9 2.25A6.75 6.75 0 1 0 9 15.75 6.75 6.75 0 0 0 9 2.25zm0 1.5a5.25 5.25 0 1 1 0 10.5 5.25 5.25 0 0 1 0-10.5zm.75 2a.75.75 0 0 0-1.5 0V9c0 .25.12.48.32.62l2.25 1.5a.75.75 0 1 0 .84-1.24L9.75 8.6V5.75z"
-      />
-    </svg>
-  )
-}
-
 function Pill({ tone, children }: { tone: 'mint' | 'sand'; children: React.ReactNode }) {
-  const base = 'inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none'
-  const cls = tone === 'mint' ? 'bg-emerald-100 text-emerald-700' : 'bg-[#faf6ef] text-[#80654a]'
+  const base = 'inline-flex items-center rounded-full px-3 py-1 text-xs font-medium'
+  const cls =
+    tone === 'mint' ? 'bg-[#6FAF8F]/20 text-[#6FAF8F]' : 'bg-[#E8DCCB] text-[#8B7355]'
   return <span className={`${base} ${cls}`}>{children}</span>
-}
-
-function IconChevron({ open }: { open: boolean }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden className={open ? 'rotate-180 transition-transform' : 'transition-transform'}>
-      <path fill="currentColor" d="M4.7 6.7a.75.75 0 0 1 1.06 0L9 9.94l3.24-3.24a.75.75 0 1 1 1.06 1.06l-3.77 3.77a.75.75 0 0 1-1.06 0L4.7 7.76a.75.75 0 0 1 0-1.06z" />
-    </svg>
-  )
 }
 
 type LeadVisitGroup = {
@@ -122,18 +95,18 @@ type LeadVisitGroup = {
 
 function VisitRow({ v }: { v: SiteVisitDTO }) {
   return (
-    <div className="rounded-xl border border-gray-900/5 bg-white px-4 py-3">
+    <div className="rounded-lg border border-[#8B7355]/10 bg-white px-4 py-3">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <div className="truncate text-[12px] font-semibold text-gray-900">{v.projectName}</div>
-          <div className="mt-0.5 text-[11px] text-gray-500">{v.visitDateTimeLabel}</div>
-          {v.rmName ? <div className="mt-0.5 text-[11px] text-gray-500">RM: {v.rmName}</div> : null}
+          <div className="truncate text-[12px] font-semibold text-[#2E2E2E]">{v.projectName}</div>
+          <div className="mt-0.5 text-[11px] text-[#8B7355]">{v.visitDateTimeLabel}</div>
+          {v.rmName ? <div className="mt-0.5 text-[11px] text-[#8B7355]">RM: {v.rmName}</div> : null}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Pill tone="mint">{v.daysLeftLabel}</Pill>
         </div>
       </div>
-      <div className="mt-2 text-[11px] text-gray-600">{v.feedback}</div>
+      <div className="mt-2 text-[11px] text-[#8B7355]">{v.feedback}</div>
     </div>
   )
 }
@@ -151,7 +124,7 @@ function LeadVisitSection({
   const moreCount = Math.max(0, g.visits.length - 1)
 
   return (
-    <article className="rounded-2xl border border-gray-900/5 bg-[#FDFBF7] p-5 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
+    <article className={`${d.cardP6} hover:shadow-lg transition-shadow`}>
       <button
         type="button"
         onClick={onToggle}
@@ -160,31 +133,35 @@ function LeadVisitSection({
       >
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="truncate text-[15px] font-semibold text-gray-900">{g.leadName}</div>
+            <div className="truncate text-[15px] font-semibold text-[#2E2E2E]">{g.leadName}</div>
             <span className="text-gray-300">·</span>
-            <div className="text-[12px] font-medium text-gray-500">{g.locationLabel || '—'}</div>
+            <div className="text-[12px] font-medium text-[#8B7355]">{g.locationLabel || '—'}</div>
           </div>
-          <div className="mt-1 text-[12px] text-gray-600">
-            <span className="font-semibold text-gray-900">Latest:</span> {latest.visitDateTimeLabel} · {latest.projectName}
+          <div className="mt-1 text-[12px] text-[#8B7355]">
+            <span className="font-semibold text-[#2E2E2E]">Latest:</span> {latest.visitDateTimeLabel} · {latest.projectName}
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <Pill tone="mint">{latest.daysLeftLabel}</Pill>
-            <span className="ml-1 text-[11px] font-medium text-gray-500">
+            <span className="ml-1 text-[11px] font-medium text-[#8B7355]">
               {g.visits.length} scheduled {g.visits.length === 1 ? 'visit' : 'visits'}
               {moreCount ? ` · +${moreCount} more` : ''}
             </span>
           </div>
         </div>
-        <span className="mt-1 shrink-0 text-gray-400">
-          <IconChevron open={open} />
+        <span className="mt-1 shrink-0 text-[#8B7355]">
+          <FiChevronDown
+            className={open ? 'rotate-180 transition-transform' : 'transition-transform'}
+            size={18}
+            aria-hidden
+          />
         </span>
       </button>
 
       <div className="mt-3">
-        <div className="rounded-xl bg-[#faf6ef] px-4 py-3">
-          <div className="text-[11px] font-semibold text-gray-500">Latest Notes</div>
-          <div className="mt-1 text-[12px] text-gray-700">{latest.feedback}</div>
-          {latest.rmName ? <div className="mt-2 text-[11px] font-medium text-gray-600">RM: {latest.rmName}</div> : null}
+        <div className="rounded-xl bg-[#F5EFE7] px-4 py-3">
+          <div className="text-[11px] font-semibold text-[#8B7355]">Latest Notes</div>
+          <div className="mt-1 text-[12px] text-[#2E2E2E]">{latest.feedback}</div>
+          {latest.rmName ? <div className="mt-2 text-[11px] font-medium text-[#8B7355]">RM: {latest.rmName}</div> : null}
         </div>
       </div>
 
@@ -312,26 +289,24 @@ export function SiteVisits() {
   const loadingSummary = loadingVisits || loadingLeads || loadingProjects
 
   return (
-    <section className="mx-auto box-border w-full max-w-[1280px]">
-      <header className="flex flex-col gap-3 py-2 pb-4 min-[760px]:flex-row min-[760px]:items-start min-[760px]:justify-between">
-        <div>
-          <h2 className="m-0 text-[28px] font-bold tracking-[-0.03em] text-gray-900">Site Visits</h2>
-          <p className="mt-1 text-[14px] font-medium text-gray-500">Track and manage all site visits with customers</p>
-        </div>
-      </header>
+    <section className="w-full">
+      <PageHeader
+        title="Site Visits"
+        subtitle="Track and manage all site visits with customers"
+      />
 
-      <div className="mt-3 grid grid-cols-1 gap-6 min-[900px]:grid-cols-3" aria-busy={loadingSummary}>
+      <div className={d.gridStats3} aria-busy={loadingSummary}>
         <StatCard
           title="Total Visits"
           value={summary ? String(summary.totalVisits) : '—'}
           note={summary ? summary.totalVisitsNote : ''}
-          icon={<IconCalendar />}
+          icon={<FiCalendar size={18} aria-hidden />}
         />
         <StatCard
           title="Upcoming"
           value={summary ? String(summary.upcoming) : '—'}
           note={summary ? summary.upcomingNote : ''}
-          icon={<IconClock />}
+          icon={<FiClock size={18} aria-hidden />}
         />
         {/* <StatCard
           title="Average Rating"
@@ -343,8 +318,8 @@ export function SiteVisits() {
 
       <section className="mt-6 flex flex-col gap-5" aria-busy={loadingVisits}>
         {loadingVisits ? (
-          <div className="rounded-2xl border border-gray-900/5 bg-white p-6 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
-            <p className="m-0 px-1 py-5 text-[13px] text-gray-400">Loading visits…</p>
+          <div className={d.cardP6}>
+            <p className="m-0 py-5 text-sm text-[#8B7355]">Loading visits…</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-5">
@@ -360,7 +335,7 @@ export function SiteVisits() {
                 />
               ))
             ) : (
-              <div className="rounded-2xl border border-gray-900/5 bg-white p-6 text-[13px] text-gray-500 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
+              <div className={`${d.cardP6} text-center text-sm text-[#8B7355]`}>
                 No site visits scheduled yet.
               </div>
             )}

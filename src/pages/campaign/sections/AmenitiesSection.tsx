@@ -15,11 +15,11 @@ export function AmenitiesSection({
 }) {
   return (
     <SectionCard title="Amenities" subtitle="Amenity cards + multiple icons per amenity (upload or paste icon URLs).">
-      <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-        <div className="text-sm font-semibold text-gray-900">Amenity list</div>
+      <div className="rounded-xl border border-[#E8DCCB] bg-gray-50 p-4">
+        <div className="text-sm font-semibold text-[#2E2E2E]">Amenity list</div>
         <div className="mt-3 grid grid-cols-1 gap-3">
           {amenityItems.map((item, idx) => (
-            <div key={idx} className="rounded-xl border border-gray-200 bg-white p-3">
+            <div key={idx} className="rounded-xl border border-[#E8DCCB] bg-white p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <input
@@ -32,10 +32,10 @@ export function AmenitiesSection({
                   />
 
                   <div className="mt-2 flex items-center justify-between gap-2">
-                    <div className="text-xs text-gray-500">{(item.icons ?? []).length} icons</div>
+                    <div className="text-xs text-[#8B7355]">{(item.icons ?? []).length} icons</div>
                     <button
                       type="button"
-                      className="h-8 rounded-lg border border-gray-300 bg-white px-3 text-xs font-semibold text-gray-900 hover:bg-gray-50"
+                      className="h-8 rounded-lg border border-[#E8DCCB] bg-white px-3 text-xs font-semibold text-[#2E2E2E] hover:bg-[#F5EFE7]"
                       onClick={() =>
                         setAmenityItems((prev) =>
                           prev.map((p, i) => (i === idx ? { ...p, icons: [...(p.icons ?? []), { src: '', alt: '' }] } : p)),
@@ -90,8 +90,8 @@ export function AmenitiesSection({
                   type="button"
                   className={
                     amenityItems.length <= 1
-                      ? 'h-10 px-3 rounded-lg bg-gray-100 text-gray-400 text-xs font-semibold cursor-not-allowed'
-                      : 'h-10 px-3 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-semibold hover:bg-gray-50'
+                      ? 'h-10 px-3 rounded-lg bg-gray-100 text-[#8B7355] text-xs font-semibold cursor-not-allowed'
+                      : 'h-10 px-3 rounded-lg border border-[#E8DCCB] bg-white text-[#2E2E2E] text-xs font-semibold hover:bg-[#F5EFE7]'
                   }
                   disabled={amenityItems.length <= 1}
                   onClick={() => setAmenityItems((prev) => prev.filter((_, i) => i !== idx))}
@@ -103,7 +103,7 @@ export function AmenitiesSection({
           ))}
           <button
             type="button"
-            className="h-10 w-max rounded-lg border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+            className="h-10 w-max rounded-lg border border-[#E8DCCB] bg-white px-4 text-sm font-semibold text-[#2E2E2E] hover:bg-[#F5EFE7]"
             onClick={() => setAmenityItems((prev) => [...prev, { name: '', icons: [{ src: '', alt: '' }] }])}
           >
             Add amenity

@@ -279,10 +279,10 @@ export function BulkUploadLeads() {
   const errorLeadsCount = uploadedLeads.filter((lead) => !lead.isValid).length
 
   return (
-    <section className="mx-auto box-border w-full max-w-[1280px] px-4 py-6">
+    <section className="w-full px-4 py-6">
       {flash ? (
         <div
-          className={`mb-4 rounded-2xl border px-4 py-3 text-[13px] font-medium ${
+          className={`mb-4 rounded-xl border px-4 py-3 text-[13px] font-medium ${
             flash.type === 'ok'
               ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
               : 'border-red-200 bg-red-50 text-red-900'
@@ -295,7 +295,7 @@ export function BulkUploadLeads() {
       <div className="mb-8">
         <button
           type="button"
-          className="mb-4 inline-flex items-center gap-2 border-0 bg-transparent p-0 text-[13px] font-semibold text-[#80654a] hover:text-[#5c4835]"
+          className="mb-4 inline-flex items-center gap-2 border-0 bg-transparent p-0 text-[13px] font-semibold text-[#8B7355] hover:text-[#6d5a43]"
           onClick={() => {
             if (dirty && !window.confirm(BULK_UPLOAD_LEAVE_MESSAGE)) return
             navigate('/leads')
@@ -305,17 +305,17 @@ export function BulkUploadLeads() {
           Back to Leads
         </button>
         <div className="flex flex-col gap-2">
-        <p className="m-0 text-[28px] font-semibold tracking-[-0.03em] text-gray-900">Bulk Upload Leads</p>
-        <p className="mt-1 text-[14px] font-medium text-gray-500">Upload multiple leads at once using an Excel file</p>
+        <p className="m-0 text-[28px] font-semibold tracking-[-0.03em] text-[#2E2E2E]">Bulk Upload Leads</p>
+        <p className="mt-1 text-[14px] font-medium text-[#8B7355]">Upload multiple leads at once using an Excel file</p>
         </div>
       </div>
 
-      <div className="mb-6 rounded-2xl border border-gray-900/5 bg-white p-6 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
-        <div className="mb-6 flex gap-3 rounded-xl border border-[#e7ddcf] bg-[#faf6ef] p-4">
-          <FiAlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-[#80654a]" aria-hidden />
-          <div className="text-[13px] text-gray-800">
+      <div className="mb-6 rounded-xl border border-[#8B7355]/10 bg-white p-6 ">
+        <div className="mb-6 flex gap-3 rounded-xl border border-[#e7ddcf] bg-[#F5EFE7] p-4">
+          <FiAlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-[#8B7355]" aria-hidden />
+          <div className="text-[13px] text-[#2E2E2E]">
             <p className="m-0 mb-1 font-semibold">Upload Excel file with the following columns:</p>
-            <ul className="m-0 list-disc pl-5 text-gray-600">
+            <ul className="m-0 list-disc pl-5 text-[#8B7355]">
               <li>
                 <strong>Name</strong> — full name (required)
               </li>
@@ -333,7 +333,7 @@ export function BulkUploadLeads() {
           <button
             type="button"
             onClick={handleDownloadTemplate}
-            className="inline-flex items-center gap-2 rounded-2xl border border-[#80654a] px-4 py-2.5 text-[13px] font-semibold text-[#80654a] hover:bg-[#f6efe4]"
+            className="inline-flex items-center gap-2 rounded-xl border border-[#8B7355] px-4 py-2.5 text-[13px] font-semibold text-[#8B7355] hover:bg-[#FAF7F2]"
           >
             <FiDownload className="h-4 w-4" aria-hidden />
             Download Template
@@ -342,10 +342,10 @@ export function BulkUploadLeads() {
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div>
-            <label className="mb-2 block text-[13px] font-semibold text-gray-800">
+            <label className="mb-2 block text-[13px] font-semibold text-[#2E2E2E]">
               Select Excel File <span className="text-red-600">*</span>
             </label>
-            <div className="rounded-2xl border-2 border-dashed border-[#e7ddcf] p-8 text-center hover:border-[#cdb89f]">
+            <div className="rounded-xl border-2 border-dashed border-[#e7ddcf] p-8 text-center hover:border-[#E8DCCB]">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -355,11 +355,11 @@ export function BulkUploadLeads() {
                 id="crm-bulk-file-upload"
               />
               <label htmlFor="crm-bulk-file-upload" className="cursor-pointer">
-                <FiUpload className="mx-auto mb-3 h-12 w-12 text-[#80654a]" aria-hidden />
+                <FiUpload className="mx-auto mb-3 h-12 w-12 text-[#8B7355]" aria-hidden />
                 {selectedFile ? (
                   <div>
-                    <p className="m-0 font-semibold text-gray-900">{selectedFile.name}</p>
-                    <p className="mt-1 text-[13px] text-gray-500">{(selectedFile.size / 1024).toFixed(2)} KB</p>
+                    <p className="m-0 font-semibold text-[#2E2E2E]">{selectedFile.name}</p>
+                    <p className="mt-1 text-[13px] text-[#8B7355]">{(selectedFile.size / 1024).toFixed(2)} KB</p>
                     <button
                       type="button"
                       onClick={(e) => {
@@ -374,8 +374,8 @@ export function BulkUploadLeads() {
                   </div>
                 ) : (
                   <div>
-                    <p className="m-0 font-semibold text-gray-900">Click to select Excel file</p>
-                    <p className="mt-1 text-[13px] text-gray-500">.xlsx or .xls</p>
+                    <p className="m-0 font-semibold text-[#2E2E2E]">Click to select Excel file</p>
+                    <p className="mt-1 text-[13px] text-[#8B7355]">.xlsx or .xls</p>
                   </div>
                 )}
               </label>
@@ -383,13 +383,13 @@ export function BulkUploadLeads() {
           </div>
 
           <div>
-            <label className="mb-2 block text-[13px] font-semibold text-gray-800">
+            <label className="mb-2 block text-[13px] font-semibold text-[#2E2E2E]">
               Campaign <span className="text-red-600">*</span>
             </label>
             <select
               value={selectedCampaignId}
               onChange={(e) => setSelectedCampaignId(e.target.value)}
-              className="h-12 w-full rounded-2xl border border-gray-200 bg-white px-3 text-[13px] text-gray-800 focus:border-[#cdb89f] focus:outline-none disabled:opacity-60"
+              className="h-12 w-full rounded-xl border border-[#E8DCCB] bg-white px-3 text-[13px] text-[#2E2E2E] focus:border-[#8B7355] focus:outline-none disabled:opacity-60"
               disabled={!selectedFile || campaignsLoading}
             >
               <option value="">{campaignsLoading ? 'Loading campaigns…' : 'Select a campaign'}</option>
@@ -399,44 +399,44 @@ export function BulkUploadLeads() {
                 </option>
               ))}
             </select>
-            <p className="mt-2 text-[12px] font-medium text-gray-500">Stored as lead &quot;source&quot; for reporting.</p>
+            <p className="mt-2 text-[12px] font-medium text-[#8B7355]">Stored as lead &quot;source&quot; for reporting.</p>
           </div>
         </div>
       </div>
 
       {isProcessing ? (
-        <div className="mb-6 rounded-2xl border border-gray-900/5 bg-white p-8 text-center shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-[#80654a] border-t-transparent" />
-          <p className="m-0 text-[13px] font-medium text-gray-600">Processing Excel file…</p>
+        <div className="mb-6 rounded-xl border border-[#8B7355]/10 bg-white p-8 text-center ">
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-[#8B7355] border-t-transparent" />
+          <p className="m-0 text-[13px] font-medium text-[#8B7355]">Processing Excel file…</p>
         </div>
       ) : null}
 
       {uploadedLeads.length > 0 && !isProcessing ? (
         <>
           <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl border border-gray-900/5 bg-white p-6 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
+            <div className="rounded-xl border border-[#8B7355]/10 bg-white p-6 ">
               <div className="flex items-center gap-3">
-                <FiUpload className="h-10 w-10 text-[#80654a]" aria-hidden />
+                <FiUpload className="h-10 w-10 text-[#8B7355]" aria-hidden />
                 <div>
-                  <p className="m-0 text-[12px] font-medium text-gray-500">Total Rows</p>
-                  <p className="m-0 text-2xl font-bold text-gray-900">{uploadedLeads.length}</p>
+                  <p className="m-0 text-[12px] font-medium text-[#8B7355]">Total Rows</p>
+                  <p className="m-0 text-2xl font-bold text-[#2E2E2E]">{uploadedLeads.length}</p>
                 </div>
               </div>
             </div>
-            <div className="rounded-2xl border border-emerald-200/60 bg-white p-6 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
+            <div className="rounded-xl border border-emerald-200/60 bg-white p-6 ">
               <div className="flex items-center gap-3">
-                <FiCheckCircle className="h-10 w-10 text-emerald-600" aria-hidden />
+                <FiCheckCircle className="h-10 w-10 text-[#6FAF8F]" aria-hidden />
                 <div>
-                  <p className="m-0 text-[12px] font-medium text-gray-500">Valid Leads</p>
-                  <p className="m-0 text-2xl font-bold text-emerald-700">{validLeadsCount}</p>
+                  <p className="m-0 text-[12px] font-medium text-[#8B7355]">Valid Leads</p>
+                  <p className="m-0 text-2xl font-bold text-[#6FAF8F]">{validLeadsCount}</p>
                 </div>
               </div>
             </div>
-            <div className="rounded-2xl border border-red-200/60 bg-white p-6 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
+            <div className="rounded-xl border border-red-200/60 bg-white p-6 ">
               <div className="flex items-center gap-3">
                 <FiXCircle className="h-10 w-10 text-red-600" aria-hidden />
                 <div>
-                  <p className="m-0 text-[12px] font-medium text-gray-500">Errors</p>
+                  <p className="m-0 text-[12px] font-medium text-[#8B7355]">Errors</p>
                   <p className="m-0 text-2xl font-bold text-red-700">{errorLeadsCount}</p>
                 </div>
               </div>
@@ -444,31 +444,31 @@ export function BulkUploadLeads() {
           </div>
 
           {errorLeadsCount > 0 ? (
-            <div className="mb-6 rounded-2xl border border-red-200/60 bg-white p-6 shadow-[0_10px_24px_rgba(17,24,39,0.06)]">
-              <h2 className="mb-4 flex items-center gap-2 text-[18px] font-bold text-gray-900">
+            <div className="mb-6 rounded-xl border border-red-200/60 bg-white p-6 ">
+              <h2 className="mb-4 flex items-center gap-2 text-[18px] font-bold text-[#2E2E2E]">
                 <FiXCircle className="h-6 w-6 text-red-600" aria-hidden />
                 Rows with Errors ({errorLeadsCount})
               </h2>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-[13px]">
                   <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="py-3 pr-4 font-semibold text-gray-600">Row #</th>
-                      <th className="py-3 pr-4 font-semibold text-gray-600">Name</th>
-                      <th className="py-3 pr-4 font-semibold text-gray-600">Mobile No.</th>
-                      <th className="py-3 pr-4 font-semibold text-gray-600">Email Id</th>
-                      <th className="py-3 font-semibold text-gray-600">Errors</th>
+                    <tr className="border-b border-[#E8DCCB]">
+                      <th className="py-3 pr-4 font-semibold text-[#8B7355]">Row #</th>
+                      <th className="py-3 pr-4 font-semibold text-[#8B7355]">Name</th>
+                      <th className="py-3 pr-4 font-semibold text-[#8B7355]">Mobile No.</th>
+                      <th className="py-3 pr-4 font-semibold text-[#8B7355]">Email Id</th>
+                      <th className="py-3 font-semibold text-[#8B7355]">Errors</th>
                     </tr>
                   </thead>
                   <tbody>
                     {uploadedLeads
                       .filter((lead) => !lead.isValid)
                       .map((lead) => (
-                        <tr key={lead.rowNumber} className="border-b border-gray-100">
-                          <td className="py-3 pr-4 font-medium text-gray-900">{lead.rowNumber}</td>
-                          <td className="py-3 pr-4 text-gray-800">{lead.name || '—'}</td>
-                          <td className="py-3 pr-4 text-gray-800">{lead.phone || '—'}</td>
-                          <td className="py-3 pr-4 text-gray-800">{lead.email || '—'}</td>
+                        <tr key={lead.rowNumber} className="border-b border-[#E8DCCB]">
+                          <td className="py-3 pr-4 font-medium text-[#2E2E2E]">{lead.rowNumber}</td>
+                          <td className="py-3 pr-4 text-[#2E2E2E]">{lead.name || '—'}</td>
+                          <td className="py-3 pr-4 text-[#2E2E2E]">{lead.phone || '—'}</td>
+                          <td className="py-3 pr-4 text-[#2E2E2E]">{lead.email || '—'}</td>
                           <td className="py-3">
                             <div className="flex flex-wrap gap-1">
                               {lead.errors.map((err, idx) => (
@@ -490,7 +490,7 @@ export function BulkUploadLeads() {
             <button
               type="button"
               onClick={handleClearFile}
-              className="flex-1 rounded-2xl border border-gray-200 bg-white py-3 text-[13px] font-semibold text-gray-700 hover:bg-gray-50"
+              className="flex-1 rounded-xl border border-[#E8DCCB] bg-white py-3 text-[13px] font-semibold text-[#2E2E2E] hover:bg-[#F5EFE7]"
             >
               Clear &amp; Start Over
             </button>
@@ -508,7 +508,7 @@ export function BulkUploadLeads() {
                   ? 'Fix or remove rows with errors before uploading.'
                   : undefined
               }
-              className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-[#80654a] py-3 text-[13px] font-semibold text-white hover:bg-[#725940] disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#8B7355] py-3 text-[13px] font-semibold text-white hover:bg-[#6d5a43] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isUploading ? (
                 <>

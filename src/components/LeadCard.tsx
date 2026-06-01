@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { LeadDTO, LeadScoreDTO, LeadStatusDTO } from '../lib/dashboardDummyApi'
-import { FiCalendar, FiEye, FiMail, FiMessageSquare, FiPhone } from 'react-icons/fi'
+import { FiCalendar, FiChevronDown, FiEye, FiMail, FiMessageSquare, FiPhone, FiTrash2 } from 'react-icons/fi'
 
 function BadgeSelect({
   id,
@@ -29,15 +29,7 @@ function BadgeSelect({
         className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-[#8B7355]"
         aria-hidden
       >
-        <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path
-            d="M2.5 4.25L6 7.75L9.5 4.25"
-            stroke="currentColor"
-            strokeWidth="1.25"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <FiChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden />
       </span>
     </span>
   )
@@ -89,6 +81,8 @@ export function LeadCard({
   canEditAssignee,
   assigneeOptions,
   onChangeAssignee,
+  canDelete,
+  onDelete,
   dirty,
   onUpdate,
 }: {
@@ -99,6 +93,8 @@ export function LeadCard({
   canEditAssignee?: boolean
   assigneeOptions?: string[]
   onChangeAssignee?: (assignee: string) => void
+  canDelete?: boolean
+  onDelete?: (lead: LeadDTO) => void
   dirty?: boolean
   onUpdate?: () => void
 }) {
@@ -260,6 +256,16 @@ export function LeadCard({
               onClick={() => onUpdate?.()}
             >
               Update
+            </button>
+          ) : null}
+          {canDelete ? (
+            <button
+              type="button"
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-[#D96B6B]/40 px-4 py-2 text-sm font-semibold text-[#D96B6B] transition-colors hover:bg-[#D96B6B]/10 lg:flex-none"
+              onClick={() => onDelete?.(lead)}
+            >
+              <FiTrash2 className="h-4 w-4 shrink-0" aria-hidden />
+              Delete
             </button>
           ) : null}
         </div>

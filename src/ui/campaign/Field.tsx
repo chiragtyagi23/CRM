@@ -4,13 +4,10 @@ export function Field({ label, required, children }: { label: string; required?:
   const id = useId()
   return (
     <label className="block" htmlFor={id}>
-      <div className="text-[11px] tracking-widest uppercase text-gray-500 font-semibold">
-        {label} {required ? <span className="text-rose-600">*</span> : null}
+      <div className="mb-2 text-sm font-medium text-[#8B7355]">
+        {label} {required ? <span className="text-[#D96B6B]">*</span> : null}
       </div>
-      <div className="mt-2" id={id}>
-        {children}
-      </div>
+      <div id={id}>{children}</div>
     </label>
   )
 }
-

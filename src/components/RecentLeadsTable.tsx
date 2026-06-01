@@ -12,12 +12,12 @@ function Pill({
   const base = 'inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none'
   const cls =
     tone === 'rose'
-      ? 'bg-rose-100 text-rose-700'
+      ? 'bg-[#D96B6B]/20 text-[#D96B6B]'
       : tone === 'mint'
-        ? 'bg-emerald-100 text-emerald-700'
+        ? 'bg-[#6FAF8F]/20 text-[#6FAF8F]'
         : tone === 'slate'
-          ? 'bg-slate-100 text-slate-700'
-          : 'bg-[rgba(157,122,86,0.14)] text-[#7a5b3f]'
+          ? 'bg-[#F5EFE7] text-[#8B7355]'
+          : 'bg-[#E8DCCB] text-[#8B7355]'
   return <span className={`${base} ${cls}`}>{children}</span>
 }
 
@@ -53,12 +53,12 @@ const columns: TableColumnDef<RecentLeadDTO>[] = [
   {
     key: 'name',
     header: 'Name',
-    cell: (r) => <span className="font-medium text-gray-900">{r.name}</span>,
+    cell: (r) => <span className="font-medium text-[#2E2E2E]">{r.name}</span>,
   },
   {
     key: 'contact',
     header: 'Contact',
-    cell: (r) => <span className="text-gray-600">{r.contact}</span>,
+    cell: (r) => <span className="text-[#8B7355]">{r.contact}</span>,
   },
   {
     key: 'source',
@@ -78,7 +78,7 @@ const columns: TableColumnDef<RecentLeadDTO>[] = [
   {
     key: 'assignedTo',
     header: 'Assigned To',
-    cell: (r) => <span className="text-gray-700">{r.assignedTo}</span>,
+    cell: (r) => <span className="text-[#2E2E2E]">{r.assignedTo}</span>,
   },
 ]
 

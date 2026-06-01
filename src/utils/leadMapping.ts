@@ -28,6 +28,26 @@ export function asLeadStatus(input: string | null | undefined): LeadStatusDTO {
   return 'New'
 }
 
+export function formatBudgetLabel(input: string | null | undefined): string {
+  const raw = (input ?? '').trim()
+  if (!raw) return ''
+
+  const legacy: Record<string, string> = {
+    under_50: 'Under 50 Lakhs',
+    '50_100': '50 Lakhs – 1 Cr',
+    '100_150': '1 Cr – 1.5 Cr',
+    '150_plus': '1.5 Cr+',
+  }
+  return legacy[raw] ?? raw
+}
+
+export function formatBhkLabel(input: string | null | undefined): string {
+  const raw = (input ?? '').trim()
+  if (!raw) return ''
+  if (/^\d+$/.test(raw)) return `${raw} BHK`
+  return raw
+}
+
 export function toLeadRow(c: CaptureLeadDTO): LeadDTO {
   const created = c.created_at ?? new Date().toISOString()
   const last = c.updated_at ?? created
@@ -42,8 +62,8 @@ export function toLeadRow(c: CaptureLeadDTO): LeadDTO {
     assignedTo: c.callBy ?? '—',
     createdAtISO: created,
     lastContactAtISO: last,
-    budgetLabel: c.budget ?? '',
-    bhkLabel: c.bhk ?? '',
+    budgetLabel: formatBudgetLabel(c.budget),
+    bhkLabel: formatBhkLabel(c.bhk),
     locationLabel: c.resiLocation ?? '',
     repeatCustomer: false,
     sentiment: 'Neutral',
@@ -69,8 +89,8 @@ export function toLeadDetailsRow(c: CaptureLeadDTO): LeadDTO {
     assignedTo: c.callBy ?? '—',
     createdAtISO: created,
     lastContactAtISO: last,
-    budgetLabel: c.budget ?? '',
-    bhkLabel: c.bhk ?? '',
+    budgetLabel: formatBudgetLabel(c.budget),
+    bhkLabel: formatBhkLabel(c.bhk),
     locationLabel: c.resiLocation ?? '',
     repeatCustomer: false,
     sentiment: 'Neutral',

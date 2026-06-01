@@ -10,8 +10,8 @@ export function CampaignSidebar({
   onSectionChange: (key: TemplateSectionKey) => void
 }) {
   return (
-    <aside className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sticky top-4 h-max">
-      <div className="px-2 py-2 text-xs font-semibold tracking-widest uppercase text-gray-500">Luxury template sections</div>
+    <aside className="rounded-xl border border-[#E8DCCB] bg-white p-3 shadow-sm sticky top-4 h-max">
+      <div className="px-2 py-2 text-xs font-semibold tracking-widest uppercase text-[#8B7355]">Luxury template sections</div>
       <div className="flex flex-col gap-2">
         {TEMPLATE_SECTIONS.map((s) => (
           <SidebarButton

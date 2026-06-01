@@ -56,6 +56,7 @@ export function buildCaptureLeadCreatePayload(input: CaptureLeadCreateInput): Ca
   } = input
 
   return {
+    campaignId: null,
     source: selectedSource,
     firstCallDate: firstCallDate || null,
     callBy: callBy || null,

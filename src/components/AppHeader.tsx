@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { FiBarChart2, FiGrid, FiMapPin, FiShield, FiUser, FiUserPlus } from 'react-icons/fi'
 import { confirmLeaveFromBulkUploadIfNeeded } from '../lib/bulkUploadNavigation'
 import { useSiteSection } from '../lib/siteApi'
+import { useACL } from '../acl/useACL'
 import { useAppSelector } from '../store/hooks'
+import type { AclModuleDTO } from '../acl/types'
 
-type NavIcon = 'grid' | 'user' | 'userPlus' | 'pin' | 'chart'
+type NavIcon = 'grid' | 'user' | 'userPlus' | 'pin' | 'chart' | 'shield'
 
 type NavPayload = {
   logo: { textMain: string; textSecondary: string }
@@ -12,90 +15,73 @@ type NavPayload = {
   menuItems: { id: string; label: string; link: string; icon: NavIcon }[]
 }
 
-function IconGrid({ className }: { className?: string }) {
-  return (
-    <svg className={className} width="18" height="18" viewBox="0 0 18 18" aria-hidden>
-      <rect x="2" y="2" width="5.5" height="5.5" rx="0.75" fill="currentColor" />
-      <rect x="10.5" y="2" width="5.5" height="5.5" rx="0.75" fill="currentColor" />
-      <rect x="2" y="10.5" width="5.5" height="5.5" rx="0.75" fill="currentColor" />
-      <rect x="10.5" y="10.5" width="5.5" height="5.5" rx="0.75" fill="currentColor" />
-    </svg>
-  )
-}
-
-function IconUser({ className }: { className?: string }) {
-  return (
-    <svg className={className} width="18" height="18" viewBox="0 0 18 18" aria-hidden>
-      <circle cx="9" cy="5.5" r="2.75" fill="currentColor" />
-      <path
-        fill="currentColor"
-        d="M4 15.25c0-2.9 2.24-5.25 5-5.25s5 2.35 5 5.25V16H4v-.75z"
-      />
-    </svg>
-  )
-}
-
-function IconUserPlus({ className }: { className?: string }) {
-  return (
-    <svg className={className} width="18" height="18" viewBox="0 0 18 18" aria-hidden>
-      <circle cx="6.25" cy="5.25" r="2.25" fill="currentColor" />
-      <path
-        fill="currentColor"
-        d="M2.5 14.5c0-2.35 1.9-4.25 4.25-4.25.35 0 .68.04 1 .12v1.38h-.25c-1.66 0-3 1.34-3 3V15h-2v-.5z"
-      />
-      <path
-        fill="currentColor"
-        d="M12.5 6v1.25H11v1.5h1.5V10h1.5V8.75H15.5v-1.5H14V6h-1.5z"
-      />
-    </svg>
-  )
-}
-
-function IconPin({ className }: { className?: string }) {
-  return (
-    <svg className={className} width="18" height="18" viewBox="0 0 18 18" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M9 2.25a4.25 4.25 0 0 0-4.25 4.15c0 3.2 3.5 7.85 4.25 8.85.75-1 4.25-5.65 4.25-8.85A4.25 4.25 0 0 0 9 2.25zm0 5.5a1.35 1.35 0 1 1 0-2.7 1.35 1.35 0 0 1 0 2.7z"
-      />
-    </svg>
-  )
-}
-
-function IconChart({ className }: { className?: string }) {
-  return (
-    <svg className={className} width="18" height="18" viewBox="0 0 18 18" aria-hidden>
-      <rect x="3" y="10" width="3" height="5" rx="0.5" fill="currentColor" />
-      <rect x="7.5" y="6" width="3" height="9" rx="0.5" fill="currentColor" />
-      <rect x="12" y="3" width="3" height="12" rx="0.5" fill="currentColor" />
-    </svg>
-  )
-}
-
 function NavIconGlyph({ name }: { name: NavIcon }) {
   switch (name) {
     case 'grid':
-      return <IconGrid className="app-header__nav-icon" />
+      return <FiGrid className="app-header__nav-icon" aria-hidden />
     case 'user':
-      return <IconUser className="app-header__nav-icon" />
+      return <FiUser className="app-header__nav-icon" aria-hidden />
     case 'userPlus':
-      return <IconUserPlus className="app-header__nav-icon" />
+      return <FiUserPlus className="app-header__nav-icon" aria-hidden />
     case 'pin':
-      return <IconPin className="app-header__nav-icon" />
+      return <FiMapPin className="app-header__nav-icon" aria-hidden />
     case 'chart':
-      return <IconChart className="app-header__nav-icon" />
+      return <FiBarChart2 className="app-header__nav-icon" aria-hidden />
+    case 'shield':
+      return <FiShield className="app-header__nav-icon" aria-hidden />
     default:
-      return <IconGrid className="app-header__nav-icon" />
+      return <FiGrid className="app-header__nav-icon" aria-hidden />
   }
+}
+
+function mapModuleIcon(icon?: string | null): NavIcon {
+  const i = (icon || 'grid').toLowerCase()
+  if (i === 'user') return 'user'
+  if (i === 'userplus' || i === 'user_plus') return 'userPlus'
+  if (i === 'pin') return 'pin'
+  if (i === 'chart') return 'chart'
+  if (i === 'shield') return 'shield'
+  return 'grid'
+}
+
+function modulesToMenuItems(modules: AclModuleDTO[]) {
+  const seen = new Set<string>()
+  return modules
+    .filter((m) => {
+      if (m.module_key === 'profile' || m.module_key === 'projects' || m.parent_id) return false
+      const link = m.route.startsWith('/') ? m.route : `/${m.route}`
+      if (seen.has(link)) return false
+      seen.add(link)
+      return true
+    })
+    .map((m) => ({
+      id: m.module_key,
+      label: m.name,
+      link: m.route.startsWith('/') ? m.route : `/${m.route}`,
+      icon: mapModuleIcon(m.icon),
+    }))
 }
 
 export function AppHeader() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useAppSelector((s) => s.auth)
+  const { navModules, isLegacyFullAccess, hasRbacSession, hasAccess: can } = useACL()
   const { data, error } = useSiteSection<NavPayload>('VITE_NAV_API_URL', '/demo-api/nav.json')
   const [menuOpen, setMenuOpen] = useState(false)
-  const path = location.pathname
+
+  // Navbar = top-level page modules from login access only (not action children like leads.delete)
+  const aclMenuItems = modulesToMenuItems(navModules)
+
+  const visibleMenuItems = hasRbacSession
+    ? aclMenuItems
+    : data
+      ? data.menuItems.filter((item) => {
+          if (isLegacyFullAccess) return true
+          const key = item.id.replace(/-/g, '_')
+          return can(key) || can(item.id)
+        })
+      : []
 
   useEffect(() => {
     if (!menuOpen) return
@@ -121,9 +107,7 @@ export function AppHeader() {
     return () => mq.removeEventListener('change', onChange)
   }, [])
 
-  const onNavClick = () => {
-    setMenuOpen(false)
-  }
+  const onNavClick = () => setMenuOpen(false)
 
   const toPath = (link: string) => {
     if (link === '#home') return '/'
@@ -131,25 +115,19 @@ export function AppHeader() {
     return `/${link.slice(1)}`
   }
 
-  const isActiveLink = (link: string) => {
-    const target = toPath(link)
-    if (target === '/campaign') return path === '/campaign' || path.startsWith('/campaign/')
-    return path === target
-  }
+  const logo = data?.logo ?? { textMain: 'PropCRM', textSecondary: 'Real Estate Lead Management' }
 
-  const visibleMenuItems = data ? data.menuItems : []
-
-  if (error) {
+  if (error && visibleMenuItems.length === 0) {
     return <div className="site-api-error site-api-error--nav">Navigation: {error}</div>
   }
 
-  if (!data) {
+  if (!data && visibleMenuItems.length === 0) {
     return (
       <header className="app-header app-header--loading" aria-busy="true">
         <div className="app-header__bar">
           <div className="app-header__brand">
             <span className="app-header__logo-mark" aria-hidden>
-              <IconGrid />
+              <FiGrid size={18} />
             </span>
             <div className="app-header__titles">
               <span className="app-header__name">PropCRM</span>
@@ -164,13 +142,7 @@ export function AppHeader() {
   return (
     <header className={`app-header${menuOpen ? ' app-header--menu-open' : ''}`}>
       {menuOpen ? (
-        <button
-          type="button"
-          className="app-header__scrim"
-          aria-label="Close menu"
-          tabIndex={-1}
-          onClick={() => setMenuOpen(false)}
-        />
+        <button type="button" className="app-header__scrim" aria-label="Close menu" tabIndex={-1} onClick={() => setMenuOpen(false)} />
       ) : null}
 
       <div className="app-header__bar">
@@ -183,24 +155,22 @@ export function AppHeader() {
           }}
         >
           <span className="app-header__logo-mark" aria-hidden>
-            <IconGrid />
+            <FiGrid size={18} />
           </span>
           <div className="app-header__titles">
-            <span className="app-header__name">{data.logo.textMain}</span>
-            <span className="app-header__tagline">{data.logo.textSecondary}</span>
+            <span className="app-header__name">{logo.textMain}</span>
+            <span className="app-header__tagline">{logo.textSecondary}</span>
           </div>
         </a>
 
         <nav className="app-header__nav app-header__nav--desktop" aria-label="Main">
           <ul className="app-header__menu">
             {visibleMenuItems.map((item) => {
-              const active = isActiveLink(item.link)
               return (
                 <li key={item.id}>
                   <a
                     href={toPath(item.link)}
-                    className={`app-header__link${active ? ' app-header__link--active' : ''}`}
-                    aria-current={active ? 'page' : undefined}
+                    className="app-header__link"
                     onClick={(e) => {
                       e.preventDefault()
                       navigate(toPath(item.link))
@@ -216,20 +186,22 @@ export function AppHeader() {
           </ul>
         </nav>
 
-        <div className="ml-auto hidden items-center gap-2 min-[901px]:flex">
+        <div className="app-header__user-desktop ml-auto hidden items-center gap-3 lg:flex">
           {user ? (
             <>
-              <span className="text-[12px] font-semibold text-gray-500">{user.name}</span>
-              <button
-                type="button"
-                className="inline-flex h-9 items-center justify-center rounded-xl border border-gray-300 bg-white px-4 text-[12px] font-semibold text-gray-700 hover:bg-gray-50"
-                onClick={() => {
-                  if (!confirmLeaveFromBulkUploadIfNeeded(location.pathname)) return
-                  navigate('/profile')
-                }}
-              >
-                Profile
-              </button>
+              {/* <span className="app-header__user-name">{user.name}</span> */}
+              {can('profile') || isLegacyFullAccess ? (
+                <button
+                  type="button"
+                  className="app-header__profile-btn"
+                  onClick={() => {
+                    if (!confirmLeaveFromBulkUploadIfNeeded(location.pathname)) return
+                    navigate('/profile')
+                  }}
+                >
+                  Profile
+                </button>
+              ) : null}
             </>
           ) : null}
         </div>
@@ -252,21 +224,14 @@ export function AppHeader() {
         </div>
       </div>
 
-      <div
-        id="app-header-drawer"
-        className="app-header__drawer"
-        aria-hidden={!menuOpen}
-        inert={menuOpen ? undefined : true}
-      >
+      <div id="app-header-drawer" className="app-header__drawer" aria-hidden={!menuOpen} inert={menuOpen ? undefined : true}>
         <ul className="app-header__menu app-header__menu--mobile">
           {visibleMenuItems.map((item) => {
-            const active = isActiveLink(item.link)
             return (
               <li key={item.id}>
                 <a
                   href={toPath(item.link)}
-                  className={`app-header__link app-header__link--mobile${active ? ' app-header__link--active' : ''}`}
-                  aria-current={active ? 'page' : undefined}
+                  className="app-header__link app-header__link--mobile"
                   onClick={(e) => {
                     e.preventDefault()
                     navigate(toPath(item.link))
@@ -280,7 +245,7 @@ export function AppHeader() {
             )
           })}
 
-          {user ? (
+          {user && (can('profile') || isLegacyFullAccess) ? (
             <li>
               <button
                 type="button"
@@ -291,7 +256,7 @@ export function AppHeader() {
                   navigate('/profile')
                 }}
               >
-                <IconUser className="app-header__nav-icon" />
+                <FiUser className="app-header__nav-icon" aria-hidden />
                 <span>Profile</span>
               </button>
             </li>

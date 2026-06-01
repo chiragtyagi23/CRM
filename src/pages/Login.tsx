@@ -1,18 +1,9 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { FiEye, FiEyeOff, FiLock } from 'react-icons/fi'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { login } from '../store/authSlice'
-
-function IconLock() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M5.25 7V5.75a3.75 3.75 0 1 1 7.5 0V7h.5A1.75 1.75 0 0 1 15 8.75v5.5A1.75 1.75 0 0 1 13.25 16h-8.5A1.75 1.75 0 0 1 3 14.25v-5.5A1.75 1.75 0 0 1 4.75 7h.5zm1.5 0h4.5V5.75a2.25 2.25 0 0 0-4.5 0V7z"
-      />
-    </svg>
-  )
-}
+import { d } from '../lib/designClasses'
 
 export function Login() {
   const navigate = useNavigate()
@@ -20,45 +11,38 @@ export function Login() {
   const { loading, error } = useAppSelector((s) => s.auth)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const canSubmit = useMemo(() => email.trim().length > 0 && password.trim().length >= 1 && !loading, [email, loading, password])
+  const [showPassword, setShowPassword] = useState(false)
+  const emailTrimmed = email.trim()
+  const emailError = useMemo(() => {
+    if (!emailTrimmed) return 'Email is required'
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed)) return 'Please enter a valid email address'
+    return ''
+  }, [emailTrimmed])
+  const passwordError = useMemo(() => {
+    if (!password.trim()) return 'Password is required'
+    return ''
+  }, [password])
+  const canSubmit = useMemo(() => !emailError && !passwordError && !loading, [emailError, loading, passwordError])
 
   return (
-    <section className="mx-auto box-border flex min-h-[calc(100vh-72px)] w-full max-w-[1100px] items-center px-4 py-10">
-      <div className="grid w-full grid-cols-1 gap-8 min-[920px]:grid-cols-2 min-[920px]:items-center">
-        <div className="hidden min-[920px]:block">
-          <div className="rounded-3xl border border-gray-900/5 bg-[#FDFBF7] p-8 shadow-[0_20px_60px_rgba(17,24,39,0.08)]">
-            <div className="inline-flex items-center gap-2 rounded-2xl bg-[#faf6ef] px-4 py-2 text-[12px] font-semibold text-[#80654a]">
-              <span className="text-[#80654a]">
-                <IconLock />
-              </span>
+    <section className="flex min-h-[60vh] w-full items-center py-6">
+      <div className="grid w-full grid-cols-1 gap-8 lg:grid-cols-2 lg:items-center">
+        <div className="hidden lg:block">
+          <div className={`${d.cardP6} p-8`}>
+            <div className="inline-flex items-center gap-2 rounded-lg bg-[#F5EFE7] px-4 py-2 text-sm font-semibold text-[#8B7355]">
+              <FiLock size={18} aria-hidden />
               Secure CRM Access
             </div>
-            <div className="mt-5 text-[26px] font-bold tracking-[-0.03em] text-gray-900">Welcome back to PropCRM</div>
-            <div className="mt-2 text-[13px] font-medium text-gray-500">
+            <h2 className="mt-5 text-2xl font-semibold text-[#2E2E2E]">Welcome back to PropCRM</h2>
+            <p className="mt-2 text-sm text-[#8B7355]">
               Manage leads, schedule site visits, and track conversions — all in one place.
-            </div>
-
-            <div className="mt-8 grid grid-cols-1 gap-4">
-              <div className="rounded-2xl bg-white p-5">
-                <div className="text-[12px] font-semibold text-gray-800">Tip</div>
-                <div className="mt-1 text-[12px] text-gray-600">
-                  This is UI-only right now. We’ll connect real authentication later.
-                </div>
-              </div>
-              <div className="rounded-2xl bg-white p-5">
-                <div className="text-[12px] font-semibold text-gray-800">Theme</div>
-                <div className="mt-1 text-[12px] text-gray-600">
-                  Background <span className="font-semibold text-gray-800">#f6efe4</span> · Cards{' '}
-                  <span className="font-semibold text-gray-800">#FDFBF7</span>
-                </div>
-              </div>
-            </div>
+            </p>
           </div>
         </div>
 
-        <div className="rounded-3xl border border-gray-900/5 bg-[#FDFBF7] p-7 shadow-[0_20px_60px_rgba(17,24,39,0.08)] min-[520px]:p-9">
-          <div className="text-[24px] font-bold tracking-[-0.03em] text-gray-900">Login</div>
-          <div className="mt-1 text-[13px] font-medium text-gray-500">Sign in to continue</div>
+        <div className="crm-auth-card">
+          <h2 className="text-2xl font-semibold text-[#2E2E2E]">Login</h2>
+          <p className="mt-1 text-sm text-[#8B7355]">Sign in to continue</p>
 
           <form
             className="mt-7 flex flex-col gap-4"
@@ -74,57 +58,64 @@ export function Login() {
             }}
           >
             <label className="block">
-              <div className="mb-2 text-[12px] font-semibold text-gray-600">Email</div>
+              <span className={d.label}>Email</span>
               <input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@company.com"
                 autoComplete="email"
-                className="h-11 w-full rounded-2xl border border-gray-200 bg-white px-4 text-[13px] text-gray-800 placeholder:text-gray-400 focus:border-[#cdb89f] focus:outline-none"
+                className={d.input}
               />
+              {emailError ? <div className="mt-1 text-xs font-medium text-[#D96B6B]">{emailError}</div> : null}
             </label>
 
             <label className="block">
-              <div className="mb-2 flex items-center justify-between gap-3 text-[12px] font-semibold text-gray-600">
-                <span>Password</span>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <span className="text-sm font-medium text-[#8B7355]">Password</span>
                 <button
                   type="button"
-                  className="text-[12px] font-semibold text-[#80654a] hover:text-[#725940]"
+                  className="text-sm font-semibold text-[#8B7355] hover:text-[#2E2E2E]"
                   onClick={() => window.alert('Forgot password (UI only)')}
                 >
                   Forgot?
                 </button>
               </div>
-              <input
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                type="password"
-                autoComplete="current-password"
-                className="h-11 w-full rounded-2xl border border-gray-200 bg-white px-4 text-[13px] text-gray-800 placeholder:text-gray-400 focus:border-[#cdb89f] focus:outline-none"
-              />
+              <div className="relative">
+                <input
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  className={`${d.input} pr-12`}
+                />
+                <button
+                  type="button"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8B7355] hover:text-[#2E2E2E]"
+                  onClick={() => setShowPassword((v) => !v)}
+                >
+                  {showPassword ? <FiEyeOff size={18} aria-hidden /> : <FiEye size={18} aria-hidden />}
+                </button>
+              </div>
+              {passwordError ? <div className="mt-1 text-xs font-medium text-[#D96B6B]">{passwordError}</div> : null}
             </label>
 
-            <button
-              type="submit"
-              disabled={!canSubmit}
-              className="mt-2 inline-flex h-11 w-full items-center justify-center rounded-2xl bg-[#80654a] text-[13px] font-semibold text-white shadow-sm hover:bg-[#725940] disabled:opacity-60"
-            >
+            <button type="submit" disabled={!canSubmit} className={`mt-2 w-full ${d.btnPrimary}`}>
               {loading ? 'Signing in…' : 'Sign in'}
             </button>
 
-            {error ? <div className="text-[12px] font-medium text-rose-600">{error}</div> : null}
+            {error ? <div className="text-sm font-medium text-[#D96B6B]">{error}</div> : null}
 
-            <div className="mt-1 text-center text-[12px] text-gray-500">
+            <p className="mt-1 text-center text-sm text-[#8B7355]">
               Don’t have an account?{' '}
-              <Link className="font-semibold text-[#80654a] hover:text-[#725940]" to="/signup">
+              <Link className="font-semibold text-[#8B7355] hover:text-[#2E2E2E]" to="/signup">
                 Create one
               </Link>
-            </div>
+            </p>
           </form>
         </div>
       </div>
     </section>
   )
 }
-
