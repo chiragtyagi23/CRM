@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import {
-  fetchDashboardCharts,
   type DashboardRange,
   type DashboardStatDTO,
   type LeadSourcePointDTO,
@@ -16,13 +15,18 @@ import { RecentLeadsTable } from '../components/RecentLeadsTable'
 import { BarChart } from '@mui/x-charts/BarChart'
 import { PieChart } from '@mui/x-charts'
 import { CanAccess } from '../acl/CanAccess'
-import { buildDashboardStats, dashboardSubtitle } from '../utils/uiConfig'
-import { isSameLocalDay, toMs } from '../utils/date'
+import {
+  buildDashboardStats,
+  BUYING_STAGE_OPTIONS,
+  CAPTURE_LEAD_SOURCE_TILE_OPTIONS,
+  dashboardSubtitle,
+} from '../utils/uiConfig'
+import { toMs } from '../utils/date'
 import { asRecentLeadScore, asRecentLeadStatus } from '../utils/leads'
 
 export function Dashboard() {
   const navigate = useNavigate()
-  const [range, setRange] = useState<DashboardRange>('week')
+  const [range, setRange] = useState<DashboardRange>('today')
   const [stats, setStats] = useState<DashboardStatDTO[]>([])
   const [salesFunnel, setSalesFunnel] = useState<SalesFunnelPointDTO[]>([])
   const [leadSources, setLeadSources] = useState<LeadSourcePointDTO[]>([])
@@ -31,6 +35,35 @@ export function Dashboard() {
   const [loadingCharts, setLoadingCharts] = useState(true)
   const [loadingLeads, setLoadingLeads] = useState(true)
 
+  const getRangeStart = (r: DashboardRange) => {
+    const now = new Date()
+    if (r === 'today') {
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    }
+    if (r === 'week') {
+      return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    }
+    return new Date(now.getFullYear(), now.getMonth(), 1)
+  }
+
+  const getLeadDate = (lead: CaptureLeadDTO) => {
+    const candidate = lead.created_at ?? lead.firstCallDate ?? ''
+    const d = new Date(candidate)
+    return Number.isNaN(d.getTime()) ? null : d
+  }
+
+  const getSiteVisitDate = (visit: { created_at?: string; date?: string }) => {
+    const candidate = visit.created_at ?? visit.date ?? ''
+    const d = new Date(candidate)
+    return Number.isNaN(d.getTime()) ? null : d
+  }
+
+  const isWithinRange = (d: Date, r: DashboardRange) => {
+    const now = new Date()
+    const t = d.getTime()
+    return t >= getRangeStart(r).getTime() && t <= now.getTime()
+  }
+
   useEffect(() => {
     let cancelled = false
     setLoadingSummary(true)
@@ -38,19 +71,24 @@ export function Dashboard() {
       .then(([leadsRes, visitsRes]) => {
         if (cancelled) return
 
-        const items = leadsRes.items
+        const items = leadsRes.items.filter((lead) => {
+          const d = getLeadDate(lead)
+          return d ? isWithinRange(d, range) : false
+        })
         const totalLeads = items.length
         const hotLeads = items.filter((l) => (l.status ?? '').trim().toLowerCase() === 'hot').length
 
-        const now = new Date()
-        const contactedToday = items.filter((l: CaptureLeadDTO) => {
+        const contactedInRange = items.filter((l: CaptureLeadDTO) => {
           const d = new Date(l.firstCallDate ?? '')
           if (Number.isNaN(d.getTime())) return false
-          return isSameLocalDay(d, now)
+          return isWithinRange(d, range)
         }).length
 
-        const siteVisits = visitsRes.items.length
-        setStats(buildDashboardStats(totalLeads, hotLeads, contactedToday, siteVisits))
+        const siteVisits = visitsRes.items.filter((visit) => {
+          const d = getSiteVisitDate(visit)
+          return d ? isWithinRange(d, range) : false
+        }).length
+        setStats(buildDashboardStats(totalLeads, hotLeads, contactedInRange, siteVisits))
       })
       .finally(() => {
         if (!cancelled) setLoadingSummary(false)
@@ -66,8 +104,12 @@ export function Dashboard() {
     fetchCaptureLeads()
       .then((res) => {
         if (cancelled) return
-        const rows = [...res.items]
-          .sort((a, b) => toMs(b.created_at) - toMs(a.created_at))
+        const rows = res.items
+          .filter((lead) => {
+            const d = getLeadDate(lead)
+            return d ? isWithinRange(d, range) : false
+          })
+          .sort((a, b) => toMs(b.created_at ?? b.firstCallDate) - toMs(a.created_at ?? a.firstCallDate))
           .slice(0, 5)
           .map((l): RecentLeadDTO => ({
             id: l.id,
@@ -91,12 +133,64 @@ export function Dashboard() {
   useEffect(() => {
     let cancelled = false
     setLoadingCharts(true)
-    fetchDashboardCharts(range)
+    fetchCaptureLeads()
       .then((res) => {
-        if (!cancelled) {
-          setSalesFunnel(res.salesFunnel)
-          setLeadSources(res.leadSources)
-        }
+        if (cancelled) return
+
+        const inRangeLeads = res.items.filter((lead) => {
+          const d = getLeadDate(lead)
+          return d ? isWithinRange(d, range) : false
+        })
+
+        const stageCounts = new Map<string, number>(BUYING_STAGE_OPTIONS.map((stage) => [stage, 0]))
+        inRangeLeads.forEach((lead) => {
+          const stage = (lead.propertyBuyingStage ?? '').trim().toUpperCase()
+          if (!stageCounts.has(stage)) return
+          stageCounts.set(stage, (stageCounts.get(stage) ?? 0) + 1)
+        })
+
+        const salesFunnelData: SalesFunnelPointDTO[] = BUYING_STAGE_OPTIONS.map((stage) => ({
+          stage,
+          value: stageCounts.get(stage) ?? 0,
+        }))
+        setSalesFunnel(salesFunnelData)
+
+        const sourceMeta = CAPTURE_LEAD_SOURCE_TILE_OPTIONS.map((s, idx) => ({
+          id: idx + 1,
+          key: s.id,
+          label: s.label,
+          color:
+            s.tone === 'rose'
+              ? '#D96B6B'
+              : s.tone === 'mint'
+                ? '#6FAF8F'
+                : s.tone === 'slate'
+                  ? '#9A8B7A'
+                  : '#8B7355',
+        }))
+        const sourceCounts = new Map<string, number>(sourceMeta.map((s) => [s.key, 0]))
+        inRangeLeads.forEach((lead) => {
+          const src = (lead.source ?? '').trim().toLowerCase()
+          if (!src) return
+          if (sourceCounts.has(src)) {
+            sourceCounts.set(src, (sourceCounts.get(src) ?? 0) + 1)
+          }
+        })
+
+        const totalSources = inRangeLeads.length
+        const leadSourceData: LeadSourcePointDTO[] = sourceMeta
+          .map((s) => {
+            const count = sourceCounts.get(s.key) ?? 0
+            const value = totalSources > 0 ? Math.round((count / totalSources) * 100) : 0
+            return {
+              id: s.id,
+              label: s.label,
+              value,
+              color: s.color,
+            }
+          })
+          .filter((p) => p.value > 0)
+        setLeadSources(leadSourceData)
       })
       .finally(() => {
         if (!cancelled) setLoadingCharts(false)
@@ -200,6 +294,8 @@ export function Dashboard() {
           <div className="mt-3 flex items-center justify-center" aria-busy={loadingCharts}>
             {loadingCharts ? (
               <p className="m-0 px-1 py-5 text-[13px] text-[#8B7355]">Loading chart…</p>
+            ) : leadSources.length === 0 ? (
+              <p className="m-0 px-1 py-5 text-[13px] text-[#8B7355]">No lead source data for this range.</p>
             ) : (
               <PieChart
                 height={280}

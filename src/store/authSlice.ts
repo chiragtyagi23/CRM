@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 
-import { login as apiLogin, signup as apiSignup, fetchMe } from '../lib/authApi'
+import { login as apiLogin, fetchMe } from '../lib/authApi'
 import type { ApiError } from '../lib/crmApi'
 import { clearStoredAccess, writeStoredAccess } from '../acl/hasAccess'
 import type { AuthAccessDTO, AuthResponseDTO, AuthUserDTO } from '../types/dtos'
@@ -27,7 +27,7 @@ export type AuthState = {
   token: string | null
   user: AuthUserDTO | null
   access: AuthAccessDTO | null
-  /** True after first hydrateAuth finishes (avoids /unauthorized flash on refresh). */
+  /** True after first hydrateAuth finishes (avoids login redirect flash on refresh). */
   bootstrapped: boolean
   bootstrapping: boolean
   loading: boolean
@@ -114,19 +114,6 @@ export const hydrateAuth = createAsyncThunk(
   },
 )
 
-export const signup = createAsyncThunk<
-  AuthResponseDTO,
-  { name: string; email: string; password: string },
-  { rejectValue: string }
->('auth/signup', async (payload, { rejectWithValue }) => {
-  try {
-    const res = await apiSignup({ ...payload, role: null })
-    return res
-  } catch (err) {
-    return rejectWithValue(extractAuthErrorMessage(err))
-  }
-})
-
 export const login = createAsyncThunk<AuthResponseDTO, { email: string; password: string }, { rejectValue: string }>(
   'auth/login',
   async (payload, { rejectWithValue }) => {
@@ -199,17 +186,6 @@ const slice = createSlice({
       state.loading = false
       state.error = action.payload ?? action.error.message ?? 'Auth failed'
     }
-
-    b.addCase(signup.pending, pending)
-    b.addCase(signup.fulfilled, (state, action) => {
-      state.loading = false
-      state.token = action.payload.token
-      state.user = action.payload.user
-      state.access = action.payload.access ?? null
-      state.error = null
-      persistSession(action.payload)
-    })
-    b.addCase(signup.rejected, rejected)
 
     b.addCase(login.pending, pending)
     b.addCase(login.fulfilled, (state, action) => {

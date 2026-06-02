@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useAppSelector } from '../store/hooks'
 import { hasAccess, moduleKeyForPath, modulesForNavbar, resolveModuleKeys } from './hasAccess'
+import { resolveUiPermissions } from './permissionMap'
 import type { AclModuleDTO } from './types'
 
 export function useACL() {
@@ -17,6 +18,8 @@ export function useACL() {
   /** True when user logged in via RBAC (access payload), not legacy signup-only JWT */
   const hasRbacSession = access != null && !isLegacyFullAccess
   const navModules = useMemo(() => modulesForNavbar(modules), [modules])
+  const can = (moduleKey: string) => isLegacyFullAccess || hasAccess(moduleKey, modules, overrides)
+  const permissions = useMemo(() => resolveUiPermissions(access ?? null, can), [access, isLegacyFullAccess, modules, overrides])
 
   return {
     user,
@@ -26,8 +29,8 @@ export function useACL() {
     allowedKeys,
     isLegacyFullAccess,
     hasRbacSession,
-    hasAccess: (moduleKey: string) =>
-      isLegacyFullAccess || hasAccess(moduleKey, modules, overrides),
+    permissions,
+    hasAccess: can,
     canAccessRoute: (pathname: string) => {
       if (isLegacyFullAccess) return true
       const key = moduleKeyForPath(pathname, modules)

@@ -1,5 +1,19 @@
 /* ACL admin — matches PropCRM theme (theme.css) */
 
+:root {
+  --acl-bg: #faf7f2;
+  --acl-panel: #ffffff;
+  --acl-border: rgba(139, 115, 85, 0.2);
+  --acl-accent: #856938;
+  --acl-accent-hover: #6d5a43;
+  --acl-text: #2e2e2e;
+  --acl-muted: #8b7355;
+  --acl-danger: #d96b6b;
+  --acl-success: #6faf8f;
+  --acl-secondary: #f5efe7;
+  --acl-accent-soft: #e8dccb;
+}
+
 .acl-admin {
   --acl-bg: var(--background, #faf7f2);
   --acl-panel: var(--card, #ffffff);
@@ -460,7 +474,7 @@
 .acl-modal-scrim {
   position: absolute;
   inset: 0;
-  background: rgba(46, 46, 46, 0.45);
+  background: rgba(46, 46, 46, 0.72);
   border: none;
 }
 
@@ -469,7 +483,9 @@
   z-index: 1;
   width: min(480px, 100%);
   max-height: 90vh;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: var(--acl-panel);
   border: 1px solid rgba(139, 115, 85, 0.15);
   border-radius: 0.75rem;
@@ -512,16 +528,31 @@
 
 .acl-modal-body {
   padding: 1.25rem;
+  overflow-y: auto;
+  max-height: calc(90vh - 150px);
+}
+
+.acl-modal-panel--allow-overflow {
+  overflow: visible;
+}
+
+.acl-modal-body--allow-overflow {
+  overflow: visible;
+  max-height: none;
 }
 
 .acl-modal-footer {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  flex-shrink: 0;
   gap: 0.5rem;
   padding: 1rem 1.25rem;
   border-top: 1px solid rgba(139, 115, 85, 0.12);
   background: var(--acl-secondary);
   border-radius: 0 0 0.75rem 0.75rem;
+  position: relative;
+  z-index: 1;
 }
 
 .acl-skeleton-table {

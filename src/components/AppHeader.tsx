@@ -4,6 +4,7 @@ import { FiBarChart2, FiGrid, FiMapPin, FiShield, FiUser, FiUserPlus } from 'rea
 import { confirmLeaveFromBulkUploadIfNeeded } from '../lib/bulkUploadNavigation'
 import { useSiteSection } from '../lib/siteApi'
 import { useACL } from '../acl/useACL'
+import { defaultAuthedPath } from '../acl/hasAccess'
 import { useAppSelector } from '../store/hooks'
 import type { AclModuleDTO } from '../acl/types'
 
@@ -48,7 +49,8 @@ function modulesToMenuItems(modules: AclModuleDTO[]) {
   const seen = new Set<string>()
   return modules
     .filter((m) => {
-      if (m.module_key === 'profile' || m.module_key === 'projects' || m.parent_id) return false
+      // Reports tab hidden from navbar for now
+      if (m.module_key === 'profile' || m.module_key === 'projects' || m.module_key === 'reports' || m.parent_id) return false
       const link = m.route.startsWith('/') ? m.route : `/${m.route}`
       if (seen.has(link)) return false
       seen.add(link)
@@ -77,6 +79,8 @@ export function AppHeader() {
     ? aclMenuItems
     : data
       ? data.menuItems.filter((item) => {
+          // Reports tab hidden from navbar for now
+          if (item.id === 'reports') return false
           if (isLegacyFullAccess) return true
           const key = item.id.replace(/-/g, '_')
           return can(key) || can(item.id)
@@ -116,6 +120,7 @@ export function AppHeader() {
   }
 
   const logo = data?.logo ?? { textMain: 'PropCRM', textSecondary: 'Real Estate Lead Management' }
+  const homeForUser = defaultAuthedPath(navModules)
 
   if (error && visibleMenuItems.length === 0) {
     return <div className="site-api-error site-api-error--nav">Navigation: {error}</div>
@@ -151,7 +156,7 @@ export function AppHeader() {
           className="app-header__brand"
           onClick={(e) => {
             e.preventDefault()
-            navigate(user ? '/dashboard' : '/')
+            navigate(user ? homeForUser : '/')
           }}
         >
           <span className="app-header__logo-mark" aria-hidden>

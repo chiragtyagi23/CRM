@@ -4,7 +4,10 @@ const LS_TOKEN = 'crm_token'
 
 function baseUrl() {
   const raw = (import.meta.env as Record<string, string | undefined>).VITE_CRM_API_URL
-  return (raw && raw.trim().length > 0 ? raw.trim() : 'http://localhost:4000').replace(/\/$/, '')
+  const fallback = import.meta.env.PROD
+    ? 'https://crm-backend-ydni.onrender.com'
+    : 'http://localhost:4000'
+  return (raw && raw.trim().length > 0 ? raw.trim() : fallback).replace(/\/$/, '')
 }
 
 export const aclHttp = axios.create({

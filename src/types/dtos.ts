@@ -5,6 +5,7 @@
 export type ExistingCampaign = {
   id: string
   title: string
+  assignTo?: string | null
   address: string | null
   regNo: string | null
   logo?: string | null
@@ -155,6 +156,25 @@ export type AclOverrideDTO = {
 export type AuthAccessDTO = {
   modules: AclModuleDTO[]
   overrides?: AclOverrideDTO[]
+  permissions?: {
+    leads?: {
+      view: boolean
+      assignTo: boolean
+      delete: boolean
+      assignedOnly: boolean
+    }
+    campaign?: {
+      view: boolean
+      details: boolean
+      assignTo: boolean
+      edit: boolean
+    }
+    profile?: {
+      view: boolean
+      newUser: boolean
+      allUserTable: boolean
+    }
+  }
 }
 
 export type AuthResponseDTO = {

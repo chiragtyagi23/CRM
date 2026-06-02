@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { FiEye, FiEyeOff, FiLock } from 'react-icons/fi'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { login } from '../store/authSlice'
+import { defaultAuthedPath } from '../acl/hasAccess'
 import { d } from '../lib/designClasses'
 
 export function Login() {
@@ -50,8 +51,8 @@ export function Login() {
               e.preventDefault()
               if (!canSubmit) return
               try {
-                await dispatch(login({ email, password })).unwrap()
-                navigate('/dashboard')
+                const auth = await dispatch(login({ email, password })).unwrap()
+                navigate(defaultAuthedPath(auth.access?.modules ?? []), { replace: true })
               } catch {
                 // handled via state
               }
@@ -72,13 +73,12 @@ export function Login() {
             <label className="block">
               <div className="mb-2 flex items-center justify-between gap-3">
                 <span className="text-sm font-medium text-[#8B7355]">Password</span>
-                <button
-                  type="button"
+                <Link
+                  to="/forgot-password"
                   className="text-sm font-semibold text-[#8B7355] hover:text-[#2E2E2E]"
-                  onClick={() => window.alert('Forgot password (UI only)')}
                 >
                   Forgot?
-                </button>
+                </Link>
               </div>
               <div className="relative">
                 <input
@@ -106,13 +106,6 @@ export function Login() {
             </button>
 
             {error ? <div className="text-sm font-medium text-[#D96B6B]">{error}</div> : null}
-
-            <p className="mt-1 text-center text-sm text-[#8B7355]">
-              Don’t have an account?{' '}
-              <Link className="font-semibold text-[#8B7355] hover:text-[#2E2E2E]" to="/signup">
-                Create one
-              </Link>
-            </p>
           </form>
         </div>
       </div>

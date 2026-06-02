@@ -7,6 +7,7 @@ import { fetchCaptureLeads, patchCaptureLead } from '../lib/captureLeadsApi'
 import { toLeadRow } from '../utils/leadMapping'
 import type { LeadDTO, LeadScoreDTO, LeadStatusDTO } from '../lib/dashboardDummyApi'
 import { useACL } from '../acl/useACL'
+import { MODULE_KEYS } from '../acl/permissionMap'
 import { fetchUsers } from '../lib/usersApi'
 import { crmPayloadBuilder } from '../services/crmPayloadBuilder'
 
@@ -20,7 +21,7 @@ function CampaignDetails() {
   const [items, setItems] = useState<LeadDTO[]>([])
   const [loading, setLoading] = useState(true)
   const { hasAccess } = useACL()
-  const canAssign = hasAccess('leads.assignto')
+  const canAssign = hasAccess(MODULE_KEYS.leads.assignTo)
   const [teamMembers, setTeamMembers] = useState<string[]>([])
   const [overrides, setOverrides] = useState<Record<string, { score?: LeadScoreDTO; status?: LeadStatusDTO; assignedTo?: string }>>({})
 

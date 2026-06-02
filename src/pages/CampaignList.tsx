@@ -5,6 +5,7 @@ import { apiGet } from '../lib/crmApi'
 import { campaignBuilderActions } from '../store/campaignBuilderSlice'
 import { useAppDispatch } from '../store/hooks'
 import { CampaignListTable } from '../components/CampaignListTable'
+import { useACL } from '../acl/useACL'
 import { PageHeader } from '../components/PageHeader'
 import { d } from '../lib/designClasses'
 import { CampaignTemplateModal } from '../components/CampaignTemplateModal'
@@ -13,6 +14,8 @@ import type { CampaignListResponse, ExistingCampaign } from '../types/dtos'
 export function CampaignList() {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
+  const { permissions } = useACL()
+  const canCampaignEdit = permissions.campaign.edit
   const [templateModalOpen, setTemplateModalOpen] = useState(false)
   const [selectedTemplateKey, setSelectedTemplateKey] = useState<'luxury-template' | 'affordable-template'>('luxury-template')
 
@@ -33,16 +36,18 @@ export function CampaignList() {
         title="Campaigns"
         subtitle="Create and manage campaign microsites."
         actions={
-          <button
-            type="button"
-            className={d.btnPrimary}
-            onClick={() => {
-              setSelectedTemplateKey('luxury-template')
-              setTemplateModalOpen(true)
-            }}
-          >
-            Create new campaign
-          </button>
+          canCampaignEdit ? (
+            <button
+              type="button"
+              className={d.btnPrimary}
+              onClick={() => {
+                setSelectedTemplateKey('luxury-template')
+                setTemplateModalOpen(true)
+              }}
+            >
+              Create new campaign
+            </button>
+          ) : null
         }
       />
 

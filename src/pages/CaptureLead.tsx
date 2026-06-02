@@ -6,7 +6,6 @@ import {
   FaCalendarDays,
   FaCircleCheck,
   FaClock,
-  FaDollarSign,
   FaEnvelope,
   FaHouse,
   FaLocationDot,
@@ -18,9 +17,10 @@ import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { submitCaptureLead } from '../store/captureLeadsSlice'
 import { fetchUsers, type CrmUserDTO } from '../lib/usersApi'
 import { crmPayloadBuilder } from '../services/crmPayloadBuilder'
-import { IconInsetField, TogglePills, fieldInputClass } from '../components/uiPrimitives'
+import { IconInsetField, SearchableSelect, TogglePills, fieldInputClass } from '../components/uiPrimitives'
 import { PageHeader } from '../components/PageHeader'
 import { d } from '../lib/designClasses'
+import { FaRupeeSign } from "react-icons/fa";
 import {
   BHK_SELECT_OPTIONS,
   BUDGET_SELECT_OPTIONS,
@@ -73,11 +73,6 @@ export function CaptureLead() {
     fetchUsers()
       .then((res) => {
         setTeamMembers(res.items ?? [])
-        setCallBy((prev) => {
-          if (prev.trim()) return prev
-          const first = res.items?.[0]?.name
-          return first ? String(first) : ''
-        })
       })
       .catch(() => {
         setTeamMembers([])
@@ -121,13 +116,13 @@ export function CaptureLead() {
     <section className="w-full">
       <PageHeader
         title="Add New Lead"
-        subtitle="Complete all required fields to capture lead information"
+        subtitle="Complete the fields to capture lead information"
       />
 
       <div className={d.stack}>
       <section className={d.cardP6}>
         <h2 className={d.sectionTitle}>
-          SOURCE <span className="text-[#D96B6B]">*</span>
+          SOURCE
         </h2>
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
@@ -169,32 +164,31 @@ export function CaptureLead() {
         <h2 className={d.sectionTitle}>Contact Details</h2>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <IconInsetField label="1st CALL DATE" required icon={<FaCalendarDays className={fieldIconCls} aria-hidden />}>
+          <IconInsetField label="1st CALL DATE" icon={<FaCalendarDays className={fieldIconCls} aria-hidden />}>
             <input
+              type="date"
               value={firstCallDate}
               onChange={(e) => setFirstCallDate(e.target.value)}
               className={fieldInputClass}
             />
           </IconInsetField>
 
-          <IconInsetField label="CALL BY" required icon={<FaUser className={fieldIconCls} aria-hidden />}>
-            <select
+          <IconInsetField label="Lead Get By" icon={<FaUser className={fieldIconCls} aria-hidden />}>
+            <SearchableSelect
               value={callBy}
-              onChange={(e) => setCallBy(e.target.value)}
-              className={`${fieldInputClass} appearance-none`}
-            >
-              <option value="" disabled>
-                Select team member
-              </option>
-              {teamMembers.map((u) => (
-                <option key={u.id} value={u.name}>
-                  {u.name}
-                </option>
-              ))}
-            </select>
+              onChange={setCallBy}
+              options={teamMembers.map((u) => ({
+                id: u.id,
+                value: String(u.name ?? ''),
+                label: String(u.name ?? ''),
+              }))}
+              placeholder="Select team member"
+              searchPlaceholder="Search team member"
+              emptyMessage="No team members found"
+            />
           </IconInsetField>
 
-          <IconInsetField label="NAME" required icon={<FaUser className={fieldIconCls} aria-hidden />}>
+          <IconInsetField label="NAME" icon={<FaUser className={fieldIconCls} aria-hidden />}>
             <input
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
@@ -203,7 +197,7 @@ export function CaptureLead() {
             />
           </IconInsetField>
 
-          <IconInsetField label="NUM" required icon={<FaPhone className={fieldIconCls} aria-hidden />}>
+          <IconInsetField label="NUM" icon={<FaPhone className={fieldIconCls} aria-hidden />}>
             <input
               value={num}
               onChange={(e) => setNum(e.target.value)}
@@ -211,7 +205,7 @@ export function CaptureLead() {
             />
           </IconInsetField>
 
-          <IconInsetField label="WHATSAPP" required icon={<FaPhone className={fieldIconCls} aria-hidden />}>
+          <IconInsetField label="WHATSAPP" icon={<FaPhone className={fieldIconCls} aria-hidden />}>
             <input
               value={whatsapp}
               onChange={(e) => setWhatsapp(e.target.value)}
@@ -219,7 +213,7 @@ export function CaptureLead() {
             />
           </IconInsetField>
 
-          <IconInsetField label="EMAIL" required icon={<FaEnvelope className={fieldIconCls} aria-hidden />}>
+          <IconInsetField label="EMAIL" icon={<FaEnvelope className={fieldIconCls} aria-hidden />}>
             <input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -233,7 +227,7 @@ export function CaptureLead() {
         <h2 className={d.sectionTitle}>Property Requirements</h2>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <IconInsetField label="BHK" required icon={<FaHouse className={fieldIconCls} aria-hidden />}>
+          <IconInsetField label="BHK" icon={<FaHouse className={fieldIconCls} aria-hidden />}>
             <select
               value={bhk}
               onChange={(e) => setBhk(e.target.value)}
@@ -250,7 +244,7 @@ export function CaptureLead() {
             </select>
           </IconInsetField>
 
-          <IconInsetField label="BGT (Budget)" required icon={<FaDollarSign className={fieldIconCls} aria-hidden />}>
+          <IconInsetField label="BGT (Budget)" icon={<FaRupeeSign className={fieldIconCls} aria-hidden />}>
             <select
               value={budget}
               onChange={(e) => setBudget(e.target.value)}
@@ -273,7 +267,7 @@ export function CaptureLead() {
         <h2 className={d.sectionTitle}>Current Residence</h2>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <IconInsetField label="RESI Location" required icon={<FaLocationDot className={fieldIconCls} aria-hidden />}>
+          <IconInsetField label="RESI Location" icon={<FaLocationDot className={fieldIconCls} aria-hidden />}>
             <input
               value={resiLocation}
               onChange={(e) => setResiLocation(e.target.value)}
@@ -284,7 +278,6 @@ export function CaptureLead() {
 
           <TogglePills
             label="PROPERTY OWNERSHIP"
-            required
             value={ownership}
             options={OWNERSHIP_TOGGLE_OPTIONS}
             onChange={setOwnership}
@@ -296,7 +289,7 @@ export function CaptureLead() {
         <h2 className={d.sectionTitle}>Work Information</h2>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <IconInsetField label="WORK Location" required icon={<FaBriefcase className={fieldIconCls} aria-hidden />}>
+          <IconInsetField label="WORK Location" icon={<FaBriefcase className={fieldIconCls} aria-hidden />}>
             <input
               value={workLocation}
               onChange={(e) => setWorkLocation(e.target.value)}
@@ -307,14 +300,13 @@ export function CaptureLead() {
 
           <TogglePills
             label="WORK PROFILE"
-            required
             value={workProfile}
             options={WORK_PROFILE_TOGGLE_OPTIONS}
             onChange={setWorkProfile}
           />
 
           <div className="min-[900px]:col-span-2">
-            <IconInsetField label="TYPE OF INDUSTRY" required icon={<FaBriefcase className={fieldIconCls} aria-hidden />}>
+            <IconInsetField label="TYPE OF INDUSTRY" icon={<FaBriefcase className={fieldIconCls} aria-hidden />}>
               <input
                 value={industry}
                 onChange={(e) => setIndustry(e.target.value)}
@@ -328,11 +320,11 @@ export function CaptureLead() {
 
       <section className={d.cardP6}>
         <h2 className={d.sectionTitle}>
-          Preferred Locations <span className="text-[#D96B6B]">*</span>
+          Preferred Locations
         </h2>
 
         <div className="space-y-4">
-          <IconInsetField label="Preferred Location" required icon={<FaLocationDot className={fieldIconCls} aria-hidden />}>
+          <IconInsetField label="Preferred Location" icon={<FaLocationDot className={fieldIconCls} aria-hidden />}>
             <select
               value={preferredLocation}
               onChange={(e) => setPreferredLocation(e.target.value)}
@@ -347,7 +339,7 @@ export function CaptureLead() {
             </select>
           </IconInsetField>
           {preferredLocation === PREFERRED_LOCATION_OTHER_VALUE ? (
-            <IconInsetField label="Custom location" required icon={<FaLocationDot className={fieldIconCls} aria-hidden />}>
+            <IconInsetField label="Custom location" icon={<FaLocationDot className={fieldIconCls} aria-hidden />}>
               <input
                 value={preferredLocationOther}
                 onChange={(e) => setPreferredLocationOther(e.target.value)}
@@ -363,18 +355,18 @@ export function CaptureLead() {
         <h2 className={d.sectionTitle}>Timeline &amp; Status</h2>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <IconInsetField label="POSSESSION BY" required icon={<FaCalendarDays className={fieldIconCls} aria-hidden />}>
+          <IconInsetField label="POSSESSION BY" icon={<FaCalendarDays className={fieldIconCls} aria-hidden />}>
             <input
+              type="date"
               value={possessionBy}
               onChange={(e) => setPossessionBy(e.target.value)}
-              placeholder="e.g., Dec 2026"
               className={fieldInputClass}
             />
           </IconInsetField>
 
           <div>
             <div className={d.label}>
-              STATUS <span className="text-[#D96B6B]">*</span>
+              STATUS
             </div>
             <div className="flex gap-3">
               {LEAD_STATUS_OPTIONS.map((s) => {
@@ -407,7 +399,7 @@ export function CaptureLead() {
 
       <section className={d.cardP6}>
         <h2 className={d.sectionTitle}>
-          PROPERTY BUYING STAGE <span className="text-[#D96B6B]">*</span>
+          PROPERTY BUYING STAGE
         </h2>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -442,7 +434,7 @@ export function CaptureLead() {
               <span className="text-[#8B7355]">
                 <MdChat className={fieldIconCls} aria-hidden />
               </span>
-              REMARKS <span className="text-[#D96B6B]">*</span>
+              REMARKS
             </div>
             <textarea
               value={remarks}
@@ -452,20 +444,21 @@ export function CaptureLead() {
             />
           </label>
 
-          <IconInsetField label="CB DATE (Callback Date)" required icon={<FaCalendarDays className={fieldIconCls} aria-hidden />}>
+          <IconInsetField label="CB DATE (Callback Date)" icon={<FaCalendarDays className={fieldIconCls} aria-hidden />}>
             <input
+              type="date"
               value={callbackDate}
               onChange={(e) => setCallbackDate(e.target.value)}
-              placeholder="dd-mm-yyyy or yyyy-mm-dd"
               className={fieldInputClass}
             />
           </IconInsetField>
 
-          <IconInsetField label="CB TIME (Callback Time)" required icon={<FaClock className={fieldIconCls} aria-hidden />}>
+          <IconInsetField label="CB TIME (Callback Time)" icon={<FaClock className={fieldIconCls} aria-hidden />}>
             <input
               type="time"
               value={callbackTime}
               onChange={(e) => setCallbackTime(e.target.value)}
+              step={60}
               className={fieldInputClass}
             />
           </IconInsetField>

@@ -36,7 +36,7 @@ export function AuthenticatedLayout() {
   }
 
   if (!token) {
-    return <Navigate to="/unauthorized" replace />
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />
   }
 
   const publicPaths = ['/profile', '/403', '/session-expired']

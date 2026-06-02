@@ -5,9 +5,10 @@ import { FiArrowUpRight, FiCalendar, FiChevronLeft, FiClock, FiGrid, FiMail, FiM
 import {
   type LeadDTO,
 } from '../lib/dashboardDummyApi'
-import { fetchCaptureLeadById } from '../lib/captureLeadsApi'
+import { fetchCaptureLeadById, patchCaptureLead } from '../lib/captureLeadsApi'
 import { ScheduleVisitModal } from '../components/ScheduleVisitModal'
 import { fmtLongDateTime } from '../utils/format'
+import { BUYING_STAGE_OPTIONS } from '../utils/uiConfig'
 import { toLeadDetailsRow } from '../utils/leadMapping'
 
 function IconDot({ tone }: { tone: 'mint' | 'sand' }) {
@@ -93,13 +94,19 @@ export function LeadDetails({ leadId }: { leadId: string }) {
   ])
   const [noteDraft, setNoteDraft] = useState('')
   const [scheduleOpen, setScheduleOpen] = useState(false)
+  const [buyingStage, setBuyingStage] = useState<(typeof BUYING_STAGE_OPTIONS)[number]>('SEARCHING')
+  const [savingStage, setSavingStage] = useState(false)
 
   useEffect(() => {
     let cancelled = false
     setLoading(true)
     fetchCaptureLeadById(leadId)
       .then((d) => {
-        if (!cancelled) setLead(toLeadDetailsRow(d))
+        if (cancelled) return
+        setLead(toLeadDetailsRow(d))
+        const stageRaw = (d.propertyBuyingStage ?? '').trim().toUpperCase()
+        const stage = BUYING_STAGE_OPTIONS.find((s) => s === stageRaw) ?? 'SEARCHING'
+        setBuyingStage(stage)
       })
       .catch(() => {
         if (!cancelled) setLead(null)
@@ -111,6 +118,18 @@ export function LeadDetails({ leadId }: { leadId: string }) {
       cancelled = true
     }
   }, [leadId])
+
+  const handleUpdateBuyingStage = async () => {
+    setSavingStage(true)
+    try {
+      await patchCaptureLead(leadId, { propertyBuyingStage: buyingStage })
+      window.alert('Buying stage updated')
+    } catch {
+      window.alert('Failed to update buying stage')
+    } finally {
+      setSavingStage(false)
+    }
+  }
 
   const title = useMemo(() => lead?.name || 'Lead Details', [lead])
 
@@ -241,6 +260,31 @@ export function LeadDetails({ leadId }: { leadId: string }) {
                       <div>
                         <div className="text-[11px] font-medium text-[#8B7355]">Assigned To</div>
                         <div className="mt-1 font-semibold text-[#2E2E2E]">{lead.assignedTo || '—'}</div>
+                      </div>
+                      <div>
+                        <div className="text-[11px] font-medium text-[#8B7355]">Property Buying Stage</div>
+                        <div className="mt-1 flex items-center gap-2">
+                          <select
+                            value={buyingStage}
+                            onChange={(e) => setBuyingStage(e.target.value as (typeof BUYING_STAGE_OPTIONS)[number])}
+                            className="h-9 min-w-[180px] rounded-lg border border-[#E8DCCB] bg-white px-3 text-[12px] font-semibold text-[#2E2E2E] focus:border-[#8B7355] focus:outline-none"
+                            disabled={savingStage}
+                          >
+                            {BUYING_STAGE_OPTIONS.map((stage) => (
+                              <option key={stage} value={stage}>
+                                {stage}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            className="inline-flex h-9 items-center justify-center rounded-lg bg-[#8B7355] px-3 text-[11px] font-semibold text-white hover:bg-[#6d5a43] disabled:opacity-60"
+                            disabled={savingStage}
+                            onClick={handleUpdateBuyingStage}
+                          >
+                            {savingStage ? 'Saving…' : 'Update'}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </section>

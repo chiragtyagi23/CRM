@@ -34,6 +34,25 @@ export type AclUserDTO = {
 export type AuthAccessDTO = {
   modules: AclModuleDTO[]
   overrides?: AclOverrideDTO[]
+  permissions?: {
+    leads?: {
+      view: boolean
+      assignTo: boolean
+      delete: boolean
+      assignedOnly: boolean
+    }
+    campaign?: {
+      view: boolean
+      details: boolean
+      assignTo: boolean
+      edit: boolean
+    }
+    profile?: {
+      view: boolean
+      newUser: boolean
+      allUserTable: boolean
+    }
+  }
 }
 
 export type AuthRoleDTO = {

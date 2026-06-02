@@ -2,6 +2,18 @@ import type { AclModuleDTO, AclOverrideDTO } from './types'
 
 const LS_ACCESS = 'crm_access'
 
+function expandWithParents(key: string): string[] {
+  const raw = String(key ?? '').trim()
+  if (!raw) return []
+  const out = [raw]
+  const parts = raw.split('.')
+  while (parts.length > 1) {
+    parts.pop()
+    out.push(parts.join('.'))
+  }
+  return out
+}
+
 /** Resolve allowed module keys — DENY > ALLOW > role modules > default deny */
 export function resolveModuleKeys(
   roleModules: Pick<AclModuleDTO, 'module_key'>[],
@@ -19,10 +31,14 @@ export function resolveModuleKeys(
 
   const allowed = new Set<string>()
   for (const key of roleSet) {
-    if (!deny.has(key)) allowed.add(key)
+    for (const k of expandWithParents(key)) {
+      if (!deny.has(k)) allowed.add(k)
+    }
   }
   for (const key of allow) {
-    if (!deny.has(key)) allowed.add(key)
+    for (const k of expandWithParents(key)) {
+      if (!deny.has(k)) allowed.add(k)
+    }
   }
   return allowed
 }
@@ -85,4 +101,25 @@ export function moduleKeyForPath(pathname: string, modules: AclModuleDTO[]): str
     }
   }
   return best?.key ?? null
+}
+
+function normalizeRoute(route?: string | null): string {
+  const raw = String(route ?? '').trim()
+  if (!raw) return ''
+  return raw.startsWith('/') ? raw : `/${raw}`
+}
+
+/** Best landing path after login based on accessible top-level modules. */
+export function defaultAuthedPath(modules: AclModuleDTO[]): string {
+  const nav = modulesForNavbar(modules)
+  if (nav.length > 0) {
+    const byPriority = ['leads', 'dashboard', 'capture_lead', 'site_visits', 'reports', 'campaign']
+    const preferred = byPriority
+      .map((k) => nav.find((m) => m.module_key === k))
+      .find(Boolean)
+    const chosen = preferred ?? nav[0]
+    const route = normalizeRoute(chosen?.route)
+    if (route) return route
+  }
+  return '/403'
 }

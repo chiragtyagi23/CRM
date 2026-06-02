@@ -7,7 +7,8 @@ import { WiDirectionUpRight } from 'react-icons/wi'
 import type { LeadDTO } from '../lib/dashboardDummyApi'
 import { useACL } from '../acl/useACL'
 import { fetchUsers } from '../lib/usersApi'
-import { fetchCaptureLeads, patchCaptureLead } from '../lib/captureLeadsApi'
+import { fetchCaptureLeads } from '../lib/captureLeadsApi'
+import { apiSend } from '../lib/crmApi'
 
 const CAMPAIGN_ASSIGNEE_ROLES = new Set(['manager', 'admin'])
 const campaignSiteBase =
@@ -87,13 +88,16 @@ function AssignToSelect({
 }
 
 export function CampaignListTable(props: CampaignListTableProps) {
-  const { hasAccess } = useACL()
-  const canEditAssignee = hasAccess('leads.assignto')
+  const { permissions, user } = useACL()
+  const canCampaignAssign = permissions.campaign.assignTo
+  const canCampaignEdit = permissions.campaign.edit
+  const canCampaignDetails = permissions.campaign.details
+  const canManageCampaignAssignments = canCampaignAssign && canCampaignEdit
   const [assigneeOptions, setAssigneeOptions] = useState<string[]>([])
   const [assigneeOverrides, setAssigneeOverrides] = useState<Record<string, string>>({})
   const [baseAssigneeByCampaignId, setBaseAssigneeByCampaignId] = useState<Record<string, string>>({})
-  const [leadsByCampaignId, setLeadsByCampaignId] = useState<Record<string, CaptureLeadDTO[]>>({})
   const [savingCampaignId, setSavingCampaignId] = useState<string | null>(null)
+  const [loadingCampaignAssignees, setLoadingCampaignAssignees] = useState(false)
 
   const campaignIdsKey = useMemo(() => {
     if (props.variant === 'leads') return ''
@@ -121,6 +125,15 @@ export function CampaignListTable(props: CampaignListTableProps) {
     if (props.variant === 'leads' || !campaignIdsKey) return
 
     let cancelled = false
+    setLoadingCampaignAssignees(true)
+    setBaseAssigneeByCampaignId((prev) => {
+      const next: Record<string, string> = { ...prev }
+      for (const c of props.campaigns) {
+        const assigned = String(c.assignTo ?? '').trim()
+        if (assigned) next[c.id] = assigned
+      }
+      return next
+    })
     fetchCaptureLeads()
       .then((res) => {
         if (cancelled) return
@@ -131,18 +144,23 @@ export function CampaignListTable(props: CampaignListTableProps) {
           if (!byCampaign[campaignId]) byCampaign[campaignId] = []
           byCampaign[campaignId].push(lead)
         }
-        setLeadsByCampaignId(byCampaign)
-        const base: Record<string, string> = {}
-        for (const [campaignId, leads] of Object.entries(byCampaign)) {
-          base[campaignId] = deriveCampaignAssignee(leads)
-        }
-        setBaseAssigneeByCampaignId(base)
+        setBaseAssigneeByCampaignId((prev) => {
+          const next: Record<string, string> = { ...prev }
+          for (const [campaignId, leads] of Object.entries(byCampaign)) {
+            if (!next[campaignId] || next[campaignId] === '—') {
+              next[campaignId] = deriveCampaignAssignee(leads)
+            }
+          }
+          return next
+        })
       })
       .catch(() => {
         if (!cancelled) {
-          setLeadsByCampaignId({})
-          setBaseAssigneeByCampaignId({})
+          // Keep existing campaign-level assignment state on fetch failure.
         }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingCampaignAssignees(false)
       })
 
     return () => {
@@ -161,21 +179,10 @@ export function CampaignListTable(props: CampaignListTableProps) {
   const saveCampaignAssignee = async (campaignId: string) => {
     const next = displayAssignee(campaignId)
     const callBy = next === '—' ? null : next
-    const leads = leadsByCampaignId[campaignId] ?? []
-    if (leads.length === 0) {
-      window.alert('No leads linked to this campaign yet.')
-      return
-    }
 
     setSavingCampaignId(campaignId)
     try {
-      const toPatch = leads.filter((l) => (l.callBy ?? '').trim() !== (callBy ?? '').trim())
-      await Promise.all(toPatch.map((l) => patchCaptureLead(l.id, { callBy })))
-
-      setLeadsByCampaignId((prev) => ({
-        ...prev,
-        [campaignId]: (prev[campaignId] ?? []).map((l) => ({ ...l, callBy })),
-      }))
+      await apiSend(`/api/campaigns/${campaignId}/assignee`, 'PATCH', { assignTo: callBy })
       setBaseAssigneeByCampaignId((prev) => ({ ...prev, [campaignId]: next }))
       setAssigneeOverrides((prev) => {
         const nextOverrides = { ...prev }
@@ -279,6 +286,11 @@ export function CampaignListTable(props: CampaignListTableProps) {
   }
 
   const { campaigns, loadingCampaigns, selectedCampaignId, onSelectCampaign } = props
+  const currentUserName = String(user?.name ?? '').trim().toLowerCase()
+  const visibleCampaigns = useMemo(() => {
+    if (canManageCampaignAssignments || !currentUserName) return campaigns
+    return campaigns.filter((c) => displayAssignee(c.id).trim().toLowerCase() === currentUserName)
+  }, [campaigns, canManageCampaignAssignments, currentUserName, baseAssigneeByCampaignId, assigneeOverrides])
   const colSpan = 6
 
   return (
@@ -300,37 +312,39 @@ export function CampaignListTable(props: CampaignListTableProps) {
             </tr>
           </thead>
           <tbody className="text-[#2E2E2E]">
-            {loadingCampaigns ? (
+            {loadingCampaigns || loadingCampaignAssignees ? (
               <tr>
                 <td className="px-4 py-4 text-[#8B7355]" colSpan={colSpan}>
                   Loading…
                 </td>
               </tr>
-            ) : campaigns.length === 0 ? (
+            ) : visibleCampaigns.length === 0 ? (
               <tr>
                 <td className="px-4 py-4 text-[#8B7355]" colSpan={colSpan}>
                   No campaigns yet.
                 </td>
               </tr>
             ) : (
-              campaigns.map((c) => (
+              visibleCampaigns.map((c) => (
                 <tr key={c.id} className="border-b border-[#E8DCCB] last:border-b-0">
                   <td className="px-4 py-3 font-semibold">{c.title}</td>
                   <td className="px-4 py-3 text-[#8B7355]">{c.address ?? '—'}</td>
                   <td className="px-4 py-3 text-[#8B7355]">{c.regNo ?? '—'}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        className={
-                          selectedCampaignId === c.id
-                            ? 'h-9 px-3 rounded-lg bg-violet-600 text-white text-xs font-semibold'
-                            : 'h-9 px-3 rounded-lg border border-[#E8DCCB] bg-white text-[#2E2E2E] text-xs font-semibold hover:bg-[#F5EFE7]'
-                        }
-                        onClick={() => onSelectCampaign(c)}
-                      >
-                        {selectedCampaignId === c.id ? 'Cancel' : 'Edit'}
-                      </button>
+                      {canCampaignEdit && (
+                        <button
+                          type="button"
+                          className={
+                            selectedCampaignId === c.id
+                              ? 'h-9 px-3 rounded-lg bg-violet-600 text-white text-xs font-semibold'
+                              : 'h-9 px-3 rounded-lg border border-[#E8DCCB] bg-white text-[#2E2E2E] text-xs font-semibold hover:bg-[#F5EFE7]'
+                          }
+                          onClick={() => onSelectCampaign(c)}
+                        >
+                          {selectedCampaignId === c.id ? 'Cancel' : 'Edit'}
+                        </button>
+                      )}
                       <a
                         href={`${campaignSiteBase}/${c.title.toLowerCase().replace(/ /g, '-')}/${c.id}?template=${c.templateKey}`}
                         target="_blank"
@@ -342,19 +356,25 @@ export function CampaignListTable(props: CampaignListTableProps) {
                     </div>
                   </td>
                   <td className="text-[#8B7355] px-4 py-3 font-semibold">
-                    <Link to={`/campaign/${c.id}`} state={{ title: c.title }} aria-label={`${c.title} details`}>
-                      <WiDirectionUpRight className="w-8 h-8" />
-                    </Link>
+                    {canCampaignDetails ? (
+                      <Link to={`/campaign/${c.id}`} state={{ title: c.title }} aria-label={`${c.title} details`}>
+                        <WiDirectionUpRight className="w-8 h-8" />
+                      </Link>
+                    ) : (
+                      <span className="opacity-40">
+                        <WiDirectionUpRight className="w-8 h-8" />
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <AssignToSelect
                         assignedTo={displayAssignee(c.id)}
-                        canEditAssignee={canEditAssignee}
+                        canEditAssignee={canManageCampaignAssignments}
                         assigneeOptions={assigneeOptionsWithCurrent(assigneeOptions, displayAssignee(c.id))}
                         onChangeAssignee={(value) => setAssigneeOverrides((s) => ({ ...s, [c.id]: value }))}
                       />
-                      {isAssigneeDirty(c.id) ? (
+                      {canManageCampaignAssignments && isAssigneeDirty(c.id) ? (
                         <button
                           type="button"
                           disabled={savingCampaignId === c.id}

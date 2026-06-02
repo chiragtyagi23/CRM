@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Navigate, Outlet, Route, Routes, useParams } from 'react-router-dom'
 
+import { defaultAuthedPath } from './acl/hasAccess'
 import { ProtectedRoute } from './acl/ProtectedRoute'
 import { AppMain } from './components/AppMain'
 import { ToastProvider } from './components/acl/Toast'
@@ -14,13 +15,13 @@ import { Forbidden } from './pages/Forbidden'
 import { Home } from './pages/Home'
 import { LeadDetails } from './pages/LeadDetails'
 import { Leads } from './pages/Leads'
+import { ForgotPassword } from './pages/ForgotPassword'
 import { Login } from './pages/Login'
+import { ResetPassword } from './pages/ResetPassword'
 import { Profile } from './pages/Profile'
 import { Reports } from './pages/Reports'
 import { SessionExpired } from './pages/SessionExpired'
-import { Signup } from './pages/Signup'
 import { SiteVisits } from './pages/SiteVisits'
-import { Unauthorized } from './pages/Unauthorized'
 import { AclManagement } from './pages/admin/AclManagement'
 import { useAppDispatch, useAppSelector } from './store/hooks'
 import { hydrateAuth } from './store/authSlice'
@@ -53,7 +54,8 @@ function CampaignModule() {
 
 function App() {
   const dispatch = useAppDispatch()
-  const { token } = useAppSelector((s) => s.auth)
+  const { token, access } = useAppSelector((s) => s.auth)
+  const authedHome = defaultAuthedPath(access?.modules ?? [])
 
   useEffect(() => {
     dispatch(hydrateAuth())
@@ -63,16 +65,19 @@ function App() {
     <ToastProvider>
       <div className="app-shell">
         <Routes>
-          <Route path="/" element={token ? <Navigate to="/dashboard" replace /> : <Home />} />
+          <Route path="/" element={token ? <Navigate to={authedHome} replace /> : <Home />} />
           <Route
             path="/login"
-            element={token ? <Navigate to="/dashboard" replace /> : <AppMain id="login" narrow><Login /></AppMain>}
+            element={token ? <Navigate to={authedHome} replace /> : <AppMain id="login" narrow><Login /></AppMain>}
           />
           <Route
-            path="/signup"
-            element={token ? <Navigate to="/dashboard" replace /> : <AppMain id="signup" narrow><Signup /></AppMain>}
+            path="/forgot-password"
+            element={token ? <Navigate to={authedHome} replace /> : <AppMain id="forgot-password" narrow><ForgotPassword /></AppMain>}
           />
-          <Route path="/unauthorized" element={<AppMain id="unauthorized" narrow><Unauthorized /></AppMain>} />
+          <Route
+            path="/reset-password"
+            element={token ? <Navigate to={authedHome} replace /> : <AppMain id="reset-password" narrow><ResetPassword /></AppMain>}
+          />
           <Route path="/session-expired" element={<AppMain id="session-expired" narrow><SessionExpired /></AppMain>} />
 
           <Route element={<AuthenticatedLayout />}>
@@ -88,9 +93,30 @@ function App() {
             />
             <Route path="/campaign" element={<CampaignModule />}>
               <Route index element={<CampaignList />} />
-              <Route path="new" element={<CampaignBuilder />} />
-              <Route path="edit/:id" element={<CampaignEditRoute />} />
-              <Route path=":id" element={<CampaignDetails />} />
+              <Route
+                path="new"
+                element={
+                  <ProtectedRoute moduleKey="campaign.edit">
+                    <CampaignBuilder />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="edit/:id"
+                element={
+                  <ProtectedRoute moduleKey="campaign.edit">
+                    <CampaignEditRoute />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path=":id"
+                element={
+                  <ProtectedRoute moduleKey="campaign.details">
+                    <CampaignDetails />
+                  </ProtectedRoute>
+                }
+              />
             </Route>
             <Route
               path="/leads"
@@ -149,7 +175,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to={authedHome} replace />} />
           </Route>
         </Routes>
       </div>

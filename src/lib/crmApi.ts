@@ -4,9 +4,12 @@ export type { ApiUploadImageOptions, UploadImageResponse } from '../types/dtos'
 
 export type ApiError = { message: string; status?: number; body?: unknown }
 
+const PRODUCTION_API_URL = 'https://crm-backend-ydni.onrender.com'
+
 function baseUrl() {
   const raw = (import.meta.env as Record<string, string | undefined>).VITE_CRM_API_URL
-  return (raw && raw.trim().length > 0 ? raw.trim() : 'http://localhost:4000').replace(/\/$/, '')
+  const fallback = import.meta.env.PROD ? PRODUCTION_API_URL : 'http://localhost:4000'
+  return (raw && raw.trim().length > 0 ? raw.trim() : fallback).replace(/\/$/, '')
 }
 
 /** Same origin as the CRM API (for resolving `/uploads/...` draft URLs). */

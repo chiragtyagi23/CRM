@@ -14,9 +14,10 @@ import { ALL_LEAD_SCORES, ALL_LEAD_STATUSES, toLeadRow } from '../utils/leadMapp
 export function Leads() {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const { hasAccess } = useACL()
-  const canAssign = hasAccess('leads.assignto')
-  const canDelete = hasAccess('leads.delete')
+  const { user, permissions } = useACL()
+  const canAssign = permissions.leads.assignTo
+  const canDelete = permissions.leads.delete
+  const assignedOnly = permissions.leads.assignedOnly
   const { items, loading } = useAppSelector((s) => s.captureLeads)
 
   const rows = useMemo(() => items.map(toLeadRow), [items])
@@ -49,7 +50,13 @@ export function Leads() {
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase()
+    const currentUserName = (user?.name ?? '').trim().toLowerCase()
     return rowsWithOverrides.filter((r) => {
+      if (assignedOnly && currentUserName) {
+        const assigned = r.assignedTo.trim().toLowerCase()
+        const isUnassigned = !assigned || assigned === '—'
+        if (!isUnassigned && assigned !== currentUserName) return false
+      }
       if (status !== 'all' && r.status !== status) return false
       if (score !== 'all' && r.score !== score) return false
       if (source !== 'all' && r.source !== source) return false
@@ -63,7 +70,7 @@ export function Leads() {
         r.assignedTo.toLowerCase().includes(query)
       )
     })
-  }, [q, rowsWithOverrides, score, source, status])
+  }, [assignedOnly, q, rowsWithOverrides, score, source, status, user?.name])
 
   const totalCount = rowsWithOverrides.length
   const shownCount = filtered.length
