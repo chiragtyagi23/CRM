@@ -25,7 +25,7 @@ export type CaptureLeadCreateInput = {
   industry: string
   preferredResolved: string
   possessionBy: string
-  leadStatus: NonNullable<CaptureLeadCreatePayload['status']>
+  leadStatus: NonNullable<CaptureLeadCreatePayload['leadScore']>
   buyingStage: NonNullable<CaptureLeadCreatePayload['propertyBuyingStage']>
   callbackDate: string
   callbackTime: string
@@ -73,7 +73,8 @@ export function buildCaptureLeadCreatePayload(input: CaptureLeadCreateInput): Ca
     industryType: industry || null,
     preferredLocation: preferredResolved ? [preferredResolved] : [],
     possessionDate: possessionBy || null,
-    status: leadStatus,
+    leadScore: leadStatus,
+    status: 'NEW',
     propertyBuyingStage: buyingStage,
     callbackDate: callbackDate || null,
     callbackTime: callbackTime.trim() || null,
@@ -108,8 +109,8 @@ export function buildCaptureLeadLeadListCardPatch(input: {
 }): CaptureLeadPatchPayload {
   const { base, lead } = input
   const patch: CaptureLeadPatchPayload = {}
-  if (base.score !== lead.score) patch.status = lead.score.toUpperCase()
-  if (base.status !== lead.status) patch.status = lead.status
+  if (base.score !== lead.score) patch.leadScore = lead.score.toUpperCase()
+  if (base.status !== lead.status) patch.status = lead.status.toUpperCase().replace(/\s+/g, ' ')
   if (base.assignedTo !== lead.assignedTo) patch.callBy = lead.assignedTo
   return patch
 }

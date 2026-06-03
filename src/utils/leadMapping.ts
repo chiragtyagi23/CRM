@@ -4,21 +4,25 @@ import type { CaptureLeadDTO } from '../lib/captureLeadsApi'
 export const ALL_LEAD_STATUSES: (LeadStatusDTO | 'all')[] = ['all', 'New', 'Contacted', 'Qualified', 'Opportunity', 'Site Visit']
 export const ALL_LEAD_SCORES: (LeadScoreDTO | 'all')[] = ['all', 'Hot', 'Warm', 'Cold']
 
-export function asLeadScore(input: string | null | undefined): LeadScoreDTO {
-  const v = (input ?? '').trim().toLowerCase()
+function norm(value: string | null | undefined) {
+  return (value ?? '').trim().toLowerCase()
+}
+
+export function asLeadScore(input: string | null | undefined, leadScore?: string | null): LeadScoreDTO {
+  const fromScore = norm(leadScore)
+  if (fromScore === 'hot') return 'Hot'
+  if (fromScore === 'warm') return 'Warm'
+  if (fromScore === 'cold') return 'Cold'
+
+  const v = norm(input)
   if (v === 'hot') return 'Hot'
   if (v === 'warm') return 'Warm'
   if (v === 'cold') return 'Cold'
-
-  if (v === 'qualified' || v === 'opportunity') return 'Hot'
-  if (v === 'site visit' || v === 'site_visit' || v === 'sitevisit') return 'Hot'
-  if (v === 'new' || v === 'contacted') return 'Warm'
-
   return 'Warm'
 }
 
 export function asLeadStatus(input: string | null | undefined): LeadStatusDTO {
-  const v = (input ?? '').trim().toLowerCase()
+  const v = norm(input)
   if (v === 'new') return 'New'
   if (v === 'contacted') return 'Contacted'
   if (v === 'qualified') return 'Qualified'
@@ -58,7 +62,7 @@ export function toLeadRow(c: CaptureLeadDTO): LeadDTO {
     email: c.email ?? '',
     source: c.source ?? '—',
     status: asLeadStatus(c.status),
-    score: asLeadScore(c.status),
+    score: asLeadScore(c.status, c.leadScore),
     assignedTo: c.callBy ?? '—',
     createdAtISO: created,
     lastContactAtISO: last,
@@ -72,29 +76,5 @@ export function toLeadRow(c: CaptureLeadDTO): LeadDTO {
 }
 
 export function toLeadDetailsRow(c: CaptureLeadDTO): LeadDTO {
-  const created = c.created_at ?? new Date().toISOString()
-  const last = c.updated_at ?? created
-  const statusRaw = (c.status ?? '').trim().toLowerCase()
-  const score: LeadDTO['score'] = statusRaw === 'hot' ? 'Hot' : statusRaw === 'cold' ? 'Cold' : 'Warm'
-  const status: LeadDTO['status'] = 'New'
-
-  return {
-    id: c.id,
-    name: c.name ?? '—',
-    contact: c.number ?? '',
-    email: c.email ?? '',
-    source: c.source ?? '—',
-    status,
-    score,
-    assignedTo: c.callBy ?? '—',
-    createdAtISO: created,
-    lastContactAtISO: last,
-    budgetLabel: formatBudgetLabel(c.budget),
-    bhkLabel: formatBhkLabel(c.bhk),
-    locationLabel: c.resiLocation ?? '',
-    repeatCustomer: false,
-    sentiment: 'Neutral',
-    timelineLabel: '—',
-  }
+  return toLeadRow(c)
 }
-

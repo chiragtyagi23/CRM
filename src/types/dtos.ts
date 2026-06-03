@@ -77,7 +77,10 @@ export type CaptureLeadDTO = {
   industryType: string | null
   preferredLocation: string[]
   possessionDate: string | null
+  /** Pipeline: NEW, CONTACTED, QUALIFIED, OPPORTUNITY, SITE VISIT */
   status: string | null
+  /** Temperature: HOT, WARM, COLD */
+  leadScore: string | null
   propertyBuyingStage: string | null
   callbackDate: string | null
   /** Local time string from `<input type="time">`, e.g. `14:30` */

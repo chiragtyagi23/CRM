@@ -76,7 +76,10 @@ export function Dashboard() {
           return d ? isWithinRange(d, range) : false
         })
         const totalLeads = items.length
-        const hotLeads = items.filter((l) => (l.status ?? '').trim().toLowerCase() === 'hot').length
+        const hotLeads = items.filter((l) => {
+          const score = (l.leadScore ?? l.status ?? '').trim().toLowerCase()
+          return score === 'hot'
+        }).length
 
         const contactedInRange = items.filter((l: CaptureLeadDTO) => {
           const d = new Date(l.firstCallDate ?? '')
@@ -117,7 +120,7 @@ export function Dashboard() {
             contact: l.number ?? '',
             source: l.source ?? '—',
             status: asRecentLeadStatus(l.status),
-            score: asRecentLeadScore(l.status),
+            score: asRecentLeadScore(l.status, l.leadScore),
             assignedTo: l.callBy ?? '—',
           }))
         setRecentLeads(rows)
