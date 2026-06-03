@@ -5,7 +5,7 @@ import { FiCalendar, FiChevronDown, FiClock } from 'react-icons/fi'
 import { PageHeader } from '../components/PageHeader'
 import { d } from '../lib/designClasses'
 
-import { fetchProjects, type ProjectDTO } from '../lib/dashboardDummyApi'
+import { fetchCampaignProjects, type CampaignProjectOption } from '../lib/campaignsApi'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { loadCaptureLeads } from '../store/captureLeadsSlice'
 import { loadSiteVisits } from '../store/siteVisit.slice'
@@ -180,7 +180,7 @@ export function SiteVisits() {
   const dispatch = useAppDispatch()
   const { items: leadItems, loading: loadingLeads } = useAppSelector((s) => s.captureLeads)
   const { items: visitItems, loading: loadingVisits } = useAppSelector((s) => s.siteVisits)
-  const [projects, setProjects] = useState<ProjectDTO[]>([])
+  const [projects, setProjects] = useState<CampaignProjectOption[]>([])
   const [loadingProjects, setLoadingProjects] = useState(true)
   const [openLeadIds, setOpenLeadIds] = useState<Record<string, boolean>>({})
 
@@ -192,9 +192,12 @@ export function SiteVisits() {
   useEffect(() => {
     let cancelled = false
     setLoadingProjects(true)
-    fetchProjects()
+    fetchCampaignProjects()
       .then((p) => {
         if (!cancelled) setProjects(p)
+      })
+      .catch(() => {
+        if (!cancelled) setProjects([])
       })
       .finally(() => {
         if (!cancelled) setLoadingProjects(false)
@@ -206,11 +209,11 @@ export function SiteVisits() {
 
   const { groups, summary } = useMemo(() => {
     const leadById = new Map(leadItems.map((l) => [l.id, l]))
-    const projectById = new Map<ProjectDTO['id'], ProjectDTO>(projects.map((p) => [p.id, p]))
+    const projectById = new Map(projects.map((p) => [p.id, p]))
 
     const uiVisits: SiteVisitDTO[] = visitItems.map((v) => {
       const lead = leadById.get(v.leadId)
-      const project = projectById.get(v.projectId as ProjectDTO['id'])
+      const project = projectById.get(v.projectId)
 
       const visitDateTimeLabel = `${v.date}, ${v.time}`
       const tagPeriodDays = 60

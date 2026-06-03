@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 
-import { fetchProjects, type ProjectDTO } from '../lib/dashboardDummyApi'
+import type { ApiError } from '../lib/crmApi'
+import { fetchCampaignProjects, type CampaignProjectOption } from '../lib/campaignsApi'
 import { crmPayloadBuilder } from '../services/crmPayloadBuilder'
 import { fetchUsers, type CrmUserDTO } from '../lib/usersApi'
 import { useAppDispatch } from '../store/hooks'
@@ -30,6 +31,24 @@ function Modal({
   )
 }
 
+const scheduleInputClass =
+  'h-11 w-full rounded-xl border border-[#E8DCCB] bg-white px-4 text-[13px] text-[#2E2E2E] focus:border-[#8B7355] focus:outline-none'
+
+function scheduleApiErrorMessage(err: unknown): string {
+  if (err && typeof err === 'object' && 'body' in err) {
+    const body = (err as ApiError).body
+    if (body && typeof body === 'object' && body !== null && 'error' in body) {
+      return String((body as { error: unknown }).error)
+    }
+  }
+  return 'Failed to schedule site visit. Please try again.'
+}
+
+function normalizeLeadAssignee(name?: string | null): string {
+  const v = (name ?? '').trim()
+  return !v || v === '—' ? '' : v
+}
+
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <label className="block">
@@ -44,16 +63,20 @@ function Field({ label, required, children }: { label: string; required?: boolea
 export function ScheduleVisitModal({
   open,
   leadId,
+  leadAssignee,
   onClose,
   onScheduled,
 }: {
   open: boolean
   leadId: string
+  /** Lead’s assigned user (`callBy`); pre-selects Handler when modal opens. */
+  leadAssignee?: string | null
   onClose: () => void
   onScheduled?: () => void
 }) {
   const dispatch = useAppDispatch()
-  const [projects, setProjects] = useState<ProjectDTO[]>([])
+  const [projects, setProjects] = useState<CampaignProjectOption[]>([])
+  const [projectsLoading, setProjectsLoading] = useState(false)
   const [selectedProjectIds, setSelectedProjectIds] = useState<Set<string>>(() => new Set())
   const [projectDropdownOpen, setProjectDropdownOpen] = useState(false)
   const [date, setDate] = useState('')
@@ -67,7 +90,11 @@ export function ScheduleVisitModal({
 
   useEffect(() => {
     if (!open) return
-    fetchProjects().then((p) => setProjects(p))
+    setProjectsLoading(true)
+    fetchCampaignProjects()
+      .then((p) => setProjects(p))
+      .catch(() => setProjects([]))
+      .finally(() => setProjectsLoading(false))
   }, [open])
 
   useEffect(() => {
@@ -76,20 +103,47 @@ export function ScheduleVisitModal({
 
   useEffect(() => {
     if (!open) return
-    // Best-effort: load internal handlers. If unavailable, we still allow manual typing.
+    setDate('')
+    setTime('')
+    setSelectedProjectIds(new Set())
+    setProjectDropdownOpen(false)
+    setNotes('')
+    setRmName('')
+    setHandlerName(normalizeLeadAssignee(leadAssignee))
+  }, [open, leadAssignee])
+
+  useEffect(() => {
+    if (!open) return
+    let cancelled = false
     fetchUsers()
       .then((res) => {
+        if (cancelled) return
         setHandlers(res.items ?? [])
-        setHandlerName((prev) => {
-          if (prev.trim()) return prev
-          const first = res.items?.[0]?.name
-          return first ? String(first) : ''
-        })
       })
       .catch(() => {
-        setHandlers([])
+        if (!cancelled) setHandlers([])
       })
+    return () => {
+      cancelled = true
+    }
   }, [open])
+
+  const handlerSelectOptions = useMemo(() => {
+    const seen = new Set<string>()
+    const options: { key: string; name: string }[] = []
+    const add = (name: string, key: string) => {
+      const n = name.trim()
+      if (!n) return
+      const k = n.toLowerCase()
+      if (seen.has(k)) return
+      seen.add(k)
+      options.push({ key, name: n })
+    }
+    const assignee = normalizeLeadAssignee(leadAssignee)
+    if (assignee) add(assignee, '__lead-assignee')
+    for (const u of handlers) add(String(u.name ?? ''), u.id)
+    return options
+  }, [handlers, leadAssignee])
 
   const selectedProjectsLabel = useMemo(() => {
     const ids = Array.from(selectedProjectIds)
@@ -149,8 +203,10 @@ export function ScheduleVisitModal({
                 aria-label="Projects"
               >
                 <div className="max-h-[220px] overflow-auto p-2">
-                  {projects.length === 0 ? (
-                    <div className="px-3 py-2 text-[12px] text-[#8B7355]">Loading projects…</div>
+                  {projectsLoading ? (
+                    <div className="px-3 py-2 text-[12px] text-[#8B7355]">Loading campaigns…</div>
+                  ) : projects.length === 0 ? (
+                    <div className="px-3 py-2 text-[12px] text-[#8B7355]">No campaigns found</div>
                   ) : (
                     projects.map((p) => {
                       const checked = selectedProjectIds.has(p.id)
@@ -204,18 +260,21 @@ export function ScheduleVisitModal({
         <div className="grid grid-cols-1 gap-4 min-[520px]:grid-cols-2">
           <Field label="Date" required>
             <input
+              type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              placeholder="3/31/2026"
-              className="h-11 w-full rounded-xl border border-[#E8DCCB] bg-white px-4 text-[13px] text-[#2E2E2E] placeholder:text-[#8B7355]"
+              className={scheduleInputClass}
+              disabled={saving}
             />
           </Field>
           <Field label="Time" required>
             <input
+              type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              placeholder="11:00 AM"
-              className="h-11 w-full rounded-xl border border-[#E8DCCB] bg-white px-4 text-[13px] text-[#2E2E2E] placeholder:text-[#8B7355]"
+              step={60}
+              className={scheduleInputClass}
+              disabled={saving}
             />
           </Field>
         </div>
@@ -255,13 +314,13 @@ export function ScheduleVisitModal({
                   className="h-11 w-full rounded-xl border border-[#E8DCCB] bg-white px-4 text-[13px] text-[#2E2E2E]"
                 >
                   <option value="">Select handler</option>
-                  {handlers.map((u) => (
-                    <option key={u.id} value={u.name}>
-                      {u.name}
+                  {handlerSelectOptions.map((o) => (
+                    <option key={o.key} value={o.name}>
+                      {o.name}
                     </option>
                   ))}
                 </select>
-                {handlers.length === 0 ? (
+                {handlers.length === 0 && !normalizeLeadAssignee(leadAssignee) ? (
                   <div className="mt-2 text-[11px] font-medium text-[#8B7355]">No handlers loaded (you can still type in Notes).</div>
                 ) : null}
               </Field>
@@ -318,6 +377,8 @@ export function ScheduleVisitModal({
                 }
                 onClose()
                 onScheduled?.()
+              } catch (err) {
+                window.alert(scheduleApiErrorMessage(err))
               } finally {
                 setSaving(false)
               }

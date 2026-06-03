@@ -228,6 +228,7 @@ export function LeadDetails({ leadId }: { leadId: string }) {
             <ScheduleVisitModal
               open={scheduleOpen}
               leadId={leadId}
+              leadAssignee={lead?.assignedTo}
               onClose={() => setScheduleOpen(false)}
               onScheduled={() => {
                 navigate('/site-visits')

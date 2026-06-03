@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import type { LeadDTO, LeadScoreDTO, LeadStatusDTO } from '../lib/dashboardDummyApi'
+import { toIndiaTelHref, toWhatsAppHref } from '../utils/phone'
 import { FiCalendar, FiChevronDown, FiEye, FiMail, FiMessageSquare, FiPhone, FiTrash2 } from 'react-icons/fi'
 
 function BadgeSelect({
@@ -69,10 +70,6 @@ function formatRelativeDate(iso: string) {
   return date.toLocaleDateString()
 }
 
-function digitsForWhatsApp(contact: string) {
-  return String(contact ?? '').replace(/\D/g, '')
-}
-
 export function LeadCard({
   lead,
   onViewDetails,
@@ -98,9 +95,8 @@ export function LeadCard({
   dirty?: boolean
   onUpdate?: () => void
 }) {
-  const telHref = lead.contact?.trim() ? `tel:${lead.contact.replace(/\s/g, '')}` : undefined
-  const waDigits = digitsForWhatsApp(lead.contact)
-  const waHref = waDigits.length >= 10 ? `https://wa.me/${waDigits}` : undefined
+  const telHref = lead.contact?.trim() ? toIndiaTelHref(lead.contact) : undefined
+  const waHref = lead.contact?.trim() ? toWhatsAppHref(lead.contact) : undefined
 
   return (
     <article className="rounded-xl border border-[#8B7355]/10 bg-white p-6 transition-all hover:shadow-lg">

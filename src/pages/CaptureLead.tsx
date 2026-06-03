@@ -173,7 +173,7 @@ export function CaptureLead() {
             />
           </IconInsetField>
 
-          <IconInsetField label="Lead Get By" icon={<FaUser className={fieldIconCls} aria-hidden />}>
+          <IconInsetField label="LEAD RECEIVED BY" icon={<FaUser className={fieldIconCls} aria-hidden />}>
             <SearchableSelect
               value={callBy}
               onChange={setCallBy}
