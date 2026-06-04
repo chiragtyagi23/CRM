@@ -63,6 +63,8 @@ export type LeadDTO = RecentLeadDTO & {
   bhkLabel: string
   locationLabel: string
   lastContactAtISO: string
+  callbackDate?: string | null
+  callbackTime?: string | null
   repeatCustomer: boolean
   sentiment: 'Positive' | 'Neutral' | 'Negative'
   timelineLabel: string

@@ -119,6 +119,28 @@ export function AppHeader() {
     return `/${link.slice(1)}`
   }
 
+  const isNavLinkActive = (link: string, itemId?: string) => {
+    const path = toPath(link)
+    const { pathname } = location
+
+    if (itemId === 'profile' || path === '/profile') {
+      return pathname === '/profile' || pathname.startsWith('/profile/')
+    }
+
+    if (path === '/') return pathname === '/'
+
+    if (path === '/capture-lead') {
+      return pathname === '/capture-lead' || pathname.startsWith('/capture-lead/')
+    }
+
+    return pathname === path || pathname.startsWith(`${path}/`)
+  }
+
+  const navLinkClass = (link: string, itemId?: string) => {
+    const active = isNavLinkActive(link, itemId)
+    return ['app-header__link', active ? 'app-header__link--active' : ''].filter(Boolean).join(' ')
+  }
+
   const logo = data?.logo ?? { textMain: 'PropCRM', textSecondary: 'Real Estate Lead Management' }
   const homeForUser = defaultAuthedPath(navModules)
 
@@ -171,13 +193,16 @@ export function AppHeader() {
         <nav className="app-header__nav app-header__nav--desktop" aria-label="Main">
           <ul className="app-header__menu">
             {visibleMenuItems.map((item) => {
+              const active = isNavLinkActive(item.link, item.id)
               return (
                 <li key={item.id}>
                   <a
                     href={toPath(item.link)}
-                    className="app-header__link"
+                    className={navLinkClass(item.link, item.id)}
+                    aria-current={active ? 'page' : undefined}
                     onClick={(e) => {
                       e.preventDefault()
+                      if (!confirmLeaveFromBulkUploadIfNeeded(location.pathname)) return
                       navigate(toPath(item.link))
                       onNavClick()
                     }}
@@ -198,7 +223,15 @@ export function AppHeader() {
               {can('profile') || isLegacyFullAccess ? (
                 <button
                   type="button"
-                  className="app-header__profile-btn"
+                  className={[
+                    'app-header__profile-btn',
+                    location.pathname === '/profile' || location.pathname.startsWith('/profile/')
+                      ? 'app-header__profile-btn--active'
+                      : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  aria-current={location.pathname.startsWith('/profile') ? 'page' : undefined}
                   onClick={() => {
                     if (!confirmLeaveFromBulkUploadIfNeeded(location.pathname)) return
                     navigate('/profile')
@@ -232,13 +265,16 @@ export function AppHeader() {
       <div id="app-header-drawer" className="app-header__drawer" aria-hidden={!menuOpen} inert={menuOpen ? undefined : true}>
         <ul className="app-header__menu app-header__menu--mobile">
           {visibleMenuItems.map((item) => {
+            const active = isNavLinkActive(item.link, item.id)
             return (
               <li key={item.id}>
                 <a
                   href={toPath(item.link)}
-                  className="app-header__link app-header__link--mobile"
+                  className={`${navLinkClass(item.link, item.id)} app-header__link--mobile`}
+                  aria-current={active ? 'page' : undefined}
                   onClick={(e) => {
                     e.preventDefault()
+                    if (!confirmLeaveFromBulkUploadIfNeeded(location.pathname)) return
                     navigate(toPath(item.link))
                     onNavClick()
                   }}
@@ -254,7 +290,8 @@ export function AppHeader() {
             <li>
               <button
                 type="button"
-                className="app-header__link app-header__link--mobile"
+                className={`${navLinkClass('/profile', 'profile')} app-header__link--mobile`}
+                aria-current={location.pathname.startsWith('/profile') ? 'page' : undefined}
                 onClick={() => {
                   if (!confirmLeaveFromBulkUploadIfNeeded(location.pathname)) return
                   setMenuOpen(false)

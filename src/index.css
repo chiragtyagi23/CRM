@@ -155,9 +155,15 @@ body {
   text-align: left;
 }
 
-.app-header__link:hover {
+.app-header__link:hover,
+.app-header__link--active {
   background: var(--ah-secondary);
   color: var(--ah-text);
+}
+
+.app-header__link--active {
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--ah-border);
 }
 
 .app-header__nav-icon {
@@ -190,8 +196,12 @@ body {
   transition: background 0.15s ease;
 }
 
-.app-header__profile-btn:hover {
+.app-header__profile-btn:hover,
+.app-header__profile-btn--active {
   background: var(--ah-secondary);
+  border-color: var(--ah-primary, #8b7355);
+  color: var(--ah-text);
+  font-weight: 600;
 }
 
 .app-header__mobile-toggle {

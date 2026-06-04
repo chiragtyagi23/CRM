@@ -1,15 +1,155 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { FiArrowUpRight, FiCalendar, FiChevronLeft, FiClock, FiGrid, FiMail, FiMapPin, FiMessageSquare, FiPhone } from 'react-icons/fi'
+import {
+  FiArrowUpRight,
+  FiCalendar,
+  FiChevronDown,
+  FiChevronLeft,
+  FiChevronUp,
+  FiClock,
+  FiGrid,
+  FiMail,
+  FiMapPin,
+  FiMessageSquare,
+  FiPhone,
+} from 'react-icons/fi'
 
 import {
   type LeadDTO,
 } from '../lib/dashboardDummyApi'
+import { fetchCampaignProjects, type CampaignProjectOption } from '../lib/campaignsApi'
 import { fetchCaptureLeadById, patchCaptureLead } from '../lib/captureLeadsApi'
+import type { LeadActivityTimelineEntry } from '../types/dtos'
 import { ScheduleVisitModal } from '../components/ScheduleVisitModal'
-import { fmtLongDateTime } from '../utils/format'
+import { fmtLongDateTime, formatCallbackDateTime } from '../utils/format'
 import { BUYING_STAGE_OPTIONS } from '../utils/uiConfig'
 import { toLeadDetailsRow } from '../utils/leadMapping'
+
+function timelineTitle(type: LeadActivityTimelineEntry['type']) {
+  return type === 'call' ? 'Call Connected' : 'Email Sent'
+}
+
+function formatTimelineWhen(date: string, time: string) {
+  if (!date.trim()) return '—'
+  return time.trim() ? `${date}, ${time}` : date
+}
+
+function sortTimeline(items: LeadActivityTimelineEntry[]) {
+  return [...items].sort((a, b) => {
+    const ka = `${a.date}T${a.time || '00:00'}`
+    const kb = `${b.date}T${b.time || '00:00'}`
+    return kb.localeCompare(ka)
+  })
+}
+
+function timelineEntryMs(entry: LeadActivityTimelineEntry) {
+  const d = new Date(`${entry.date}T${entry.time || '00:00'}`)
+  return Number.isNaN(d.getTime()) ? 0 : d.getTime()
+}
+
+function entryWhen(entry: LeadActivityTimelineEntry) {
+  const ms = timelineEntryMs(entry)
+  if (!ms) return formatTimelineWhen(entry.date, entry.time)
+  return fmtLongDateTime(new Date(ms).toISOString())
+}
+
+type TimelineFeedItem = {
+  id: string
+  icon: 'call' | 'email' | 'created' | 'contact'
+  dotTone: 'mint' | 'sand'
+  title: string
+  subtitle?: string
+  when: string
+  sortMs: number
+}
+
+function entrySubtitle(entry: LeadActivityTimelineEntry) {
+  const parts: string[] = []
+  if (entry.projectName?.trim()) parts.push(entry.projectName.trim())
+  if (entry.note?.trim()) parts.push(entry.note.trim())
+  return parts.length ? parts.join(' · ') : undefined
+}
+
+function groupTimelineByProject(entries: LeadActivityTimelineEntry[]) {
+  const map = new Map<string, { projectId: string; projectName: string; entries: LeadActivityTimelineEntry[] }>()
+  for (const e of sortTimeline(entries)) {
+    const projectId = e.projectId || 'other'
+    const projectName = e.projectName?.trim() || 'Other'
+    const row = map.get(projectId) ?? { projectId, projectName, entries: [] }
+    row.entries.push(e)
+    map.set(projectId, row)
+  }
+  return Array.from(map.values()).sort((a, b) => a.projectName.localeCompare(b.projectName))
+}
+
+function buildTimelineFeed(entries: LeadActivityTimelineEntry[], lead: LeadDTO): TimelineFeedItem[] {
+  const items: TimelineFeedItem[] = entries.map((entry, idx) => ({
+    id: `entry-${idx}-${entry.projectId}-${entry.type}-${entry.date}-${entry.time}`,
+    icon: entry.type === 'call' ? 'call' : 'email',
+    dotTone: entry.type === 'call' ? 'mint' : 'sand',
+    title: timelineTitle(entry.type),
+    subtitle: entrySubtitle(entry),
+    when: entryWhen(entry),
+    sortMs: timelineEntryMs(entry),
+  }))
+
+  const lastContactMs = new Date(lead.lastContactAtISO).getTime()
+  if (!Number.isNaN(lastContactMs)) {
+    items.push({
+      id: 'last-contact',
+      icon: 'contact',
+      dotTone: 'sand',
+      title: 'Last Contact',
+      when: fmtLongDateTime(lead.lastContactAtISO),
+      sortMs: lastContactMs,
+    })
+  }
+
+  const createdMs = new Date(lead.createdAtISO).getTime()
+  if (!Number.isNaN(createdMs)) {
+    items.push({
+      id: 'lead-created',
+      icon: 'created',
+      dotTone: 'mint',
+      title: 'Lead Created',
+      subtitle: lead.source ? `Source: ${lead.source}` : undefined,
+      when: fmtLongDateTime(lead.createdAtISO),
+      sortMs: createdMs,
+    })
+  }
+
+  return items.sort((a, b) => b.sortMs - a.sortMs)
+}
+
+function ActivityIcon({ icon }: { icon: TimelineFeedItem['icon'] }) {
+  const cls = 'flex h-9 w-9 items-center justify-center rounded-full'
+  if (icon === 'call') {
+    return (
+      <div className={`${cls} bg-[#6FAF8F]/20 text-[#6FAF8F]`}>
+        <FiPhone size={16} aria-hidden />
+      </div>
+    )
+  }
+  if (icon === 'email') {
+    return (
+      <div className={`${cls} bg-[#FAF7F2] text-[#8B7355]`}>
+        <FiMail size={16} aria-hidden />
+      </div>
+    )
+  }
+  if (icon === 'contact') {
+    return (
+      <div className={`${cls} bg-[#E8DCCB]/50 text-[#8B7355]`}>
+        <FiClock size={16} aria-hidden />
+      </div>
+    )
+  }
+  return (
+    <div className={`${cls} bg-[#F5EFE7] text-[#8B7355]`}>
+      <FiArrowUpRight size={14} aria-hidden />
+    </div>
+  )
+}
 
 function IconDot({ tone }: { tone: 'mint' | 'sand' }) {
   const cls = tone === 'mint' ? 'bg-[#6FAF8F]' : 'bg-[#8B7355]'
@@ -89,6 +229,7 @@ export function LeadDetails({ leadId }: { leadId: string }) {
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<LeadDetailsTab>('overview')
   const activityTopRef = useRef<HTMLDivElement | null>(null)
+  const addTimelineFormRef = useRef<HTMLDivElement | null>(null)
   const [notes, setNotes] = useState<string[]>([
     'Looking for immediate possession. Interested in premium projects.',
   ])
@@ -96,14 +237,47 @@ export function LeadDetails({ leadId }: { leadId: string }) {
   const [scheduleOpen, setScheduleOpen] = useState(false)
   const [buyingStage, setBuyingStage] = useState<(typeof BUYING_STAGE_OPTIONS)[number]>('SEARCHING')
   const [savingStage, setSavingStage] = useState(false)
+  const [timeline, setTimeline] = useState<LeadActivityTimelineEntry[]>([])
+  const [projects, setProjects] = useState<CampaignProjectOption[]>([])
+  const [timelineProjectId, setTimelineProjectId] = useState('')
+  const [timelineType, setTimelineType] = useState<LeadActivityTimelineEntry['type']>('call')
+  const [timelineNote, setTimelineNote] = useState('')
+  const [timelineDate, setTimelineDate] = useState('')
+  const [timelineTime, setTimelineTime] = useState('')
+  const [savingTimeline, setSavingTimeline] = useState(false)
+  const [addTimelineOpen, setAddTimelineOpen] = useState(true)
+
+  const sortedTimeline = useMemo(() => sortTimeline(timeline), [timeline])
+  const timelineByProject = useMemo(() => groupTimelineByProject(sortedTimeline), [sortedTimeline])
+  const timelineFeed = useMemo(
+    () => (lead ? buildTimelineFeed(sortedTimeline, lead) : []),
+    [lead, sortedTimeline],
+  )
+  const systemFeed = useMemo(
+    () => timelineFeed.filter((item) => item.icon === 'created' || item.icon === 'contact'),
+    [timelineFeed],
+  )
+
+  const scrollToActivity = (target: 'top' | 'form') => {
+    setTab('activity')
+    if (target === 'form') setAddTimelineOpen(true)
+    requestAnimationFrame(() => {
+      const el = target === 'form' ? addTimelineFormRef.current : activityTopRef.current
+      el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      window.setTimeout(() => window.scrollBy({ top: -72, left: 0, behavior: 'smooth' }), 50)
+    })
+  }
 
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    fetchCaptureLeadById(leadId)
-      .then((d) => {
+    Promise.all([fetchCaptureLeadById(leadId), fetchCampaignProjects()])
+      .then(([d, campaignList]) => {
         if (cancelled) return
         setLead(toLeadDetailsRow(d))
+        setProjects(campaignList)
+        setTimeline(Array.isArray(d.activityTimeline) ? d.activityTimeline : [])
+        setTimelineProjectId((prev) => prev || d.campaignId || campaignList[0]?.id || '')
         const stageRaw = (d.propertyBuyingStage ?? '').trim().toUpperCase()
         const stage = BUYING_STAGE_OPTIONS.find((s) => s === stageRaw) ?? 'SEARCHING'
         setBuyingStage(stage)
@@ -131,7 +305,43 @@ export function LeadDetails({ leadId }: { leadId: string }) {
     }
   }
 
+  const handleAddTimeline = async () => {
+    if (!timelineProjectId || !timelineDate.trim() || !timelineTime.trim()) return
+    const project = projects.find((p) => p.id === timelineProjectId)
+    if (!project) {
+      window.alert('Please select a project')
+      return
+    }
+    setSavingTimeline(true)
+    try {
+      const entry: LeadActivityTimelineEntry = {
+        type: timelineType,
+        projectId: project.id,
+        projectName: project.name,
+        note: timelineNote.trim(),
+        date: timelineDate,
+        time: timelineTime,
+      }
+      const next = [entry, ...timeline]
+      const updated = await patchCaptureLead(leadId, { activityTimeline: next })
+      setTimeline(Array.isArray(updated.activityTimeline) ? updated.activityTimeline : next)
+      setLead(toLeadDetailsRow(updated))
+      setTimelineNote('')
+      setTimelineDate('')
+      setTimelineTime('')
+    } catch {
+      window.alert('Failed to add timeline entry')
+    } finally {
+      setSavingTimeline(false)
+    }
+  }
+
   const title = useMemo(() => lead?.name || 'Lead Details', [lead])
+
+  const callbackLabel = useMemo(() => {
+    if (!lead || lead.status !== 'New') return ''
+    return formatCallbackDateTime(lead.callbackDate, lead.callbackTime)
+  }, [lead])
 
   return (
     <section className="w-full">
@@ -191,6 +401,12 @@ export function LeadDetails({ leadId }: { leadId: string }) {
                       <FiGrid className="text-[#8B7355]" size={16} aria-hidden />
                       <span className="font-medium">Source: {lead.source || '—'}</span>
                     </div>
+                    {callbackLabel ? (
+                      <div className="inline-flex items-center gap-2 min-[820px]:col-span-2">
+                        <FiCalendar className="text-[#8B7355]" size={16} aria-hidden />
+                        <span className="font-medium text-[#D96B6B]">Callback: {callbackLabel}</span>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
 
@@ -328,37 +544,41 @@ export function LeadDetails({ leadId }: { leadId: string }) {
 
                 <div className="flex flex-col gap-6">
                   <section className="rounded-xl border border-[#8B7355]/10 bg-[#FFFFFF] p-6 shadow-[0_10px_24px_rgba(17,24,39,0.05)]">
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-start justify-between gap-3">
                       <div className="text-[16px] font-semibold text-[#2E2E2E]">Timeline</div>
-                      <button
-                        type="button"
-                        className="inline-flex h-8 items-center justify-center rounded-xl border border-[#E8DCCB] bg-white px-3 text-[11px] font-semibold text-[#2E2E2E] hover:bg-[#F5EFE7]"
-                        onClick={() => {
-                          setTab('activity')
-                          requestAnimationFrame(() => {
-                            activityTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                            window.setTimeout(() => window.scrollBy({ top: -72, left: 0, behavior: 'smooth' }), 50)
-                          })
-                        }}
-                      >
-                        View more
-                      </button>
+                      <div className="flex flex-col items-end gap-2">
+                        <button
+                          type="button"
+                          className="inline-flex h-8 items-center justify-center rounded-xl border border-[#E8DCCB] bg-white px-3 text-[11px] font-semibold text-[#2E2E2E] hover:bg-[#F5EFE7]"
+                          onClick={() => scrollToActivity('top')}
+                        >
+                          View more
+                        </button>
+                        <button
+                          type="button"
+                          className="inline-flex h-8 items-center justify-center rounded-xl bg-[#8B7355] px-3 text-[11px] font-semibold text-white hover:bg-[#6d5a43]"
+                          onClick={() => scrollToActivity('form')}
+                        >
+                          Add timeline
+                        </button>
+                      </div>
                     </div>
                     <div className="mt-4 flex flex-col gap-4 text-[12px] text-[#2E2E2E]">
-                      <div className="flex items-start gap-3">
-                        <IconDot tone="mint" />
-                        <div>
-                          <div className="font-medium text-[#2E2E2E]">Lead Created</div>
-                          <div className="mt-0.5 text-[11px] text-[#8B7355]">{fmtLongDateTime(lead.createdAtISO)}</div>
+                      {timelineFeed.slice(0, 3).map((item) => (
+                        <div key={item.id} className="flex items-start gap-3">
+                          <IconDot tone={item.dotTone} />
+                          <div>
+                            <div className="font-medium text-[#2E2E2E]">{item.title}</div>
+                            {item.subtitle ? (
+                              <div className="mt-0.5 text-[11px] text-[#8B7355]">{item.subtitle}</div>
+                            ) : null}
+                            <div className="mt-0.5 text-[11px] text-[#8B7355]">{item.when}</div>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <IconDot tone="sand" />
-                        <div>
-                          <div className="font-medium text-[#2E2E2E]">Last Contact</div>
-                          <div className="mt-0.5 text-[11px] text-[#8B7355]">{fmtLongDateTime(lead.lastContactAtISO)}</div>
-                        </div>
-                      </div>
+                      ))}
+                      {timelineFeed.length === 0 ? (
+                        <div className="text-[11px] text-[#8B7355]">No timeline activity yet.</div>
+                      ) : null}
                     </div>
                   </section>
 
@@ -379,39 +599,154 @@ export function LeadDetails({ leadId }: { leadId: string }) {
                 <div ref={activityTopRef} />
                 <div className="text-[16px] font-semibold text-[#2E2E2E]">Activity History</div>
 
-                <div className="mt-4 divide-y divide-gray-900/5 rounded-xl border border-[#8B7355]/10 bg-[#FFFFFF]">
-                  <div className="flex items-start gap-4 px-4 py-4">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#6FAF8F]/20 text-[#6FAF8F]">
-                      <FiPhone size={16} aria-hidden />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-[12px] font-semibold text-[#2E2E2E]">Call Connected</div>
-                      <div className="mt-1 text-[11px] text-[#8B7355]">Duration: 5m 32s</div>
-                      <div className="mt-1 text-[10.5px] text-[#8B7355]">{fmtLongDateTime(lead.lastContactAtISO)}</div>
-                    </div>
+                <div ref={addTimelineFormRef} className="mt-4 rounded-xl border border-[#E8DCCB] bg-[#FAFAF8]">
+                  <div className="flex items-center justify-between gap-3 px-4 py-3">
+                    <div className="text-[13px] font-semibold text-[#2E2E2E]">Add timeline</div>
+                    <button
+                      type="button"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E8DCCB] bg-white text-[#8B7355] hover:bg-[#F5EFE7]"
+                      aria-expanded={addTimelineOpen}
+                      aria-label={addTimelineOpen ? 'Collapse add timeline' : 'Expand add timeline'}
+                      onClick={() => setAddTimelineOpen((o) => !o)}
+                    >
+                      {addTimelineOpen ? (
+                        <FiChevronUp size={18} aria-hidden />
+                      ) : (
+                        <FiChevronDown size={18} aria-hidden />
+                      )}
+                    </button>
                   </div>
+                  {addTimelineOpen ? (
+                  <div className="border-t border-[#E8DCCB] px-4 pb-4 pt-3">
+                  <div className="grid grid-cols-1 gap-3 min-[640px]:grid-cols-2">
+                    <label className="block min-[640px]:col-span-2">
+                      <span className="mb-1 block text-[11px] font-medium text-[#8B7355]">Project</span>
+                      <select
+                        value={timelineProjectId}
+                        onChange={(e) => setTimelineProjectId(e.target.value)}
+                        className="h-10 w-full rounded-lg border border-[#E8DCCB] bg-white px-3 text-[12px] text-[#2E2E2E]"
+                        disabled={savingTimeline || projects.length === 0}
+                      >
+                        <option value="">{projects.length === 0 ? 'No projects found' : 'Select project'}</option>
+                        {projects.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="block min-[640px]:col-span-2">
+                      <span className="mb-1 block text-[11px] font-medium text-[#8B7355]">Type</span>
+                      <select
+                        value={timelineType}
+                        onChange={(e) => setTimelineType(e.target.value as LeadActivityTimelineEntry['type'])}
+                        className="h-10 w-full rounded-lg border border-[#E8DCCB] bg-white px-3 text-[12px] text-[#2E2E2E]"
+                        disabled={savingTimeline}
+                      >
+                        <option value="call">Call Connected</option>
+                        <option value="email">Email Sent</option>
+                      </select>
+                    </label>
+                    <label className="block min-[640px]:col-span-2">
+                      <span className="mb-1 block text-[11px] font-medium text-[#8B7355]">Note (optional)</span>
+                      <input
+                        value={timelineNote}
+                        onChange={(e) => setTimelineNote(e.target.value)}
+                        placeholder="e.g. Duration 5m, brochures shared"
+                        className="h-10 w-full rounded-lg border border-[#E8DCCB] bg-white px-3 text-[12px] text-[#2E2E2E] placeholder:text-[#8B7355]/70"
+                        disabled={savingTimeline}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="mb-1 block text-[11px] font-medium text-[#8B7355]">Date</span>
+                      <input
+                        type="date"
+                        value={timelineDate}
+                        onChange={(e) => setTimelineDate(e.target.value)}
+                        className="h-10 w-full rounded-lg border border-[#E8DCCB] bg-white px-3 text-[12px] text-[#2E2E2E]"
+                        disabled={savingTimeline}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="mb-1 block text-[11px] font-medium text-[#8B7355]">Time</span>
+                      <input
+                        type="time"
+                        value={timelineTime}
+                        onChange={(e) => setTimelineTime(e.target.value)}
+                        step={60}
+                        className="h-10 w-full rounded-lg border border-[#E8DCCB] bg-white px-3 text-[12px] text-[#2E2E2E]"
+                        disabled={savingTimeline}
+                      />
+                    </label>
+                  </div>
+                  <button
+                    type="button"
+                    className="mt-3 inline-flex h-10 items-center justify-center rounded-lg bg-[#8B7355] px-4 text-[12px] font-semibold text-white hover:bg-[#6d5a43] disabled:opacity-60"
+                    disabled={
+                      savingTimeline ||
+                      !timelineProjectId ||
+                      !timelineDate.trim() ||
+                      !timelineTime.trim()
+                    }
+                    onClick={handleAddTimeline}
+                  >
+                    {savingTimeline ? 'Adding…' : 'Add to timeline'}
+                  </button>
+                  </div>
+                  ) : null}
+                </div>
 
-                  <div className="flex items-start gap-4 px-4 py-4">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#FAF7F2] text-[#8B7355]">
-                      <FiMail size={16} aria-hidden />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-[12px] font-semibold text-[#2E2E2E]">Email Sent</div>
-                      <div className="mt-1 text-[11px] text-[#8B7355]">Property brochures shared</div>
-                      <div className="mt-1 text-[10.5px] text-[#8B7355]">{fmtLongDateTime(lead.createdAtISO)}</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-4 px-4 py-4">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F5EFE7] text-[#8B7355]">
-                      <FiArrowUpRight size={14} aria-hidden />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-[12px] font-semibold text-[#2E2E2E]">Lead Created</div>
-                      <div className="mt-1 text-[11px] text-[#8B7355]">Source: {lead.source || '—'}</div>
-                      <div className="mt-1 text-[10.5px] text-[#8B7355]">{fmtLongDateTime(lead.createdAtISO)}</div>
-                    </div>
-                  </div>
+                <div className="mt-4 overflow-hidden rounded-xl border border-[#8B7355]/10 bg-[#FFFFFF]">
+                  {timelineByProject.length === 0 && systemFeed.length === 0 ? (
+                    <div className="px-4 py-6 text-[12px] text-[#8B7355]">No activity yet. Add a call or email above.</div>
+                  ) : (
+                    <>
+                      {timelineByProject.map((group) => (
+                        <div key={group.projectId} className="border-b border-[#8B7355]/10 last:border-b-0">
+                          <div className="bg-[#FAFAF8] px-4 py-2.5 text-[11px] font-semibold text-[#8B7355]">
+                            {group.projectName}
+                          </div>
+                          <div className="divide-y divide-gray-900/5">
+                            {group.entries.map((entry, idx) => (
+                              <div
+                                key={`${group.projectId}-${entry.type}-${entry.date}-${entry.time}-${idx}`}
+                                className="flex items-start gap-4 px-4 py-4"
+                              >
+                                <ActivityIcon icon={entry.type === 'call' ? 'call' : 'email'} />
+                                <div className="min-w-0">
+                                  <div className="text-[12px] font-semibold text-[#2E2E2E]">
+                                    {timelineTitle(entry.type)}
+                                  </div>
+                                  {entry.note.trim() ? (
+                                    <div className="mt-1 text-[11px] text-[#8B7355]">{entry.note}</div>
+                                  ) : null}
+                                  <div className="mt-1 text-[10.5px] text-[#8B7355]">
+                                    {entryWhen(entry)}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                      {systemFeed.length > 0 ? (
+                        <div className="divide-y divide-gray-900/5 border-t border-[#8B7355]/10">
+                          {systemFeed.map((item) => (
+                            <div key={item.id} className="flex items-start gap-4 px-4 py-4">
+                              <ActivityIcon icon={item.icon} />
+                              <div className="min-w-0">
+                                <div className="text-[12px] font-semibold text-[#2E2E2E]">{item.title}</div>
+                                {item.subtitle ? (
+                                  <div className="mt-1 text-[11px] text-[#8B7355]">{item.subtitle}</div>
+                                ) : null}
+                                <div className="mt-1 text-[10.5px] text-[#8B7355]">{item.when}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+                    </>
+                  )}
                 </div>
               </section>
             ) 

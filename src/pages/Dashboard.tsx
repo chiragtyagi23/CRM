@@ -20,6 +20,7 @@ import {
   BUYING_STAGE_OPTIONS,
   CAPTURE_LEAD_SOURCE_TILE_OPTIONS,
   dashboardSubtitle,
+  getBuyingStageChartLabel,
 } from '../utils/uiConfig'
 import { toMs } from '../utils/date'
 import { asRecentLeadScore, asRecentLeadStatus } from '../utils/leads'
@@ -268,8 +269,14 @@ export function Dashboard() {
                 xAxis={[
                   {
                     id: 'funnelStages',
-                    data: salesFunnel.map((p) => p.stage),
+                    data: salesFunnel.map((p) => getBuyingStageChartLabel(p.stage)),
                     scaleType: 'band',
+                    tickLabelInterval: () => true,
+                    tickLabelStyle: {
+                      angle: -35,
+                      textAnchor: 'end',
+                      fontSize: 8,
+                    },
                   },
                 ]}
                 series={[
@@ -279,10 +286,10 @@ export function Dashboard() {
                   },
                 ]}
                 height={280}
-                margin={{ top: 20, left: 42, right: 16, bottom: 42 }}
+                margin={{ top: 20, left: 42, right: 16, bottom: 56 }}
                 grid={{ horizontal: true }}
                 sx={{
-                  '& .MuiChartsAxis-tickLabel': { fill: '#6b7280' },
+                  '& .MuiChartsAxis-tickLabel': { fill: '#6b7280', fontSize: '8px' },
                   '& .MuiChartsAxis-line': { stroke: 'rgba(17,24,39,0.15)' },
                   '& .MuiChartsAxis-tick': { stroke: 'rgba(17,24,39,0.15)' },
                   '& .MuiChartsGrid-line': { stroke: 'rgba(17,24,39,0.08)' },

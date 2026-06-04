@@ -58,6 +58,15 @@ export type SocialInfraGroup = { title: string; items: { name: string; value: st
 // Capture leads (API)
 // ---------------------------------------------------------------------------
 
+export type LeadActivityTimelineEntry = {
+  type: 'call' | 'email'
+  projectId: string
+  projectName: string
+  note: string
+  date: string
+  time: string
+}
+
 export type CaptureLeadDTO = {
   id: string
   campaignId: string | null
@@ -85,6 +94,7 @@ export type CaptureLeadDTO = {
   callbackDate: string | null
   /** Local time string from `<input type="time">`, e.g. `14:30` */
   callbackTime: string | null
+  activityTimeline?: LeadActivityTimelineEntry[]
   created_at?: string
   updated_at?: string
 }

@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 import { AppHeader } from '../components/AppHeader'
+import { OverdueCallbackPanel } from '../components/OverdueCallbackPanel'
 import { useACL } from '../acl/useACL'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { authActions } from '../store/authSlice'
@@ -49,6 +50,7 @@ export function AuthenticatedLayout() {
     <>
       <AppHeader />
       <Outlet />
+      <OverdueCallbackPanel />
     </>
   )
 }

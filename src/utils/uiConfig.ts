@@ -126,6 +126,35 @@ export const BUYING_STAGE_OPTIONS = [
   'LOST',
 ] as const
 
+export type BuyingStage = (typeof BUYING_STAGE_OPTIONS)[number]
+
+export const BUYING_STAGE_LABELS: Record<BuyingStage, string> = {
+  SEARCHING: 'Searching',
+  ADVANCED: 'Advanced Token',
+  SHORTLISTED: 'Shortlisted',
+  TOKEN: 'Token',
+  BOOKED: 'Booked',
+  LOST: 'Lost',
+}
+
+export function getBuyingStageLabel(stage: string): string {
+  return BUYING_STAGE_LABELS[stage as BuyingStage] ?? stage
+}
+
+/** Shorter labels for charts so every stage fits on the x-axis. */
+export const BUYING_STAGE_CHART_LABELS: Record<BuyingStage, string> = {
+  SEARCHING: 'Search',
+  ADVANCED: 'Adv. Token',
+  SHORTLISTED: 'Shortlist',
+  TOKEN: 'Token',
+  BOOKED: 'Booked',
+  LOST: 'Lost',
+}
+
+export function getBuyingStageChartLabel(stage: string): string {
+  return BUYING_STAGE_CHART_LABELS[stage as BuyingStage] ?? stage
+}
+
 export const BHK_SELECT_OPTIONS: { value: string; label: string }[] = [
   { value: '1 BHK', label: '1 BHK' },
   { value: '2 BHK', label: '2 BHK' },

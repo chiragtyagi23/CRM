@@ -69,6 +69,8 @@ export function toLeadRow(c: CaptureLeadDTO): LeadDTO {
     budgetLabel: formatBudgetLabel(c.budget),
     bhkLabel: formatBhkLabel(c.bhk),
     locationLabel: c.resiLocation ?? '',
+    callbackDate: c.callbackDate ?? null,
+    callbackTime: c.callbackTime ?? null,
     repeatCustomer: false,
     sentiment: 'Neutral',
     timelineLabel: '—',
