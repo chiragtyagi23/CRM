@@ -7,27 +7,49 @@ export function IconInsetField({
   required,
   icon,
   children,
+  /** Use for type="date" / type="time" — inset icons hide the native picker on Windows. */
+  dateTime,
 }: {
   label: string
   required?: boolean
   icon: ReactNode
   children: ReactNode
+  dateTime?: boolean
 }) {
   return (
     <label className="block">
       <div className={d.label}>
-        {label} {required ? <span className="text-[#D96B6B]">*</span> : null}
+        {dateTime ? (
+          <span className="inline-flex items-center gap-2">
+            <span className="text-[#8B7355]">{icon}</span>
+            <span>
+              {label} {required ? <span className="text-[#D96B6B]">*</span> : null}
+            </span>
+          </span>
+        ) : (
+          <>
+            {label} {required ? <span className="text-[#D96B6B]">*</span> : null}
+          </>
+        )}
       </div>
-      <div className="relative">
-        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8B7355]">{icon}</span>
-        {children}
-      </div>
+      {dateTime ? (
+        children
+      ) : (
+        <div className="relative">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8B7355]">{icon}</span>
+          {children}
+        </div>
+      )}
     </label>
   )
 }
 
 export const fieldInputClass =
   'h-11 w-full rounded-lg border border-[#E8DCCB] bg-white pl-11 pr-3 text-sm text-[#2E2E2E] placeholder:text-[#8B7355]/60 focus:border-[#8B7355] focus:outline-none'
+
+/** Date/time inputs — no left icon inset (native control stays visible). */
+export const fieldDateTimeInputClass =
+  'h-11 w-full min-w-0 rounded-lg border border-[#E8DCCB] bg-white px-3 text-sm text-[#2E2E2E] focus:border-[#8B7355] focus:outline-none [color-scheme:light]'
 
 export function SearchableSelect({
   value,

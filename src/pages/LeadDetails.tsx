@@ -19,7 +19,7 @@ import {
 } from '../lib/dashboardDummyApi'
 import { fetchCampaignProjects, type CampaignProjectOption } from '../lib/campaignsApi'
 import { fetchCaptureLeadById, patchCaptureLead } from '../lib/captureLeadsApi'
-import type { LeadActivityTimelineEntry } from '../types/dtos'
+import type { LeadActivityTimelineEntry, LeadInterestedProject } from '../types/dtos'
 import { ScheduleVisitModal } from '../components/ScheduleVisitModal'
 import { fmtLongDateTime, formatCallbackDateTime } from '../utils/format'
 import { BUYING_STAGE_OPTIONS } from '../utils/uiConfig'
@@ -68,6 +68,30 @@ function entrySubtitle(entry: LeadActivityTimelineEntry) {
   if (entry.projectName?.trim()) parts.push(entry.projectName.trim())
   if (entry.note?.trim()) parts.push(entry.note.trim())
   return parts.length ? parts.join(' · ') : undefined
+}
+
+function parseInterestedProjects(raw: unknown): LeadInterestedProject[] {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .map((item) => {
+      if (!item || typeof item !== 'object') return null
+      const row = item as Record<string, unknown>
+      const projectId = String(row.projectId ?? row.project_id ?? '').trim()
+      const projectName = String(row.projectName ?? row.project_name ?? '').trim()
+      if (!projectId) return null
+      return { projectId, projectName: projectName || projectId }
+    })
+    .filter((x): x is LeadInterestedProject => x !== null)
+}
+
+function enrichInterestedProjects(
+  stored: LeadInterestedProject[],
+  campaigns: CampaignProjectOption[],
+): LeadInterestedProject[] {
+  return stored.map((item) => {
+    const match = campaigns.find((c) => c.id === item.projectId)
+    return { projectId: item.projectId, projectName: match?.name ?? item.projectName }
+  })
 }
 
 function groupTimelineByProject(entries: LeadActivityTimelineEntry[]) {
@@ -246,8 +270,15 @@ export function LeadDetails({ leadId }: { leadId: string }) {
   const [timelineTime, setTimelineTime] = useState('')
   const [savingTimeline, setSavingTimeline] = useState(false)
   const [addTimelineOpen, setAddTimelineOpen] = useState(true)
+  const [interestedProjects, setInterestedProjects] = useState<LeadInterestedProject[]>([])
+  const [interestedProjectPickId, setInterestedProjectPickId] = useState('')
+  const [savingInterested, setSavingInterested] = useState(false)
 
   const sortedTimeline = useMemo(() => sortTimeline(timeline), [timeline])
+  const availableInterestedProjects = useMemo(
+    () => projects.filter((p) => !interestedProjects.some((i) => i.projectId === p.id)),
+    [projects, interestedProjects],
+  )
   const timelineByProject = useMemo(() => groupTimelineByProject(sortedTimeline), [sortedTimeline])
   const timelineFeed = useMemo(
     () => (lead ? buildTimelineFeed(sortedTimeline, lead) : []),
@@ -277,6 +308,15 @@ export function LeadDetails({ leadId }: { leadId: string }) {
         setLead(toLeadDetailsRow(d))
         setProjects(campaignList)
         setTimeline(Array.isArray(d.activityTimeline) ? d.activityTimeline : [])
+        const interested = enrichInterestedProjects(parseInterestedProjects(d.interestedProjects), campaignList)
+        setInterestedProjects(interested)
+        setInterestedProjectPickId((prev) => {
+          if (prev && campaignList.some((c) => c.id === prev && !interested.some((i) => i.projectId === prev))) {
+            return prev
+          }
+          const first = campaignList.find((c) => !interested.some((i) => i.projectId === c.id))
+          return first?.id ?? ''
+        })
         setTimelineProjectId((prev) => prev || d.campaignId || campaignList[0]?.id || '')
         const stageRaw = (d.propertyBuyingStage ?? '').trim().toUpperCase()
         const stage = BUYING_STAGE_OPTIONS.find((s) => s === stageRaw) ?? 'SEARCHING'
@@ -302,6 +342,50 @@ export function LeadDetails({ leadId }: { leadId: string }) {
       window.alert('Failed to update buying stage')
     } finally {
       setSavingStage(false)
+    }
+  }
+
+  const persistInterestedProjects = async (next: LeadInterestedProject[]) => {
+    setSavingInterested(true)
+    try {
+      const updated = await patchCaptureLead(leadId, { interestedProjects: next })
+      const synced = enrichInterestedProjects(
+        parseInterestedProjects(updated.interestedProjects),
+        projects,
+      )
+      setInterestedProjects(synced)
+      setLead(toLeadDetailsRow(updated))
+      return synced
+    } catch {
+      window.alert('Failed to update interested projects')
+      return null
+    } finally {
+      setSavingInterested(false)
+    }
+  }
+
+  const handleAddInterestedProject = async () => {
+    if (!interestedProjectPickId) return
+    const project = projects.find((p) => p.id === interestedProjectPickId)
+    if (!project) {
+      window.alert('Please select a project')
+      return
+    }
+    if (interestedProjects.some((i) => i.projectId === project.id)) return
+    const next = [...interestedProjects, { projectId: project.id, projectName: project.name }]
+    const synced = await persistInterestedProjects(next)
+    if (!synced) return
+    const first = projects.find((p) => !synced.some((i) => i.projectId === p.id))
+    setInterestedProjectPickId(first?.id ?? '')
+  }
+
+  const handleRemoveInterestedProject = async (projectId: string) => {
+    const next = interestedProjects.filter((i) => i.projectId !== projectId)
+    const synced = await persistInterestedProjects(next)
+    if (!synced) return
+    if (!interestedProjectPickId && projects.length > 0) {
+      const first = projects.find((p) => !synced.some((i) => i.projectId === p.id))
+      setInterestedProjectPickId(first?.id ?? '')
     }
   }
 
@@ -585,11 +669,59 @@ export function LeadDetails({ leadId }: { leadId: string }) {
                   <section className="rounded-xl border border-[#8B7355]/10 bg-[#FFFFFF] p-6 shadow-[0_10px_24px_rgba(17,24,39,0.05)]">
                     <div className="text-[16px] font-semibold text-[#2E2E2E]">Interested Projects</div>
                     <div className="mt-4 flex flex-col gap-3">
-                      {['Prestige Lakeside Habitat', 'Brigade Eldorado'].map((p) => (
-                        <div key={p} className="rounded-xl bg-[#F5EFE7] px-4 py-3 text-[12px] font-medium text-[#2E2E2E]">
-                          {p}
-                        </div>
-                      ))}
+                      <div className="flex flex-col gap-2 min-[480px]:flex-row min-[480px]:items-end">
+                        <label className="block flex-1">
+                          <span className="mb-1 block text-[11px] font-medium text-[#8B7355]">Add project</span>
+                          <select
+                            value={interestedProjectPickId}
+                            onChange={(e) => setInterestedProjectPickId(e.target.value)}
+                            className="h-10 w-full rounded-lg border border-[#E8DCCB] bg-white px-3 text-[12px] text-[#2E2E2E] focus:border-[#8B7355] focus:outline-none"
+                            disabled={savingInterested || availableInterestedProjects.length === 0}
+                          >
+                            <option value="">
+                              {projects.length === 0
+                                ? 'Loading projects…'
+                                : availableInterestedProjects.length === 0
+                                  ? 'All projects added'
+                                  : 'Select project'}
+                            </option>
+                            {availableInterestedProjects.map((p) => (
+                              <option key={p.id} value={p.id}>
+                                {p.name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <button
+                          type="button"
+                          className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-[#8B7355] px-4 text-[11px] font-semibold text-white hover:bg-[#6d5a43] disabled:opacity-60"
+                          disabled={savingInterested || !interestedProjectPickId}
+                          onClick={handleAddInterestedProject}
+                        >
+                          {savingInterested ? 'Saving…' : 'Add'}
+                        </button>
+                      </div>
+                      {interestedProjects.length === 0 ? (
+                        <div className="text-[11px] text-[#8B7355]">No interested projects yet.</div>
+                      ) : (
+                        interestedProjects.map((p) => (
+                          <div
+                            key={p.projectId}
+                            className="flex items-center justify-between gap-3 rounded-xl bg-[#F5EFE7] px-4 py-3 text-[12px] font-medium text-[#2E2E2E]"
+                          >
+                            <span className="min-w-0 truncate">{p.projectName}</span>
+                            <button
+                              type="button"
+                              className="shrink-0 text-[11px] font-semibold text-[#8B7355] hover:text-[#6d5a43] disabled:opacity-60"
+                              disabled={savingInterested}
+                              onClick={() => handleRemoveInterestedProject(p.projectId)}
+                              aria-label={`Remove ${p.projectName}`}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))
+                      )}
                     </div>
                   </section>
                 </div>

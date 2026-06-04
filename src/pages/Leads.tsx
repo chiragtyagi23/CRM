@@ -7,7 +7,6 @@ import { LeadCard } from '../components/LeadCard'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { crmPayloadBuilder } from '../services/crmPayloadBuilder'
 import { loadCaptureLeads, updateCaptureLead } from '../store/captureLeadsSlice'
-import { fetchUsers } from '../lib/usersApi'
 import { useACL } from '../acl/useACL'
 import { ALL_LEAD_SCORES, ALL_LEAD_STATUSES, toLeadRow } from '../utils/leadMapping'
 
@@ -38,7 +37,7 @@ export function Leads() {
   const [showFilters, setShowFilters] = useState(false)
 
   useEffect(() => {
-    dispatch(loadCaptureLeads())
+    dispatch(loadCaptureLeads({ force: true }))
   }, [dispatch])
 
   const allSources = useMemo(() => {
@@ -74,20 +73,15 @@ export function Leads() {
 
   const totalCount = rowsWithOverrides.length
   const shownCount = filtered.length
-  const [teamMembers, setTeamMembers] = useState<string[]>([])
 
-  useEffect(() => {
-    fetchUsers()
-      .then((res) => {
-        const names = (res.items ?? [])
-          .map((u) => String(u.name || '').trim())
-          .filter(Boolean)
-        setTeamMembers(names)
-      })
-      .catch(() => {
-        setTeamMembers([])
-      })
-  }, [])
+  const teamMembers = useMemo(() => {
+    const names = items
+      .map((l) => String(l.callBy ?? '').trim())
+      .filter(Boolean)
+    const me = String(user?.name ?? '').trim()
+    if (me) names.push(me)
+    return [...new Set(names)]
+  }, [items, user?.name])
 
   return (
     <div className="crm-page">

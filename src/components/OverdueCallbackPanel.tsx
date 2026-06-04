@@ -3,27 +3,17 @@ import { useNavigate } from 'react-router-dom'
 import { FiAlertCircle, FiChevronDown, FiChevronUp, FiX } from 'react-icons/fi'
 
 import { useACL } from '../acl/useACL'
-import { loadCaptureLeads } from '../store/captureLeadsSlice'
-import { useAppDispatch, useAppSelector } from '../store/hooks'
+import { useAppSelector } from '../store/hooks'
 import { listOverdueCallbackLeads } from '../utils/callbackDue'
 
 export function OverdueCallbackPanel() {
   const navigate = useNavigate()
-  const dispatch = useAppDispatch()
   const { hasAccess, isLegacyFullAccess } = useACL()
   const { items, loading } = useAppSelector((s) => s.captureLeads)
   const [collapsed, setCollapsed] = useState(false)
   const [dismissed, setDismissed] = useState(false)
 
   const canSeeLeads = isLegacyFullAccess || hasAccess('leads')
-
-  useEffect(() => {
-    if (!canSeeLeads) return
-    dispatch(loadCaptureLeads())
-    const onFocus = () => dispatch(loadCaptureLeads())
-    window.addEventListener('focus', onFocus)
-    return () => window.removeEventListener('focus', onFocus)
-  }, [canSeeLeads, dispatch])
 
   const overdue = useMemo(() => listOverdueCallbackLeads(items), [items])
 

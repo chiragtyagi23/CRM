@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { FiBarChart2, FiGrid, FiMapPin, FiShield, FiUser, FiUserPlus } from 'react-icons/fi'
 import { confirmLeaveFromBulkUploadIfNeeded } from '../lib/bulkUploadNavigation'
-import { useSiteSection } from '../lib/siteApi'
 import { useACL } from '../acl/useACL'
 import { defaultAuthedPath } from '../acl/hasAccess'
 import { useAppSelector } from '../store/hooks'
@@ -10,11 +9,18 @@ import type { AclModuleDTO } from '../acl/types'
 
 type NavIcon = 'grid' | 'user' | 'userPlus' | 'pin' | 'chart' | 'shield'
 
-type NavPayload = {
-  logo: { textMain: string; textSecondary: string }
-  activeItemId: string
-  menuItems: { id: string; label: string; link: string; icon: NavIcon }[]
-}
+type NavMenuItem = { id: string; label: string; link: string; icon: NavIcon }
+
+const APP_LOGO = { textMain: 'PropCRM', textSecondary: 'Real Estate Lead Management' }
+
+/** Fallback navbar for legacy JWT sessions with module_key `*` (no RBAC module list). */
+const LEGACY_NAV_MENU_ITEMS: NavMenuItem[] = [
+  { id: 'dashboard', label: 'Dashboard', link: '#dashboard', icon: 'grid' },
+  { id: 'leads', label: 'Leads', link: '#leads', icon: 'user' },
+  { id: 'capture', label: 'Capture Lead', link: '#capture-lead', icon: 'userPlus' },
+  { id: 'visits', label: 'Site Visits', link: '#site-visits', icon: 'pin' },
+  { id: 'campaign', label: 'Campaign', link: '#campaign', icon: 'chart' },
+]
 
 function NavIconGlyph({ name }: { name: NavIcon }) {
   switch (name) {
@@ -45,7 +51,7 @@ function mapModuleIcon(icon?: string | null): NavIcon {
   return 'grid'
 }
 
-function modulesToMenuItems(modules: AclModuleDTO[]) {
+function modulesToMenuItems(modules: AclModuleDTO[]): NavMenuItem[] {
   const seen = new Set<string>()
   return modules
     .filter((m) => {
@@ -68,24 +74,11 @@ export function AppHeader() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useAppSelector((s) => s.auth)
-  const { navModules, isLegacyFullAccess, hasRbacSession, hasAccess: can } = useACL()
-  const { data, error } = useSiteSection<NavPayload>('VITE_NAV_API_URL', '/demo-api/nav.json')
+  const { navModules, isLegacyFullAccess, hasAccess: can } = useACL()
   const [menuOpen, setMenuOpen] = useState(false)
 
-  // Navbar = top-level page modules from login access only (not action children like leads.delete)
   const aclMenuItems = modulesToMenuItems(navModules)
-
-  const visibleMenuItems = hasRbacSession
-    ? aclMenuItems
-    : data
-      ? data.menuItems.filter((item) => {
-          // Reports tab hidden from navbar for now
-          if (item.id === 'reports') return false
-          if (isLegacyFullAccess) return true
-          const key = item.id.replace(/-/g, '_')
-          return can(key) || can(item.id)
-        })
-      : []
+  const visibleMenuItems = isLegacyFullAccess ? LEGACY_NAV_MENU_ITEMS : aclMenuItems
 
   useEffect(() => {
     if (!menuOpen) return
@@ -141,30 +134,7 @@ export function AppHeader() {
     return ['app-header__link', active ? 'app-header__link--active' : ''].filter(Boolean).join(' ')
   }
 
-  const logo = data?.logo ?? { textMain: 'PropCRM', textSecondary: 'Real Estate Lead Management' }
   const homeForUser = defaultAuthedPath(navModules)
-
-  if (error && visibleMenuItems.length === 0) {
-    return <div className="site-api-error site-api-error--nav">Navigation: {error}</div>
-  }
-
-  if (!data && visibleMenuItems.length === 0) {
-    return (
-      <header className="app-header app-header--loading" aria-busy="true">
-        <div className="app-header__bar">
-          <div className="app-header__brand">
-            <span className="app-header__logo-mark" aria-hidden>
-              <FiGrid size={18} />
-            </span>
-            <div className="app-header__titles">
-              <span className="app-header__name">PropCRM</span>
-              <span className="app-header__tagline">Real Estate Lead Management</span>
-            </div>
-          </div>
-        </div>
-      </header>
-    )
-  }
 
   return (
     <header className={`app-header${menuOpen ? ' app-header--menu-open' : ''}`}>
@@ -185,8 +155,8 @@ export function AppHeader() {
             <FiGrid size={18} />
           </span>
           <div className="app-header__titles">
-            <span className="app-header__name">{logo.textMain}</span>
-            <span className="app-header__tagline">{logo.textSecondary}</span>
+            <span className="app-header__name">{APP_LOGO.textMain}</span>
+            <span className="app-header__tagline">{APP_LOGO.textSecondary}</span>
           </div>
         </a>
 
@@ -219,7 +189,6 @@ export function AppHeader() {
         <div className="app-header__user-desktop ml-auto hidden items-center gap-3 lg:flex">
           {user ? (
             <>
-              {/* <span className="app-header__user-name">{user.name}</span> */}
               {can('profile') || isLegacyFullAccess ? (
                 <button
                   type="button"

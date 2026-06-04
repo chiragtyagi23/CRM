@@ -5,9 +5,7 @@ import { FiCalendar, FiChevronDown, FiClock } from 'react-icons/fi'
 import { PageHeader } from '../components/PageHeader'
 import { d } from '../lib/designClasses'
 
-import { fetchCampaignProjects, type CampaignProjectOption } from '../lib/campaignsApi'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
-import { loadCaptureLeads } from '../store/captureLeadsSlice'
 import { loadSiteVisits } from '../store/siteVisit.slice'
 
 type SiteVisitsSummaryDTO = {
@@ -178,43 +176,15 @@ function LeadVisitSection({
 
 export function SiteVisits() {
   const dispatch = useAppDispatch()
-  const { items: leadItems, loading: loadingLeads } = useAppSelector((s) => s.captureLeads)
   const { items: visitItems, loading: loadingVisits } = useAppSelector((s) => s.siteVisits)
-  const [projects, setProjects] = useState<CampaignProjectOption[]>([])
-  const [loadingProjects, setLoadingProjects] = useState(true)
   const [openLeadIds, setOpenLeadIds] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     dispatch(loadSiteVisits())
-    dispatch(loadCaptureLeads())
   }, [dispatch])
 
-  useEffect(() => {
-    let cancelled = false
-    setLoadingProjects(true)
-    fetchCampaignProjects()
-      .then((p) => {
-        if (!cancelled) setProjects(p)
-      })
-      .catch(() => {
-        if (!cancelled) setProjects([])
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingProjects(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
   const { groups, summary } = useMemo(() => {
-    const leadById = new Map(leadItems.map((l) => [l.id, l]))
-    const projectById = new Map(projects.map((p) => [p.id, p]))
-
     const uiVisits: SiteVisitDTO[] = visitItems.map((v) => {
-      const lead = leadById.get(v.leadId)
-      const project = projectById.get(v.projectId)
-
       const visitDateTimeLabel = `${v.date}, ${v.time}`
       const tagPeriodDays = 60
       const expiresOnLabel = v.date
@@ -225,8 +195,8 @@ export function SiteVisits() {
         id: v.id,
         leadId: v.leadId,
         projectId: v.projectId,
-        leadName: lead?.name ?? 'Unknown Lead',
-        projectName: project?.name ?? v.projectId,
+        leadName: v.leadId ? `Lead ${v.leadId.slice(0, 8)}` : 'Lead',
+        projectName: v.projectId ? `Project ${v.projectId.slice(0, 8)}` : 'Project',
         visitDateTimeLabel,
         rmName: parsed.rmName,
         handlerName: parsed.handlerName,
@@ -234,7 +204,7 @@ export function SiteVisits() {
         progressPct: 0,
         expiresOnLabel,
         daysLeftLabel,
-        locationLabel: lead?.resiLocation ?? '—',
+        locationLabel: '—',
         photosLabel: '0 photos uploaded',
         feedback: parsed.cleanedNotes.trim().length ? parsed.cleanedNotes : 'Visit scheduled.',
         created_at: v.created_at,
@@ -252,14 +222,13 @@ export function SiteVisits() {
 
     const groupMap = new Map<string, LeadVisitGroup>()
     for (const v of uiVisits) {
-      const lead = leadById.get(v.leadId)
       const key = v.leadId
       const cur = groupMap.get(key)
       if (!cur) {
         groupMap.set(key, {
           leadId: key,
-          leadName: lead?.name ?? v.leadName,
-          locationLabel: lead?.resiLocation ?? v.locationLabel,
+          leadName: v.leadName,
+          locationLabel: v.locationLabel,
           visits: [v],
         })
       } else {
@@ -287,9 +256,9 @@ export function SiteVisits() {
     }
 
     return { groups, summary }
-  }, [leadItems, projects, visitItems])
+  }, [visitItems])
 
-  const loadingSummary = loadingVisits || loadingLeads || loadingProjects
+  const loadingSummary = loadingVisits
 
   return (
     <section className="w-full">

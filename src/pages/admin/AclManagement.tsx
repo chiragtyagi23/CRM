@@ -18,9 +18,15 @@ export function AclManagement() {
   const [page, setPage] = useState(1)
   const { toast } = useToast()
 
-  const { data: rolesData, isLoading: rolesLoading } = useGetRolesQuery()
-  const { data: modulesData, isLoading: modulesLoading } = useGetModulesQuery()
-  const { data: usersData, isLoading: usersLoading } = useGetUsersQuery()
+  const needsRoles = tab === 'roles' || tab === 'matrix' || tab === 'users'
+  const needsModules = tab === 'modules' || tab === 'matrix' || tab === 'overrides'
+  const needsUsers = tab === 'users' || tab === 'overrides'
+
+  const { data: rolesData, isLoading: rolesLoading } = useGetRolesQuery(undefined, { skip: !needsRoles })
+  const { data: modulesData, isLoading: modulesLoading } = useGetModulesQuery(undefined, {
+    skip: !needsModules,
+  })
+  const { data: usersData, isLoading: usersLoading } = useGetUsersQuery(undefined, { skip: !needsUsers })
 
   const roles = rolesData?.items ?? []
   const modules = modulesData?.items ?? []

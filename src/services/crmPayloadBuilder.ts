@@ -23,7 +23,7 @@ export type CaptureLeadCreateInput = {
   workLocation: string
   workProfile: NonNullable<CaptureLeadCreatePayload['workProfile']>
   industry: string
-  preferredResolved: string
+  preferredLocations: string[]
   possessionBy: string
   leadStatus: NonNullable<CaptureLeadCreatePayload['leadScore']>
   buyingStage: NonNullable<CaptureLeadCreatePayload['propertyBuyingStage']>
@@ -47,7 +47,7 @@ export function buildCaptureLeadCreatePayload(input: CaptureLeadCreateInput): Ca
     workLocation,
     workProfile,
     industry,
-    preferredResolved,
+    preferredLocations,
     possessionBy,
     leadStatus,
     buyingStage,
@@ -71,7 +71,7 @@ export function buildCaptureLeadCreatePayload(input: CaptureLeadCreateInput): Ca
     workLocation: workLocation || null,
     workProfile,
     industryType: industry || null,
-    preferredLocation: preferredResolved ? [preferredResolved] : [],
+    preferredLocation: preferredLocations.filter((loc) => loc.trim().length > 0),
     possessionDate: possessionBy || null,
     leadScore: leadStatus,
     status: 'NEW',

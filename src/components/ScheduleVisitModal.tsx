@@ -3,8 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ApiError } from '../lib/crmApi'
 import { fetchCampaignProjects, type CampaignProjectOption } from '../lib/campaignsApi'
 import { crmPayloadBuilder } from '../services/crmPayloadBuilder'
-import { fetchUsers, type CrmUserDTO } from '../lib/usersApi'
-import { useAppDispatch } from '../store/hooks'
+import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { submitSiteVisit } from '../store/siteVisit.slice'
 
 function Modal({
@@ -75,6 +74,7 @@ export function ScheduleVisitModal({
   onScheduled?: () => void
 }) {
   const dispatch = useAppDispatch()
+  const authUser = useAppSelector((s) => s.auth.user)
   const [projects, setProjects] = useState<CampaignProjectOption[]>([])
   const [projectsLoading, setProjectsLoading] = useState(false)
   const [selectedProjectIds, setSelectedProjectIds] = useState<Set<string>>(() => new Set())
@@ -82,7 +82,6 @@ export function ScheduleVisitModal({
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
   const [assignmentTab, setAssignmentTab] = useState<'handler' | 'rm'>('handler')
-  const [handlers, setHandlers] = useState<CrmUserDTO[]>([])
   const [handlerName, setHandlerName] = useState('')
   const [rmName, setRmName] = useState('')
   const [notes, setNotes] = useState('')
@@ -112,22 +111,6 @@ export function ScheduleVisitModal({
     setHandlerName(normalizeLeadAssignee(leadAssignee))
   }, [open, leadAssignee])
 
-  useEffect(() => {
-    if (!open) return
-    let cancelled = false
-    fetchUsers()
-      .then((res) => {
-        if (cancelled) return
-        setHandlers(res.items ?? [])
-      })
-      .catch(() => {
-        if (!cancelled) setHandlers([])
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [open])
-
   const handlerSelectOptions = useMemo(() => {
     const seen = new Set<string>()
     const options: { key: string; name: string }[] = []
@@ -141,9 +124,10 @@ export function ScheduleVisitModal({
     }
     const assignee = normalizeLeadAssignee(leadAssignee)
     if (assignee) add(assignee, '__lead-assignee')
-    for (const u of handlers) add(String(u.name ?? ''), u.id)
+    const me = String(authUser?.name ?? '').trim()
+    if (me) add(me, '__self')
     return options
-  }, [handlers, leadAssignee])
+  }, [authUser?.name, leadAssignee])
 
   const selectedProjectsLabel = useMemo(() => {
     const ids = Array.from(selectedProjectIds)
@@ -320,7 +304,7 @@ export function ScheduleVisitModal({
                     </option>
                   ))}
                 </select>
-                {handlers.length === 0 && !normalizeLeadAssignee(leadAssignee) ? (
+                {handlerSelectOptions.length === 0 ? (
                   <div className="mt-2 text-[11px] font-medium text-[#8B7355]">No handlers loaded (you can still type in Notes).</div>
                 ) : null}
               </Field>

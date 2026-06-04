@@ -67,6 +67,11 @@ export type LeadActivityTimelineEntry = {
   time: string
 }
 
+export type LeadInterestedProject = {
+  projectId: string
+  projectName: string
+}
+
 export type CaptureLeadDTO = {
   id: string
   campaignId: string | null
@@ -95,6 +100,7 @@ export type CaptureLeadDTO = {
   /** Local time string from `<input type="time">`, e.g. `14:30` */
   callbackTime: string | null
   activityTimeline?: LeadActivityTimelineEntry[]
+  interestedProjects?: LeadInterestedProject[]
   created_at?: string
   updated_at?: string
 }

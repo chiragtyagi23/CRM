@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MdChat } from 'react-icons/md'
 import {
@@ -15,9 +15,13 @@ import {
 
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { submitCaptureLead } from '../store/captureLeadsSlice'
-import { fetchUsers, type CrmUserDTO } from '../lib/usersApi'
 import { crmPayloadBuilder } from '../services/crmPayloadBuilder'
-import { IconInsetField, SearchableSelect, TogglePills, fieldInputClass } from '../components/uiPrimitives'
+import {
+  IconInsetField,
+  TogglePills,
+  fieldDateTimeInputClass,
+  fieldInputClass,
+} from '../components/uiPrimitives'
 import { PageHeader } from '../components/PageHeader'
 import { d } from '../lib/designClasses'
 import { FaRupeeSign } from "react-icons/fa";
@@ -28,7 +32,6 @@ import {
   CAPTURE_LEAD_SOURCE_TILE_OPTIONS,
   LEAD_STATUS_OPTIONS,
   OWNERSHIP_TOGGLE_OPTIONS,
-  PREFERRED_LOCATION_OTHER_VALUE,
   PREFERRED_LOCATIONS,
   WORK_PROFILE_TOGGLE_OPTIONS,
   type CaptureLeadSourceId,
@@ -40,12 +43,11 @@ export function CaptureLead() {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const creating = useAppSelector((s) => s.captureLeads.creating)
-  const token = useAppSelector((s) => s.auth.token)
+  const authUser = useAppSelector((s) => s.auth.user)
 
   const [selected, setSelected] = useState<CaptureLeadSourceId | null>(null)
   const [firstCallDate, setFirstCallDate] = useState('')
   const [callBy, setCallBy] = useState('')
-  const [teamMembers, setTeamMembers] = useState<CrmUserDTO[]>([])
   const [fullName, setFullName] = useState('')
   const [num, setNum] = useState('')
   const [whatsapp, setWhatsapp] = useState('')
@@ -57,8 +59,9 @@ export function CaptureLead() {
   const [workLocation, setWorkLocation] = useState('')
   const [workProfile, setWorkProfile] = useState<'SERVICE' | 'BUSINESS'>('SERVICE')
   const [industry, setIndustry] = useState('')
-  const [preferredLocation, setPreferredLocation] = useState('KHARGHAR')
+  const [preferredLocations, setPreferredLocations] = useState<string[]>(['KHARGHAR'])
   const [preferredLocationOther, setPreferredLocationOther] = useState('')
+  const [preferredLocationOtherSelected, setPreferredLocationOtherSelected] = useState(false)
   const [possessionBy, setPossessionBy] = useState('')
   const [leadStatus, setLeadStatus] = useState<'HOT' | 'WARM' | 'COLD'>('HOT')
   const [buyingStage, setBuyingStage] = useState<
@@ -67,23 +70,78 @@ export function CaptureLead() {
   const [remarks, setRemarks] = useState('')
   const [callbackDate, setCallbackDate] = useState('')
   const [callbackTime, setCallbackTime] = useState('')
+  const [preferredDropdownOpen, setPreferredDropdownOpen] = useState(false)
+  const preferredDropdownRef = useRef<HTMLDivElement>(null)
+
+  const preferredLocationsLabel = useMemo(() => {
+    const parts = [...preferredLocations]
+    if (preferredLocationOtherSelected) {
+      const custom = preferredLocationOther.trim()
+      parts.push(custom || 'Other')
+    }
+    if (parts.length === 0) return 'Select locations'
+    if (parts.length === 1) return parts[0]
+    return `${parts.length} locations selected`
+  }, [preferredLocations, preferredLocationOther, preferredLocationOtherSelected])
 
   useEffect(() => {
-    if (!token) return
-    fetchUsers()
-      .then((res) => {
-        setTeamMembers(res.items ?? [])
-      })
-      .catch(() => {
-        setTeamMembers([])
-      })
-  }, [token])
+    if (!preferredDropdownOpen) return
+    const onDoc = (e: MouseEvent) => {
+      if (preferredDropdownRef.current && !preferredDropdownRef.current.contains(e.target as Node)) {
+        setPreferredDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onDoc)
+    return () => document.removeEventListener('mousedown', onDoc)
+  }, [preferredDropdownOpen])
+
+  useEffect(() => {
+    const selfName = String(authUser?.name ?? '').trim()
+    if (!selfName || callBy.trim()) return
+    setCallBy(selfName)
+  }, [authUser?.name, callBy])
+
+  const togglePreferredLocation = (loc: string) => {
+    setPreferredLocations((prev) =>
+      prev.includes(loc) ? prev.filter((l) => l !== loc) : [...prev, loc],
+    )
+  }
+
+  const resolvedPreferredLocations = [
+    ...preferredLocations,
+    ...(preferredLocationOtherSelected && preferredLocationOther.trim()
+      ? [preferredLocationOther.trim()]
+      : []),
+  ]
+
+  const hasPreferredLocation =
+    preferredLocations.length > 0 ||
+    (preferredLocationOtherSelected && preferredLocationOther.trim().length > 0)
+
+  const missingRequired = (): string[] => {
+    const missing: string[] = []
+    if (!firstCallDate.trim()) missing.push('1st Call Date')
+    if (!callBy.trim()) missing.push('Lead Received By')
+    if (!fullName.trim()) missing.push('Name')
+    if (!num.trim()) missing.push('Phone Number')
+    if (!callbackDate.trim()) missing.push('Callback Date')
+    if (!callbackTime.trim()) missing.push('Callback Time')
+    if (!hasPreferredLocation) missing.push('Preferred Location')
+    if (preferredLocationOtherSelected && !preferredLocationOther.trim()) {
+      missing.push('Custom Preferred Location')
+    }
+    return missing
+  }
+
+  const canSubmit = !creating && missingRequired().length === 0
 
   const handleCaptureLead = async () => {
-    const preferredResolved =
-      preferredLocation === PREFERRED_LOCATION_OTHER_VALUE
-        ? preferredLocationOther.trim()
-        : preferredLocation
+    const missing = missingRequired()
+    if (missing.length > 0) {
+      alert(`Please fill required fields:\n• ${missing.join('\n• ')}`)
+      return
+    }
+
     const payload = crmPayloadBuilder.captureLead.buildCreatePayload({
       selectedSource: selected,
       firstCallDate,
@@ -99,7 +157,7 @@ export function CaptureLead() {
       workLocation,
       workProfile,
       industry,
-      preferredResolved,
+      preferredLocations: resolvedPreferredLocations,
       possessionBy,
       leadStatus,
       buyingStage,
@@ -162,46 +220,62 @@ export function CaptureLead() {
 
       <section className={d.cardP6}>
         <h2 className={d.sectionTitle}>Contact Details</h2>
+        <p className="mb-4 text-xs text-[#8B7355]">
+          Fields marked with <span className="text-[#D96B6B]">*</span> are required to capture the lead.
+        </p>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <IconInsetField label="1st CALL DATE" icon={<FaCalendarDays className={fieldIconCls} aria-hidden />}>
+          <IconInsetField
+            label="1st CALL DATE"
+            required
+            dateTime
+            icon={<FaCalendarDays className={fieldIconCls} aria-hidden />}
+          >
             <input
               type="date"
               value={firstCallDate}
               onChange={(e) => setFirstCallDate(e.target.value)}
-              className={fieldInputClass}
+              className={fieldDateTimeInputClass}
+              required
+              aria-required
             />
           </IconInsetField>
 
-          <IconInsetField label="LEAD RECEIVED BY" icon={<FaUser className={fieldIconCls} aria-hidden />}>
-            <SearchableSelect
+          <IconInsetField
+            label="LEAD RECEIVED BY"
+            required
+            icon={<FaUser className={fieldIconCls} aria-hidden />}
+          >
+            <input
               value={callBy}
-              onChange={setCallBy}
-              options={teamMembers.map((u) => ({
-                id: u.id,
-                value: String(u.name ?? ''),
-                label: String(u.name ?? ''),
-              }))}
-              placeholder="Select team member"
-              searchPlaceholder="Search team member"
-              emptyMessage="No team members found"
+              onChange={(e) => setCallBy(e.target.value)}
+              placeholder="Who received this lead"
+              className={fieldInputClass}
+              required
+              aria-required
             />
           </IconInsetField>
 
-          <IconInsetField label="NAME" icon={<FaUser className={fieldIconCls} aria-hidden />}>
+          <IconInsetField label="NAME" required icon={<FaUser className={fieldIconCls} aria-hidden />}>
             <input
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="Full Name"
               className={fieldInputClass}
+              required
+              aria-required
             />
           </IconInsetField>
 
-          <IconInsetField label="NUM" icon={<FaPhone className={fieldIconCls} aria-hidden />}>
+          <IconInsetField label="NUM" required icon={<FaPhone className={fieldIconCls} aria-hidden />}>
             <input
               value={num}
               onChange={(e) => setNum(e.target.value)}
+              placeholder="Phone number"
               className={fieldInputClass}
+              required
+              aria-required
+              inputMode="tel"
             />
           </IconInsetField>
 
@@ -209,17 +283,22 @@ export function CaptureLead() {
             <input
               value={whatsapp}
               onChange={(e) => setWhatsapp(e.target.value)}
+              placeholder="WhatsApp number (optional)"
               className={fieldInputClass}
+              inputMode="tel"
             />
           </IconInsetField>
 
           <IconInsetField label="EMAIL" icon={<FaEnvelope className={fieldIconCls} aria-hidden />}>
             <input
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email (optional)"
               className={fieldInputClass}
             />
           </IconInsetField>
+
         </div>
       </section>
 
@@ -267,7 +346,7 @@ export function CaptureLead() {
         <h2 className={d.sectionTitle}>Current Residence</h2>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <IconInsetField label="RESI Location" icon={<FaLocationDot className={fieldIconCls} aria-hidden />}>
+          <IconInsetField label="RESI LOCATION" icon={<FaLocationDot className={fieldIconCls} aria-hidden />}>
             <input
               value={resiLocation}
               onChange={(e) => setResiLocation(e.target.value)}
@@ -289,7 +368,7 @@ export function CaptureLead() {
         <h2 className={d.sectionTitle}>Work Information</h2>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <IconInsetField label="WORK Location" icon={<FaBriefcase className={fieldIconCls} aria-hidden />}>
+          <IconInsetField label="WORK LOCATION" icon={<FaBriefcase className={fieldIconCls} aria-hidden />}>
             <input
               value={workLocation}
               onChange={(e) => setWorkLocation(e.target.value)}
@@ -324,22 +403,92 @@ export function CaptureLead() {
         </h2>
 
         <div className="space-y-4">
-          <IconInsetField label="Preferred Location" icon={<FaLocationDot className={fieldIconCls} aria-hidden />}>
-            <select
-              value={preferredLocation}
-              onChange={(e) => setPreferredLocation(e.target.value)}
-              className={`${fieldInputClass} appearance-none`}
-            >
-              {PREFERRED_LOCATIONS.map((loc) => (
-                <option key={loc} value={loc}>
-                  {loc}
-                </option>
-              ))}
-              <option value={PREFERRED_LOCATION_OTHER_VALUE}>Other (custom)</option>
-            </select>
+          <IconInsetField
+            label="Select one or more"
+            required
+            icon={<FaLocationDot className={fieldIconCls} aria-hidden />}
+          >
+            <div ref={preferredDropdownRef} className="relative">
+              <button
+                type="button"
+                className={`${fieldInputClass} flex items-center justify-between gap-2 text-left`}
+                aria-haspopup="listbox"
+                aria-expanded={preferredDropdownOpen}
+                onClick={() => setPreferredDropdownOpen((o) => !o)}
+              >
+                <span className={`min-w-0 flex-1 truncate ${preferredLocations.length > 0 || preferredLocationOtherSelected ? 'text-[#2E2E2E]' : 'text-[#8B7355]/60'}`}>
+                  {preferredLocationsLabel}
+                </span>
+                <span className="shrink-0 text-[#8B7355]" aria-hidden>
+                  ▾
+                </span>
+              </button>
+
+              {preferredDropdownOpen ? (
+                <div
+                  className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-[#E8DCCB] bg-white shadow-[0_10px_24px_rgba(17,24,39,0.10)]"
+                  role="listbox"
+                  aria-label="Preferred locations"
+                >
+                  <div className="max-h-[220px] overflow-auto p-2">
+                    {PREFERRED_LOCATIONS.map((loc) => {
+                      const checked = preferredLocations.includes(loc)
+                      return (
+                        <label
+                          key={loc}
+                          className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm text-[#2E2E2E] hover:bg-[#F5EFE7]"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => togglePreferredLocation(loc)}
+                          />
+                          <span className="min-w-0 flex-1">{loc}</span>
+                        </label>
+                      )
+                    })}
+                    <label className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm text-[#2E2E2E] hover:bg-[#F5EFE7]">
+                      <input
+                        type="checkbox"
+                        checked={preferredLocationOtherSelected}
+                        onChange={() => setPreferredLocationOtherSelected((v) => !v)}
+                      />
+                      <span className="min-w-0 flex-1">Other (custom)</span>
+                    </label>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 border-t border-[#E8DCCB] bg-white px-3 py-2">
+                    <button
+                      type="button"
+                      className="text-xs font-semibold text-[#8B7355] hover:text-[#2E2E2E] disabled:opacity-60"
+                      disabled={
+                        preferredLocations.length === 0 && !preferredLocationOtherSelected
+                      }
+                      onClick={() => {
+                        setPreferredLocations([])
+                        setPreferredLocationOtherSelected(false)
+                        setPreferredLocationOther('')
+                      }}
+                    >
+                      Clear
+                    </button>
+                    <button
+                      type="button"
+                      className="inline-flex h-9 items-center justify-center rounded-lg bg-[#8B7355] px-4 text-xs font-semibold text-white hover:bg-[#6d5a43]"
+                      onClick={() => setPreferredDropdownOpen(false)}
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
           </IconInsetField>
-          {preferredLocation === PREFERRED_LOCATION_OTHER_VALUE ? (
-            <IconInsetField label="Custom location" icon={<FaLocationDot className={fieldIconCls} aria-hidden />}>
+          {preferredLocationOtherSelected ? (
+            <IconInsetField
+              label="Custom location"
+              required
+              icon={<FaLocationDot className={fieldIconCls} aria-hidden />}
+            >
               <input
                 value={preferredLocationOther}
                 onChange={(e) => setPreferredLocationOther(e.target.value)}
@@ -355,12 +504,16 @@ export function CaptureLead() {
         <h2 className={d.sectionTitle}>Timeline &amp; Status</h2>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <IconInsetField label="POSSESSION BY" icon={<FaCalendarDays className={fieldIconCls} aria-hidden />}>
+          <IconInsetField
+            label="POSSESSION BY"
+            dateTime
+            icon={<FaCalendarDays className={fieldIconCls} aria-hidden />}
+          >
             <input
               type="date"
               value={possessionBy}
               onChange={(e) => setPossessionBy(e.target.value)}
-              className={fieldInputClass}
+              className={fieldDateTimeInputClass}
             />
           </IconInsetField>
 
@@ -429,6 +582,39 @@ export function CaptureLead() {
         <h2 className={d.sectionTitle}>Additional Information</h2>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <IconInsetField
+            label="CB DATE (Callback Date)"
+            required
+            dateTime
+            icon={<FaCalendarDays className={fieldIconCls} aria-hidden />}
+          >
+            <input
+              type="date"
+              value={callbackDate}
+              onChange={(e) => setCallbackDate(e.target.value)}
+              className={fieldDateTimeInputClass}
+              required
+              aria-required
+            />
+          </IconInsetField>
+
+          <IconInsetField
+            label="CB TIME (Callback Time)"
+            required
+            dateTime
+            icon={<FaClock className={fieldIconCls} aria-hidden />}
+          >
+            <input
+              type="time"
+              value={callbackTime}
+              onChange={(e) => setCallbackTime(e.target.value)}
+              step={60}
+              className={fieldDateTimeInputClass}
+              required
+              aria-required
+            />
+          </IconInsetField>
+
           <label className="block min-[900px]:col-span-2">
             <div className="mb-2 inline-flex items-center gap-2 text-[11px] font-semibold text-[#8B7355]">
               <span className="text-[#8B7355]">
@@ -443,25 +629,6 @@ export function CaptureLead() {
               className="min-h-[140px] w-full resize-none rounded-lg border border-[#E8DCCB] bg-white px-4 py-2 text-sm text-[#2E2E2E] placeholder:text-[#8B7355]/60 focus:border-[#8B7355] focus:outline-none"
             />
           </label>
-
-          <IconInsetField label="CB DATE (Callback Date)" icon={<FaCalendarDays className={fieldIconCls} aria-hidden />}>
-            <input
-              type="date"
-              value={callbackDate}
-              onChange={(e) => setCallbackDate(e.target.value)}
-              className={fieldInputClass}
-            />
-          </IconInsetField>
-
-          <IconInsetField label="CB TIME (Callback Time)" icon={<FaClock className={fieldIconCls} aria-hidden />}>
-            <input
-              type="time"
-              value={callbackTime}
-              onChange={(e) => setCallbackTime(e.target.value)}
-              step={60}
-              className={fieldInputClass}
-            />
-          </IconInsetField>
         </div>
       </section>
 
@@ -472,14 +639,7 @@ export function CaptureLead() {
         <button
           type="button"
           className={`flex-1 ${d.btnPrimary}`}
-          disabled={
-            creating ||
-            !fullName.trim() ||
-            !num.trim() ||
-            !callbackDate.trim() ||
-            !callbackTime.trim() ||
-            (preferredLocation === PREFERRED_LOCATION_OTHER_VALUE && !preferredLocationOther.trim())
-          }
+          disabled={!canSubmit}
           onClick={handleCaptureLead}
         >
           <span className="text-white/90">

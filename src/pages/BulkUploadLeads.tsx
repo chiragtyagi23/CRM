@@ -17,11 +17,10 @@ import {
   registerBulkUploadDirty,
 } from '../lib/bulkUploadNavigation'
 import { createCaptureLeadsBulk } from '../lib/captureLeadsApi'
+import type { CampaignListResponse } from '../types/dtos'
 import { crmPayloadBuilder } from '../services/crmPayloadBuilder'
 import { useAppDispatch } from '../store/hooks'
 import { loadCaptureLeads } from '../store/captureLeadsSlice'
-
-type CampaignRow = { id: string; title: string }
 
 type UploadedLead = {
   rowNumber: number
@@ -92,7 +91,7 @@ async function parseLeadRowsWithPromiseAll(rows: Record<string, unknown>[], chun
 export function BulkUploadLeads() {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const [campaigns, setCampaigns] = useState<CampaignRow[]>([])
+  const [campaigns, setCampaigns] = useState<{ id: string; title: string }[]>([])
   const [campaignsLoading, setCampaignsLoading] = useState(true)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [selectedCampaignId, setSelectedCampaignId] = useState('')
@@ -138,8 +137,15 @@ export function BulkUploadLeads() {
   }, [])
 
   useEffect(() => {
-    apiGet<{ items: CampaignRow[] }>('/api/campaigns')
-      .then((d) => setCampaigns(Array.isArray(d.items) ? d.items : []))
+    apiGet<CampaignListResponse>('/api/campaigns')
+      .then((d) =>
+        setCampaigns(
+          (d.items ?? []).map((c) => ({
+            id: c.id,
+            title: String(c.title ?? '').trim() || c.id,
+          })),
+        ),
+      )
       .catch(() => setCampaigns([]))
       .finally(() => setCampaignsLoading(false))
   }, [])
@@ -232,7 +238,7 @@ export function BulkUploadLeads() {
         ),
       )
 
-      await dispatch(loadCaptureLeads()).unwrap()
+      await dispatch(loadCaptureLeads({ force: true })).unwrap()
       setUploadedLeads([])
       setSelectedFile(null)
       setSelectedCampaignId('')
@@ -383,16 +389,23 @@ export function BulkUploadLeads() {
           </div>
 
           <div>
-            <label className="mb-2 block text-[13px] font-semibold text-[#2E2E2E]">
+            <label htmlFor="bulk-upload-campaign" className="mb-2 block text-[13px] font-semibold text-[#2E2E2E]">
               Campaign <span className="text-red-600">*</span>
             </label>
             <select
+              id="bulk-upload-campaign"
               value={selectedCampaignId}
               onChange={(e) => setSelectedCampaignId(e.target.value)}
               className="h-12 w-full rounded-xl border border-[#E8DCCB] bg-white px-3 text-[13px] text-[#2E2E2E] focus:border-[#8B7355] focus:outline-none disabled:opacity-60"
-              disabled={!selectedFile || campaignsLoading}
+              disabled={campaignsLoading}
             >
-              <option value="">{campaignsLoading ? 'Loading campaigns…' : 'Select a campaign'}</option>
+              <option value="">
+                {campaignsLoading
+                  ? 'Loading campaigns…'
+                  : campaigns.length === 0
+                    ? 'No campaigns found'
+                    : 'Select a campaign'}
+              </option>
               {campaigns.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.title}

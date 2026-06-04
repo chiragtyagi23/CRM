@@ -25,9 +25,20 @@ const initialState: CaptureLeadsState = {
   lastCreatedId: null,
 }
 
-export const loadCaptureLeads = createAsyncThunk('captureLeads/load', async () => {
-  return await fetchCaptureLeads()
-})
+export const loadCaptureLeads = createAsyncThunk<
+  { items: CaptureLeadDTO[] },
+  { force?: boolean } | undefined
+>(
+  'captureLeads/load',
+  async () => await fetchCaptureLeads(),
+  {
+    condition: (arg, { getState }) => {
+      if (arg?.force) return true
+      const cl = (getState() as { captureLeads: CaptureLeadsState }).captureLeads
+      return !cl.loading
+    },
+  },
+)
 
 export const submitCaptureLead = createAsyncThunk('captureLeads/create', async (payload: CaptureLeadCreatePayload) => {
   return await createCaptureLead(payload)

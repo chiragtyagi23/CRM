@@ -92,6 +92,10 @@ export const hydrateAuth = createAsyncThunk(
       return { token: null, user: null, access: null }
     }
 
+    if (stored.user && stored.access) {
+      return { token: stored.token, user: stored.user, access: stored.access }
+    }
+
     try {
       const me = await fetchMe()
       return { token: stored.token, user: me.user, access: me.access }

@@ -8,7 +8,6 @@ import { toLeadRow } from '../utils/leadMapping'
 import type { LeadDTO, LeadScoreDTO, LeadStatusDTO } from '../lib/dashboardDummyApi'
 import { useACL } from '../acl/useACL'
 import { MODULE_KEYS } from '../acl/permissionMap'
-import { fetchUsers } from '../lib/usersApi'
 import { crmPayloadBuilder } from '../services/crmPayloadBuilder'
 
 
@@ -22,7 +21,6 @@ function CampaignDetails() {
   const [loading, setLoading] = useState(true)
   const { hasAccess } = useACL()
   const canAssign = hasAccess(MODULE_KEYS.leads.assignTo)
-  const [teamMembers, setTeamMembers] = useState<string[]>([])
   const [overrides, setOverrides] = useState<Record<string, { score?: LeadScoreDTO; status?: LeadStatusDTO; assignedTo?: string }>>({})
 
   const rows = useMemo(() => items, [items])
@@ -68,19 +66,10 @@ function CampaignDetails() {
     }
   }, [id])
 
-  useEffect(() => {
-    fetchUsers()
-      .then((res) => {
-        const names = (res.items ?? [])
-          .map((u) => String(u.name || '').trim())
-          .filter(Boolean)
-        setTeamMembers(names)
-      })
-      .catch(() => {
-        setTeamMembers([])
-      })
-  }, [])
-  
+  const teamMembers = useMemo(() => {
+    const names = items.map((l) => String(l.assignedTo ?? '').trim()).filter(Boolean)
+    return [...new Set(names)]
+  }, [items])
 
   const title = stateTitle || 'Campaign'
 

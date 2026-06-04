@@ -1,29 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 
-import type { CaptureLeadDTO, ExistingCampaign } from '../types/dtos'
+import type { ExistingCampaign } from '../types/dtos'
 import { IoEyeSharp } from 'react-icons/io5'
 import { Link } from 'react-router-dom'
 import { WiDirectionUpRight } from 'react-icons/wi'
 import type { LeadDTO } from '../lib/dashboardDummyApi'
 import { useACL } from '../acl/useACL'
-import { fetchUsers } from '../lib/usersApi'
-import { fetchCaptureLeads } from '../lib/captureLeadsApi'
 import { apiSend } from '../lib/crmApi'
 
-const CAMPAIGN_ASSIGNEE_ROLES = new Set(['manager', 'admin'])
 const campaignSiteBase =
   (import.meta.env.VITE_CAMPAIGN_SITE_URL || 'http://localhost:3000').replace(/\/$/, '')
-
-function isCampaignAssigneeRole(role: string | null | undefined): boolean {
-  return CAMPAIGN_ASSIGNEE_ROLES.has((role ?? '').trim().toLowerCase())
-}
-
-function deriveCampaignAssignee(leads: CaptureLeadDTO[]): string {
-  const names = leads.map((l) => (l.callBy ?? '').trim()).filter(Boolean)
-  if (names.length === 0) return '—'
-  const unique = [...new Set(names)]
-  return unique.length === 1 ? unique[0] : '—'
-}
 
 function assigneeOptionsWithCurrent(options: string[], current?: string): string[] {
   const name = current?.trim()
@@ -93,80 +79,29 @@ export function CampaignListTable(props: CampaignListTableProps) {
   const canCampaignEdit = permissions.campaign.edit
   const canCampaignDetails = permissions.campaign.details
   const canManageCampaignAssignments = canCampaignAssign && canCampaignEdit
-  const [assigneeOptions, setAssigneeOptions] = useState<string[]>([])
   const [assigneeOverrides, setAssigneeOverrides] = useState<Record<string, string>>({})
-  const [baseAssigneeByCampaignId, setBaseAssigneeByCampaignId] = useState<Record<string, string>>({})
+  const [savedAssigneeByCampaignId, setSavedAssigneeByCampaignId] = useState<Record<string, string>>({})
   const [savingCampaignId, setSavingCampaignId] = useState<string | null>(null)
-  const [loadingCampaignAssignees, setLoadingCampaignAssignees] = useState(false)
 
-  const campaignIdsKey = useMemo(() => {
-    if (props.variant === 'leads') return ''
-    return props.campaigns
-      .map((c) => c.id)
-      .sort()
-      .join(',')
-  }, [props])
+  const assigneeOptions = useMemo(() => {
+    if (props.variant === 'leads') return []
+    const names = props.campaigns
+      .map((c) => String(c.assignTo ?? '').trim())
+      .filter(Boolean)
+    const me = String(user?.name ?? '').trim()
+    if (me) names.push(me)
+    return [...new Set(names)]
+  }, [props, user?.name])
 
-  useEffect(() => {
-    if (props.variant === 'leads') return
-    fetchUsers()
-      .then((res) => {
-        const names = (res.items ?? [])
-          .filter((u) => isCampaignAssigneeRole(u.role))
-          .map((u) => String(u.name || '').trim())
-          .filter(Boolean)
-        setAssigneeOptions(names)
-      })
-      .catch(() => setAssigneeOptions([]))
-  }, [props.variant])
-
-
-  useEffect(() => {
-    if (props.variant === 'leads' || !campaignIdsKey) return
-
-    let cancelled = false
-    setLoadingCampaignAssignees(true)
-    setBaseAssigneeByCampaignId((prev) => {
-      const next: Record<string, string> = { ...prev }
-      for (const c of props.campaigns) {
-        const assigned = String(c.assignTo ?? '').trim()
-        if (assigned) next[c.id] = assigned
-      }
-      return next
-    })
-    fetchCaptureLeads()
-      .then((res) => {
-        if (cancelled) return
-        const byCampaign: Record<string, CaptureLeadDTO[]> = {}
-        for (const lead of res.items ?? []) {
-          const campaignId = lead.campaignId
-          if (!campaignId) continue
-          if (!byCampaign[campaignId]) byCampaign[campaignId] = []
-          byCampaign[campaignId].push(lead)
-        }
-        setBaseAssigneeByCampaignId((prev) => {
-          const next: Record<string, string> = { ...prev }
-          for (const [campaignId, leads] of Object.entries(byCampaign)) {
-            if (!next[campaignId] || next[campaignId] === '—') {
-              next[campaignId] = deriveCampaignAssignee(leads)
-            }
-          }
-          return next
-        })
-      })
-      .catch(() => {
-        if (!cancelled) {
-          // Keep existing campaign-level assignment state on fetch failure.
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingCampaignAssignees(false)
-      })
-
-    return () => {
-      cancelled = true
+  const baseAssigneeByCampaignId = useMemo(() => {
+    if (props.variant === 'leads') return {}
+    const next: Record<string, string> = {}
+    for (const c of props.campaigns) {
+      const assigned = String(savedAssigneeByCampaignId[c.id] ?? c.assignTo ?? '').trim()
+      next[c.id] = assigned || '—'
     }
-  }, [props.variant, campaignIdsKey])
+    return next
+  }, [props, savedAssigneeByCampaignId])
 
   const displayAssignee = (campaignId: string) =>
     assigneeOverrides[campaignId] ?? baseAssigneeByCampaignId[campaignId] ?? '—'
@@ -183,7 +118,7 @@ export function CampaignListTable(props: CampaignListTableProps) {
     setSavingCampaignId(campaignId)
     try {
       await apiSend(`/api/campaigns/${campaignId}/assignee`, 'PATCH', { assignTo: callBy })
-      setBaseAssigneeByCampaignId((prev) => ({ ...prev, [campaignId]: next }))
+      setSavedAssigneeByCampaignId((prev) => ({ ...prev, [campaignId]: next }))
       setAssigneeOverrides((prev) => {
         const nextOverrides = { ...prev }
         delete nextOverrides[campaignId]
@@ -312,7 +247,7 @@ export function CampaignListTable(props: CampaignListTableProps) {
             </tr>
           </thead>
           <tbody className="text-[#2E2E2E]">
-            {loadingCampaigns || loadingCampaignAssignees ? (
+            {loadingCampaigns ? (
               <tr>
                 <td className="px-4 py-4 text-[#8B7355]" colSpan={colSpan}>
                   Loading…
