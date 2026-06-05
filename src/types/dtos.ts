@@ -131,11 +131,20 @@ export type SiteVisitDTO = {
   date: string
   time: string
   notes: string
+  /** Resolved on GET /api/site-visits — no separate leads/campaigns fetch needed. */
+  leadName?: string | null
+  leadLocation?: string | null
+  projectName?: string | null
   created_at?: string
   updated_at?: string
 }
 
 export type SiteVisitCreatePayload = Omit<SiteVisitDTO, 'id' | 'created_at' | 'updated_at'>
+
+export type AssigneeOptionDTO = {
+  id: string
+  name: string
+}
 
 // ---------------------------------------------------------------------------
 // Auth

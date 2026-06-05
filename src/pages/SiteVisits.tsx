@@ -190,13 +190,19 @@ export function SiteVisits() {
       const expiresOnLabel = v.date
       const daysLeftLabel = `${tagPeriodDays} days left`
       const parsed = parseAssignmentNotes(v.notes)
+      const leadName =
+        String(v.leadName ?? '').trim() || (v.leadId ? `Lead ${v.leadId.slice(0, 8)}` : 'Lead')
+      const projectName =
+        String(v.projectName ?? '').trim() ||
+        (v.projectId ? `Project ${v.projectId.slice(0, 8)}` : 'Project')
+      const locationLabel = String(v.leadLocation ?? '').trim() || '—'
 
       return {
         id: v.id,
         leadId: v.leadId,
         projectId: v.projectId,
-        leadName: v.leadId ? `Lead ${v.leadId.slice(0, 8)}` : 'Lead',
-        projectName: v.projectId ? `Project ${v.projectId.slice(0, 8)}` : 'Project',
+        leadName,
+        projectName,
         visitDateTimeLabel,
         rmName: parsed.rmName,
         handlerName: parsed.handlerName,
@@ -204,7 +210,7 @@ export function SiteVisits() {
         progressPct: 0,
         expiresOnLabel,
         daysLeftLabel,
-        locationLabel: '—',
+        locationLabel,
         photosLabel: '0 photos uploaded',
         feedback: parsed.cleanedNotes.trim().length ? parsed.cleanedNotes : 'Visit scheduled.',
         created_at: v.created_at,

@@ -1,10 +1,16 @@
 import { apiGet, apiSend } from './crmApi'
 import type { ApiError } from './crmApi'
-import type { CrmUserDTO } from '../types/dtos'
+import type { AssigneeOptionDTO, CrmUserDTO } from '../types/dtos'
 import type { AclRoleDTO } from '../acl/types'
 
-export type { CrmUserDTO } from '../types/dtos'
+export type { AssigneeOptionDTO, CrmUserDTO } from '../types/dtos'
 
+/** Scoped names for Lead Received By — workers get self; managers get all active users. */
+export async function fetchAssignees(): Promise<{ items: AssigneeOptionDTO[] }> {
+  return await apiGet<{ items: AssigneeOptionDTO[] }>('/api/auth/assignees')
+}
+
+/** Full directory with email/role — Profile admin table only. */
 export async function fetchUsers(): Promise<{ items: CrmUserDTO[] }> {
   return await apiGet<{ items: CrmUserDTO[] }>('/api/auth/users')
 }

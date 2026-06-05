@@ -8,6 +8,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { crmPayloadBuilder } from '../services/crmPayloadBuilder'
 import { loadCaptureLeads, updateCaptureLead } from '../store/captureLeadsSlice'
 import { useACL } from '../acl/useACL'
+import { fetchAssignees } from '../lib/usersApi'
 import { ALL_LEAD_SCORES, ALL_LEAD_STATUSES, toLeadRow } from '../utils/leadMapping'
 
 export function Leads() {
@@ -35,10 +36,32 @@ export function Leads() {
   const [score, setScore] = useState<(typeof ALL_LEAD_SCORES)[number]>('all')
   const [source, setSource] = useState<string>('all')
   const [showFilters, setShowFilters] = useState(false)
+  const [assigneeDirectory, setAssigneeDirectory] = useState<string[]>([])
 
   useEffect(() => {
     dispatch(loadCaptureLeads({ force: true }))
   }, [dispatch])
+
+  useEffect(() => {
+    if (!canAssign) {
+      setAssigneeDirectory([])
+      return
+    }
+    let cancelled = false
+    fetchAssignees()
+      .then((res) => {
+        if (cancelled) return
+        setAssigneeDirectory(
+          (res.items ?? []).map((u) => String(u.name ?? '').trim()).filter(Boolean),
+        )
+      })
+      .catch(() => {
+        if (!cancelled) setAssigneeDirectory([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [canAssign])
 
   const allSources = useMemo(() => {
     const unique = Array.from(new Set(rows.map((r) => (r.source ?? '').trim()).filter(Boolean))).sort((a, b) =>
@@ -75,13 +98,12 @@ export function Leads() {
   const shownCount = filtered.length
 
   const teamMembers = useMemo(() => {
-    const names = items
-      .map((l) => String(l.callBy ?? '').trim())
-      .filter(Boolean)
+    if (!canAssign) return []
+    const names = [...assigneeDirectory]
     const me = String(user?.name ?? '').trim()
-    if (me) names.push(me)
-    return [...new Set(names)]
-  }, [items, user?.name])
+    if (me && !names.includes(me)) names.push(me)
+    return [...new Set(names.filter(Boolean))].sort((a, b) => a.localeCompare(b))
+  }, [assigneeDirectory, canAssign, user?.name])
 
   return (
     <div className="crm-page">

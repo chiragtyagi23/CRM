@@ -18,10 +18,12 @@ import { submitCaptureLead } from '../store/captureLeadsSlice'
 import { crmPayloadBuilder } from '../services/crmPayloadBuilder'
 import {
   IconInsetField,
+  SearchableSelect,
   TogglePills,
   fieldDateTimeInputClass,
   fieldInputClass,
 } from '../components/uiPrimitives'
+import { fetchAssignees } from '../lib/usersApi'
 import { PageHeader } from '../components/PageHeader'
 import { d } from '../lib/designClasses'
 import { FaRupeeSign } from "react-icons/fa";
@@ -72,7 +74,8 @@ export function CaptureLead() {
   const [callbackTime, setCallbackTime] = useState('')
   const [preferredDropdownOpen, setPreferredDropdownOpen] = useState(false)
   const preferredDropdownRef = useRef<HTMLDivElement>(null)
-
+  const [receivedByOptions, setReceivedByOptions] = useState<{ id: string; value: string; label: string }[]>([])
+  const [receivedByLoading, setReceivedByLoading] = useState(true)
   const preferredLocationsLabel = useMemo(() => {
     const parts = [...preferredLocations]
     if (preferredLocationOtherSelected) {
@@ -94,6 +97,35 @@ export function CaptureLead() {
     document.addEventListener('mousedown', onDoc)
     return () => document.removeEventListener('mousedown', onDoc)
   }, [preferredDropdownOpen])
+
+  useEffect(() => {
+    let cancelled = false
+    setReceivedByLoading(true)
+
+    fetchAssignees()
+      .then((res) => {
+        if (cancelled) return
+        const names = (res.items ?? [])
+          .map((u) => String(u.name ?? '').trim())
+          .filter(Boolean)
+        const me = String(authUser?.name ?? '').trim()
+        if (me && !names.includes(me)) names.unshift(me)
+        const unique = [...new Set(names)].sort((a, b) => a.localeCompare(b))
+        setReceivedByOptions(unique.map((name) => ({ id: name, value: name, label: name })))
+      })
+      .catch(() => {
+        if (cancelled) return
+        const me = String(authUser?.name ?? '').trim()
+        setReceivedByOptions(me ? [{ id: me, value: me, label: me }] : [])
+      })
+      .finally(() => {
+        if (!cancelled) setReceivedByLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [authUser?.name])
 
   useEffect(() => {
     const selfName = String(authUser?.name ?? '').trim()
@@ -246,13 +278,14 @@ export function CaptureLead() {
             required
             icon={<FaUser className={fieldIconCls} aria-hidden />}
           >
-            <input
+            <SearchableSelect
               value={callBy}
-              onChange={(e) => setCallBy(e.target.value)}
-              placeholder="Who received this lead"
-              className={fieldInputClass}
-              required
-              aria-required
+              onChange={setCallBy}
+              options={receivedByOptions}
+              placeholder={receivedByLoading ? 'Loading team…' : 'Select team member'}
+              searchPlaceholder="Search name…"
+              emptyMessage="No team members found"
+              disabled={receivedByLoading}
             />
           </IconInsetField>
 

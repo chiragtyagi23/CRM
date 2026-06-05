@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import type { LeadDTO, LeadScoreDTO, LeadStatusDTO } from '../lib/dashboardDummyApi'
 import { toIndiaTelHref, toWhatsAppHref } from '../utils/phone'
 import { FiCalendar, FiChevronDown, FiEye, FiMail, FiMessageSquare, FiPhone, FiTrash2 } from 'react-icons/fi'
@@ -97,6 +97,12 @@ export function LeadCard({
 }) {
   const telHref = lead.contact?.trim() ? toIndiaTelHref(lead.contact) : undefined
   const waHref = lead.contact?.trim() ? toWhatsAppHref(lead.contact) : undefined
+  const assigneeSelectOptions = useMemo(() => {
+    const current = String(lead.assignedTo ?? '').trim()
+    const base = assigneeOptions ?? []
+    if (!current || current === '—' || base.includes(current)) return base
+    return [current, ...base]
+  }, [assigneeOptions, lead.assignedTo])
 
   return (
     <article className="rounded-xl border border-[#8B7355]/10 bg-white p-6 transition-all hover:shadow-lg">
@@ -187,7 +193,7 @@ export function LeadCard({
                   <option value="" disabled>
                     Select
                   </option>
-                  {(assigneeOptions ?? []).map((p) => (
+                  {assigneeSelectOptions.map((p) => (
                     <option key={p} value={p}>
                       {p}
                     </option>

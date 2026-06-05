@@ -4,6 +4,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { LeadCard } from '../components/LeadCard'
 import { fetchCaptureLeads, patchCaptureLead } from '../lib/captureLeadsApi'
+import { fetchAssignees } from '../lib/usersApi'
 import { toLeadRow } from '../utils/leadMapping'
 import type { LeadDTO, LeadScoreDTO, LeadStatusDTO } from '../lib/dashboardDummyApi'
 import { useACL } from '../acl/useACL'
@@ -19,8 +20,9 @@ function CampaignDetails() {
   const stateTitle = String((location.state as { title?: string } | null)?.title ?? '').trim()
   const [items, setItems] = useState<LeadDTO[]>([])
   const [loading, setLoading] = useState(true)
-  const { hasAccess } = useACL()
+  const { hasAccess, user } = useACL()
   const canAssign = hasAccess(MODULE_KEYS.leads.assignTo)
+  const [assigneeDirectory, setAssigneeDirectory] = useState<string[]>([])
   const [overrides, setOverrides] = useState<Record<string, { score?: LeadScoreDTO; status?: LeadStatusDTO; assignedTo?: string }>>({})
 
   const rows = useMemo(() => items, [items])
@@ -39,6 +41,27 @@ function CampaignDetails() {
   }, [overrides, rows])
 
   const baseById = useMemo(() => new Map(rows.map((r) => [r.id, r])), [rows])
+
+  useEffect(() => {
+    if (!canAssign) {
+      setAssigneeDirectory([])
+      return
+    }
+    let cancelled = false
+    fetchAssignees()
+      .then((res) => {
+        if (cancelled) return
+        setAssigneeDirectory(
+          (res.items ?? []).map((u) => String(u.name ?? '').trim()).filter(Boolean),
+        )
+      })
+      .catch(() => {
+        if (!cancelled) setAssigneeDirectory([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [canAssign])
 
   useEffect(() => {
     if (!id) {
@@ -67,9 +90,14 @@ function CampaignDetails() {
   }, [id])
 
   const teamMembers = useMemo(() => {
-    const names = items.map((l) => String(l.assignedTo ?? '').trim()).filter(Boolean)
-    return [...new Set(names)]
-  }, [items])
+    const names = [
+      ...assigneeDirectory,
+      ...items.map((l) => String(l.assignedTo ?? '').trim()).filter(Boolean),
+    ]
+    const me = String(user?.name ?? '').trim()
+    if (me) names.push(me)
+    return [...new Set(names.filter((n) => n && n !== '—'))].sort((a, b) => a.localeCompare(b))
+  }, [assigneeDirectory, items, user?.name])
 
   const title = stateTitle || 'Campaign'
 
@@ -99,8 +127,12 @@ function CampaignDetails() {
             <LeadCard
               key={lead.id}
               lead={lead}
-              onChangeScore={() => {}}
-              onChangeStatus={() => {}}
+              onChangeScore={(next) => {
+                setOverrides((s) => ({ ...s, [lead.id]: { ...(s[lead.id] ?? {}), score: next } }))
+              }}
+              onChangeStatus={(next) => {
+                setOverrides((s) => ({ ...s, [lead.id]: { ...(s[lead.id] ?? {}), status: next } }))
+              }}
               canEditAssignee={canAssign}
               assigneeOptions={teamMembers}
               canDelete={false}
@@ -110,7 +142,11 @@ function CampaignDetails() {
               dirty={(() => {
                 const base = baseById.get(lead.id)
                 if (!base) return false
-                return base.assignedTo !== lead.assignedTo
+                return (
+                  base.score !== lead.score ||
+                  base.status !== lead.status ||
+                  base.assignedTo !== lead.assignedTo
+                )
               })()}
               onUpdate={async () => {
                 const base = baseById.get(lead.id)
@@ -122,7 +158,11 @@ function CampaignDetails() {
                 try {
                   await patchCaptureLead(lead.id, patch)
                   setItems((prev) =>
-                    prev.map((r) => (r.id === lead.id ? { ...r, assignedTo: lead.assignedTo } : r)),
+                    prev.map((r) =>
+                      r.id === lead.id
+                        ? { ...r, score: lead.score, status: lead.status, assignedTo: lead.assignedTo }
+                        : r,
+                    ),
                   )
                   setOverrides((s) => {
                     const next = { ...s }
@@ -130,7 +170,7 @@ function CampaignDetails() {
                     return next
                   })
                 } catch {
-                  window.alert('Could not update assignee. Try again.')
+                  window.alert('Could not update lead. Try again.')
                 }
               }}
               onViewDetails={() =>
