@@ -44,7 +44,17 @@ import { toPng } from 'html-to-image'
 
 const fieldIconCls = 'h-[18px] w-[18px] shrink-0'
 
-const qrUrl = `${import.meta.env.VITE_CAMPAIGN_SITE_URL || 'https://www.magnumworld.in'}?source=qrcode#contact`
+const QR_FORM_BASE_URL = (
+  import.meta.env.VITE_CAMPAIGN_SITE_URL || 'http://localhost:5174'
+).replace(/\/$/, '')
+
+function buildQrFormUrl(id: string) {
+  const params = new URLSearchParams({
+    source: 'qrcode',
+    id,
+  })
+  return `${QR_FORM_BASE_URL}/?${params.toString()}#contact`
+}
 
 async function downloadQrPng(node: HTMLElement) {
   const dataUrl = await toPng(node, { cacheBust: true, pixelRatio: 2 })
@@ -102,6 +112,12 @@ export function CaptureLead() {
 
   const [showQr, setShowQr] = useState(false)
   const qrBoxRef = useRef<HTMLDivElement>(null)
+
+  const qrUrl = useMemo(() => {
+    const userId = String(authUser?.id ?? '').trim()
+    if (!userId) return null
+    return buildQrFormUrl(userId)
+  }, [authUser?.id])
 
   useEffect(() => {
     if (!preferredDropdownOpen) return
@@ -720,14 +736,23 @@ export function CaptureLead() {
           >
             <p className="text-base font-semibold text-[#2E2E2E]">Scan to open enquiry form</p>
             <p className="mt-1 text-xs text-[#8B7355]">Point your phone camera at the code below</p>
-            <div ref={qrBoxRef} className="mx-auto mt-5 inline-block rounded-lg border border-[#E8DCCB] bg-white p-3">
-              <QRCode value={qrUrl} size={200} level="M" />
-            </div>
-            <p className="mt-4 break-all text-[10px] leading-relaxed text-[#8B7355]">{qrUrl}</p>
+            {qrUrl ? (
+              <>
+                <div ref={qrBoxRef} className="mx-auto mt-5 inline-block rounded-lg border border-[#E8DCCB] bg-white p-3">
+                  <QRCode value={qrUrl} size={200} level="M" />
+                </div>
+                <p className="mt-4 break-all text-[10px] leading-relaxed text-[#8B7355]">{qrUrl}</p>
+              </>
+            ) : (
+              <p className="mt-5 text-sm text-[#D96B6B]">
+                Could not build QR link — sign in again to include your user id.
+              </p>
+            )}
             <div className="mt-5 flex gap-2">
               <button
                 type="button"
                 className={`flex-1 ${d.btnSecondary}`}
+                disabled={!qrUrl}
                 onClick={() => {
                   if (qrBoxRef.current) void downloadQrPng(qrBoxRef.current)
                 }}
