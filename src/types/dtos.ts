@@ -58,7 +58,7 @@ export type SocialInfraGroup = { title: string; items: { name: string; value: st
 // Capture leads (API)
 // ---------------------------------------------------------------------------
 
-export type LeadActivityTimelineEntry = {
+export type LeadManualTimelineEntry = {
   type: 'call' | 'email'
   projectId: string
   projectName: string
@@ -66,6 +66,19 @@ export type LeadActivityTimelineEntry = {
   date: string
   time: string
 }
+
+export type LeadWebhookTimelineEntry = {
+  type: 'webhook_received'
+  source?: string | null
+  at: string
+  message?: string | null
+  propertyType?: string | null
+  propertyId?: string | null
+  city?: string | null
+  payload?: Record<string, unknown>
+}
+
+export type LeadActivityTimelineEntry = LeadManualTimelineEntry | LeadWebhookTimelineEntry
 
 export type LeadInterestedProject = {
   projectId: string

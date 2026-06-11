@@ -19,38 +19,59 @@ import {
 } from '../lib/dashboardDummyApi'
 import { fetchCampaignProjects, type CampaignProjectOption } from '../lib/campaignsApi'
 import { fetchCaptureLeadById, patchCaptureLead } from '../lib/captureLeadsApi'
-import type { LeadActivityTimelineEntry, LeadInterestedProject } from '../types/dtos'
+import type {
+  LeadActivityTimelineEntry,
+  LeadInterestedProject,
+  LeadManualTimelineEntry,
+  LeadWebhookTimelineEntry,
+} from '../types/dtos'
 import { ScheduleVisitModal } from '../components/ScheduleVisitModal'
 import { fmtLongDateTime, formatCallbackDateTime } from '../utils/format'
 import { BUYING_STAGE_OPTIONS } from '../utils/uiConfig'
 import { toLeadDetailsRow } from '../utils/leadMapping'
 
-function timelineTitle(type: LeadActivityTimelineEntry['type']) {
-  return type === 'call' ? 'Call Connected' : 'Email Sent'
+function isWebhookTimelineEntry(entry: LeadActivityTimelineEntry): entry is LeadWebhookTimelineEntry {
+  return entry.type === 'webhook_received'
 }
 
-function formatTimelineWhen(date: string, time: string) {
-  if (!date.trim()) return '—'
-  return time.trim() ? `${date}, ${time}` : date
+function timelineTitle(entry: LeadActivityTimelineEntry) {
+  if (entry.type === 'call') return 'Call Connected'
+  if (entry.type === 'email') return 'Email Sent'
+  if (entry.type === 'webhook_received') {
+    const source = entry.source?.trim()
+    return source ? `Lead from ${source}` : 'Lead Received'
+  }
+  return 'Activity'
+}
+
+function formatTimelineWhen(date?: string, time?: string) {
+  const d = (date ?? '').trim()
+  if (!d) return '—'
+  const t = (time ?? '').trim()
+  return t ? `${d}, ${t}` : d
 }
 
 function sortTimeline(items: LeadActivityTimelineEntry[]) {
-  return [...items].sort((a, b) => {
-    const ka = `${a.date}T${a.time || '00:00'}`
-    const kb = `${b.date}T${b.time || '00:00'}`
-    return kb.localeCompare(ka)
-  })
+  return [...items].sort((a, b) => timelineEntryMs(b) - timelineEntryMs(a))
 }
 
 function timelineEntryMs(entry: LeadActivityTimelineEntry) {
-  const d = new Date(`${entry.date}T${entry.time || '00:00'}`)
-  return Number.isNaN(d.getTime()) ? 0 : d.getTime()
+  if (isWebhookTimelineEntry(entry) && entry.at) {
+    const ms = new Date(entry.at).getTime()
+    return Number.isNaN(ms) ? 0 : ms
+  }
+  if (!isWebhookTimelineEntry(entry)) {
+    const d = new Date(`${entry.date}T${entry.time || '00:00'}`)
+    return Number.isNaN(d.getTime()) ? 0 : d.getTime()
+  }
+  return 0
 }
 
 function entryWhen(entry: LeadActivityTimelineEntry) {
   const ms = timelineEntryMs(entry)
-  if (!ms) return formatTimelineWhen(entry.date, entry.time)
-  return fmtLongDateTime(new Date(ms).toISOString())
+  if (ms) return fmtLongDateTime(new Date(ms).toISOString())
+  if (!isWebhookTimelineEntry(entry)) return formatTimelineWhen(entry.date, entry.time)
+  return '—'
 }
 
 type TimelineFeedItem = {
@@ -65,9 +86,20 @@ type TimelineFeedItem = {
 
 function entrySubtitle(entry: LeadActivityTimelineEntry) {
   const parts: string[] = []
+  if (isWebhookTimelineEntry(entry)) {
+    if (entry.message?.trim()) parts.push(entry.message.trim())
+    if (entry.city?.trim()) parts.push(entry.city.trim())
+    if (entry.propertyId?.trim()) parts.push(entry.propertyId.trim())
+    return parts.length ? parts.join(' · ') : undefined
+  }
   if (entry.projectName?.trim()) parts.push(entry.projectName.trim())
   if (entry.note?.trim()) parts.push(entry.note.trim())
   return parts.length ? parts.join(' · ') : undefined
+}
+
+function timelineEntryIcon(entry: LeadActivityTimelineEntry): TimelineFeedItem['icon'] {
+  if (isWebhookTimelineEntry(entry)) return 'created'
+  return entry.type === 'call' ? 'call' : 'email'
 }
 
 function parseInterestedProjects(raw: unknown): LeadInterestedProject[] {
@@ -97,8 +129,10 @@ function enrichInterestedProjects(
 function groupTimelineByProject(entries: LeadActivityTimelineEntry[]) {
   const map = new Map<string, { projectId: string; projectName: string; entries: LeadActivityTimelineEntry[] }>()
   for (const e of sortTimeline(entries)) {
-    const projectId = e.projectId || 'other'
-    const projectName = e.projectName?.trim() || 'Other'
+    const projectId = isWebhookTimelineEntry(e) ? e.propertyId || 'other' : e.projectId || 'other'
+    const projectName = isWebhookTimelineEntry(e)
+      ? e.propertyId?.trim() || 'Other'
+      : e.projectName?.trim() || 'Other'
     const row = map.get(projectId) ?? { projectId, projectName, entries: [] }
     row.entries.push(e)
     map.set(projectId, row)
@@ -107,15 +141,20 @@ function groupTimelineByProject(entries: LeadActivityTimelineEntry[]) {
 }
 
 function buildTimelineFeed(entries: LeadActivityTimelineEntry[], lead: LeadDTO): TimelineFeedItem[] {
-  const items: TimelineFeedItem[] = entries.map((entry, idx) => ({
-    id: `entry-${idx}-${entry.projectId}-${entry.type}-${entry.date}-${entry.time}`,
-    icon: entry.type === 'call' ? 'call' : 'email',
-    dotTone: entry.type === 'call' ? 'mint' : 'sand',
-    title: timelineTitle(entry.type),
-    subtitle: entrySubtitle(entry),
-    when: entryWhen(entry),
-    sortMs: timelineEntryMs(entry),
-  }))
+  const items: TimelineFeedItem[] = entries.map((entry, idx) => {
+    const webhook = isWebhookTimelineEntry(entry)
+    const projectKey = webhook ? entry.propertyId : entry.projectId
+    const whenKey = webhook ? entry.at : `${entry.date}-${entry.time}`
+    return {
+      id: `entry-${idx}-${projectKey}-${entry.type}-${whenKey}`,
+      icon: timelineEntryIcon(entry),
+      dotTone: webhook || entry.type === 'call' ? 'mint' : 'sand',
+      title: timelineTitle(entry),
+      subtitle: entrySubtitle(entry),
+      when: entryWhen(entry),
+      sortMs: timelineEntryMs(entry),
+    }
+  })
 
   const lastContactMs = new Date(lead.lastContactAtISO).getTime()
   if (!Number.isNaN(lastContactMs)) {
@@ -264,7 +303,7 @@ export function LeadDetails({ leadId }: { leadId: string }) {
   const [timeline, setTimeline] = useState<LeadActivityTimelineEntry[]>([])
   const [projects, setProjects] = useState<CampaignProjectOption[]>([])
   const [timelineProjectId, setTimelineProjectId] = useState('')
-  const [timelineType, setTimelineType] = useState<LeadActivityTimelineEntry['type']>('call')
+  const [timelineType, setTimelineType] = useState<LeadManualTimelineEntry['type']>('call')
   const [timelineNote, setTimelineNote] = useState('')
   const [timelineDate, setTimelineDate] = useState('')
   const [timelineTime, setTimelineTime] = useState('')
@@ -398,7 +437,7 @@ export function LeadDetails({ leadId }: { leadId: string }) {
     }
     setSavingTimeline(true)
     try {
-      const entry: LeadActivityTimelineEntry = {
+      const entry: LeadManualTimelineEntry = {
         type: timelineType,
         projectId: project.id,
         projectName: project.name,
@@ -771,7 +810,7 @@ export function LeadDetails({ leadId }: { leadId: string }) {
                       <span className="mb-1 block text-[11px] font-medium text-[#8B7355]">Type</span>
                       <select
                         value={timelineType}
-                        onChange={(e) => setTimelineType(e.target.value as LeadActivityTimelineEntry['type'])}
+                        onChange={(e) => setTimelineType(e.target.value as LeadManualTimelineEntry['type'])}
                         className="h-10 w-full rounded-lg border border-[#E8DCCB] bg-white px-3 text-[12px] text-[#2E2E2E]"
                         disabled={savingTimeline}
                       >
@@ -839,25 +878,28 @@ export function LeadDetails({ leadId }: { leadId: string }) {
                             {group.projectName}
                           </div>
                           <div className="divide-y divide-gray-900/5">
-                            {group.entries.map((entry, idx) => (
+                            {group.entries.map((entry, idx) => {
+                              const subtitle = entrySubtitle(entry)
+                              return (
                               <div
-                                key={`${group.projectId}-${entry.type}-${entry.date}-${entry.time}-${idx}`}
+                                key={`${group.projectId}-${entry.type}-${timelineEntryMs(entry)}-${idx}`}
                                 className="flex items-start gap-4 px-4 py-4"
                               >
-                                <ActivityIcon icon={entry.type === 'call' ? 'call' : 'email'} />
+                                <ActivityIcon icon={timelineEntryIcon(entry)} />
                                 <div className="min-w-0">
                                   <div className="text-[12px] font-semibold text-[#2E2E2E]">
-                                    {timelineTitle(entry.type)}
+                                    {timelineTitle(entry)}
                                   </div>
-                                  {entry.note.trim() ? (
-                                    <div className="mt-1 text-[11px] text-[#8B7355]">{entry.note}</div>
+                                  {subtitle ? (
+                                    <div className="mt-1 text-[11px] text-[#8B7355]">{subtitle}</div>
                                   ) : null}
                                   <div className="mt-1 text-[10.5px] text-[#8B7355]">
                                     {entryWhen(entry)}
                                   </div>
                                 </div>
                               </div>
-                            ))}
+                              )
+                            })}
                           </div>
                         </div>
                       ))}
