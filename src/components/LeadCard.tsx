@@ -1,7 +1,7 @@
 import { useMemo, type ReactNode } from 'react'
 import type { LeadDTO, LeadScoreDTO, LeadStatusDTO } from '../lib/dashboardDummyApi'
 import { toIndiaTelHref, toWhatsAppHref } from '../utils/phone'
-import { FiCalendar, FiChevronDown, FiEye, FiMail, FiMessageSquare, FiPhone, FiTrash2 } from 'react-icons/fi'
+import { FiCalendar, FiEye, FiMail, FiMessageSquare, FiPhone, FiTrash2 } from 'react-icons/fi'
 
 function BadgeSelect({
   id,
@@ -22,16 +22,10 @@ function BadgeSelect({
         id={id}
         value={value}
         onChange={onChange}
-        className={`w-full min-w-0 cursor-pointer appearance-none rounded-full border-0 py-1 pl-3 pr-9 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#8B7355]/40 ${badgeClassName}`}
+        className={`w-full min-w-0 cursor-pointer rounded-full border-0 py-1 pl-3 pr-9 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#8B7355]/40 ${badgeClassName}`}
       >
         {children}
       </select>
-      <span
-        className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-[#8B7355]"
-        aria-hidden
-      >
-        <FiChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden />
-      </span>
     </span>
   )
 }

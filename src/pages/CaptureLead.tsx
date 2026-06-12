@@ -20,6 +20,7 @@ import {
   IconInsetField,
   SearchableSelect,
   TogglePills,
+  dropdownChevronInlineClass,
   fieldDateTimeInputClass,
   fieldInputClass,
 } from '../components/uiPrimitives'
@@ -385,7 +386,7 @@ export function CaptureLead() {
               <select
                 value={bhk}
                 onChange={(e) => setBhk(e.target.value)}
-                className={`${fieldInputClass} appearance-none`}
+                className={fieldInputClass}
               >
                 <option value="" disabled>
                   Select BHK
@@ -402,7 +403,7 @@ export function CaptureLead() {
               <select
                 value={budget}
                 onChange={(e) => setBudget(e.target.value)}
-                className={`${fieldInputClass} appearance-none`}
+                className={fieldInputClass}
               >
                 <option value="" disabled>
                   Select budget range
@@ -494,7 +495,7 @@ export function CaptureLead() {
                   <span className={`min-w-0 flex-1 truncate ${preferredLocations.length > 0 || preferredLocationOtherSelected ? 'text-[#2E2E2E]' : 'text-[#8B7355]/60'}`}>
                     {preferredLocationsLabel}
                   </span>
-                  <span className="shrink-0 text-[#8B7355]" aria-hidden>
+                  <span className={dropdownChevronInlineClass} aria-hidden>
                     ▾
                   </span>
                 </button>

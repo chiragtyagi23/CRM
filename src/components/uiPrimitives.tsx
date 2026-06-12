@@ -36,7 +36,7 @@ export function IconInsetField({
         children
       ) : (
         <div className="relative">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8B7355]">{icon}</span>
+          <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[#8B7355]">{icon}</span>
           {children}
         </div>
       )}
@@ -46,6 +46,12 @@ export function IconInsetField({
 
 export const fieldInputClass =
   'h-11 w-full rounded-lg border border-[#E8DCCB] bg-white pl-11 pr-3 text-sm text-[#2E2E2E] placeholder:text-[#8B7355]/60 focus:border-[#8B7355] focus:outline-none'
+
+/** Dropdown chevron — inset from the right edge (shared across custom selects). */
+export const dropdownChevronClass =
+  'pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-[#8B7355]'
+
+export const dropdownChevronInlineClass = 'shrink-0 text-[#8B7355] mr-2'
 
 /** Date/time inputs — no left icon inset (native control stays visible). */
 export const fieldDateTimeInputClass =
@@ -90,19 +96,21 @@ export function SearchableSelect({
   }, [open])
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className="relative w-full">
       <button
         type="button"
         onClick={() => !disabled && setOpen((o) => !o)}
-        className={`${fieldInputClass} flex items-center justify-between gap-2 text-left`}
+        className={`${fieldInputClass} relative w-full text-left`}
         disabled={disabled}
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        <span className={`min-w-0 flex-1 truncate ${value ? 'text-[#2E2E2E]' : 'text-[#8B7355]/60'}`}>
+        <span
+          className={`block truncate pr-6 ${value ? 'text-[#2E2E2E]' : 'text-[#8B7355]/60'}`}
+        >
           {selectedLabel || placeholder}
         </span>
-        <span className="shrink-0 text-[#8B7355]" aria-hidden>
+        <span className={dropdownChevronClass} aria-hidden>
           ▾
         </span>
       </button>

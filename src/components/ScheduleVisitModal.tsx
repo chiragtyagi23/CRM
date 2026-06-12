@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 
+import { dropdownChevronInlineClass } from './uiPrimitives'
 import type { ApiError } from '../lib/crmApi'
 import { fetchCampaignProjects, type CampaignProjectOption } from '../lib/campaignsApi'
 import { crmPayloadBuilder } from '../services/crmPayloadBuilder'
@@ -175,7 +176,7 @@ export function ScheduleVisitModal({
               disabled={saving}
             >
               <span className="truncate">{selectedProjectsLabel}</span>
-              <span className="ml-3 text-[#8B7355]" aria-hidden>
+              <span className={`ml-3 ${dropdownChevronInlineClass}`} aria-hidden>
                 ▾
               </span>
             </button>

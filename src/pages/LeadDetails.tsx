@@ -185,7 +185,7 @@ function buildTimelineFeed(entries: LeadActivityTimelineEntry[], lead: LeadDTO):
 }
 
 function ActivityIcon({ icon }: { icon: TimelineFeedItem['icon'] }) {
-  const cls = 'flex h-9 w-9 items-center justify-center rounded-full'
+  const cls = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-full aspect-square'
   if (icon === 'call') {
     return (
       <div className={`${cls} bg-[#6FAF8F]/20 text-[#6FAF8F]`}>
@@ -268,7 +268,8 @@ function ActionBtn({
   label: string
   onClick: () => void
 }) {
-  const base = 'inline-flex h-9 w-[128px] items-center justify-center gap-2 rounded-xl px-4 text-[11px] font-semibold'
+  const base =
+    'inline-flex h-9 w-full min-[980px]:w-[128px] items-center justify-center gap-2 rounded-xl px-3 min-[980px]:px-4 text-[11px] font-semibold'
   const cls =
     tone === 'call'
       ? 'bg-[#8B7355] text-white shadow-sm hover:bg-[#6d5a43]'
@@ -308,7 +309,7 @@ export function LeadDetails({ leadId }: { leadId: string }) {
   const [timelineDate, setTimelineDate] = useState('')
   const [timelineTime, setTimelineTime] = useState('')
   const [savingTimeline, setSavingTimeline] = useState(false)
-  const [addTimelineOpen, setAddTimelineOpen] = useState(true)
+  const [addTimelineOpen, setAddTimelineOpen] = useState(false)
   const [interestedProjects, setInterestedProjects] = useState<LeadInterestedProject[]>([])
   const [interestedProjectPickId, setInterestedProjectPickId] = useState('')
   const [savingInterested, setSavingInterested] = useState(false)
@@ -533,33 +534,41 @@ export function LeadDetails({ leadId }: { leadId: string }) {
                   </div>
                 </div>
 
-                <div className="flex shrink-0 flex-col gap-2 min-[980px]:items-end">
-                  <ActionBtn
-                    tone="call"
-                    icon={<FiPhone size={14} aria-hidden />}
-                    label="Call"
-                    onClick={() => window.alert(`Call (dummy): ${lead.contact}`)}
-                  />
-                  <ActionBtn
-                    tone="wa"
-                    icon={<FiMessageSquare size={14} aria-hidden />}
-                    label="WhatsApp"
-                    onClick={() => window.alert(`WhatsApp (dummy): ${lead.contact}`)}
-                  />
-                  <ActionBtn
-                    tone="outline"
-                    icon={<FiMail size={14} aria-hidden />}
-                    label="Email"
-                    onClick={() => window.alert(`Email (dummy): ${lead.email}`)}
-                  />
-                  <ActionBtn
-                    tone="outline"
-                    icon={<FiCalendar size={14} aria-hidden />}
-                    label="Schedule Visit"
-                    onClick={() => {
-                      setScheduleOpen(true)
-                    }}
-                  />
+                <div className="grid w-full shrink-0 grid-cols-2 gap-2 min-[980px]:flex min-[980px]:w-auto min-[980px]:flex-col min-[980px]:items-end">
+                  <div className="order-1 min-[980px]:order-1">
+                    <ActionBtn
+                      tone="call"
+                      icon={<FiPhone size={14} aria-hidden />}
+                      label="Call"
+                      onClick={() => window.alert(`Call (dummy): ${lead.contact}`)}
+                    />
+                  </div>
+                  <div className="order-2 min-[980px]:order-3">
+                    <ActionBtn
+                      tone="outline"
+                      icon={<FiMail size={14} aria-hidden />}
+                      label="Email"
+                      onClick={() => window.alert(`Email (dummy): ${lead.email}`)}
+                    />
+                  </div>
+                  <div className="order-3 min-[980px]:order-2">
+                    <ActionBtn
+                      tone="wa"
+                      icon={<FiMessageSquare size={14} aria-hidden />}
+                      label="WhatsApp"
+                      onClick={() => window.alert(`WhatsApp (dummy): ${lead.contact}`)}
+                    />
+                  </div>
+                  <div className="order-4 min-[980px]:order-4">
+                    <ActionBtn
+                      tone="outline"
+                      icon={<FiCalendar size={14} aria-hidden />}
+                      label="Schedule Visit"
+                      onClick={() => {
+                        setScheduleOpen(true)
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             </section>
