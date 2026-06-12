@@ -21,6 +21,7 @@ import { fetchCampaignProjects, type CampaignProjectOption } from '../lib/campai
 import { fetchCaptureLeadById, patchCaptureLead } from '../lib/captureLeadsApi'
 import type {
   LeadActivityTimelineEntry,
+  LeadEmailAutoReplyTimelineEntry,
   LeadInterestedProject,
   LeadManualTimelineEntry,
   LeadWebhookTimelineEntry,
@@ -34,12 +35,28 @@ function isWebhookTimelineEntry(entry: LeadActivityTimelineEntry): entry is Lead
   return entry.type === 'webhook_received'
 }
 
+function isEmailAutoReplyEntry(entry: LeadActivityTimelineEntry): entry is LeadEmailAutoReplyTimelineEntry {
+  return entry.type === 'email_auto_reply'
+}
+
+function isTimestampedTimelineEntry(
+  entry: LeadActivityTimelineEntry,
+): entry is LeadWebhookTimelineEntry | LeadEmailAutoReplyTimelineEntry {
+  return isWebhookTimelineEntry(entry) || isEmailAutoReplyEntry(entry)
+}
+
 function timelineTitle(entry: LeadActivityTimelineEntry) {
   if (entry.type === 'call') return 'Call Connected'
   if (entry.type === 'email') return 'Email Sent'
   if (entry.type === 'webhook_received') {
     const source = entry.source?.trim()
     return source ? `Lead from ${source}` : 'Lead Received'
+  }
+  if (entry.type === 'email_auto_reply') {
+    if (entry.status === 'sent') return 'Thank-you email delivered'
+    if (entry.status === 'failed') return 'Thank-you email failed'
+    if (entry.status === 'skipped') return 'Thank-you email skipped'
+    return 'Thank-you email logged (dev)'
   }
   return 'Activity'
 }
@@ -56,11 +73,11 @@ function sortTimeline(items: LeadActivityTimelineEntry[]) {
 }
 
 function timelineEntryMs(entry: LeadActivityTimelineEntry) {
-  if (isWebhookTimelineEntry(entry) && entry.at) {
+  if (isTimestampedTimelineEntry(entry) && entry.at) {
     const ms = new Date(entry.at).getTime()
     return Number.isNaN(ms) ? 0 : ms
   }
-  if (!isWebhookTimelineEntry(entry)) {
+  if (!isWebhookTimelineEntry(entry) && !isEmailAutoReplyEntry(entry)) {
     const d = new Date(`${entry.date}T${entry.time || '00:00'}`)
     return Number.isNaN(d.getTime()) ? 0 : d.getTime()
   }
@@ -70,7 +87,9 @@ function timelineEntryMs(entry: LeadActivityTimelineEntry) {
 function entryWhen(entry: LeadActivityTimelineEntry) {
   const ms = timelineEntryMs(entry)
   if (ms) return fmtLongDateTime(new Date(ms).toISOString())
-  if (!isWebhookTimelineEntry(entry)) return formatTimelineWhen(entry.date, entry.time)
+  if (!isWebhookTimelineEntry(entry) && !isEmailAutoReplyEntry(entry)) {
+    return formatTimelineWhen(entry.date, entry.time)
+  }
   return '—'
 }
 
@@ -86,6 +105,22 @@ type TimelineFeedItem = {
 
 function entrySubtitle(entry: LeadActivityTimelineEntry) {
   const parts: string[] = []
+  if (isEmailAutoReplyEntry(entry)) {
+    const source = entry.source?.trim()
+    if (entry.status === 'sent') {
+      if (entry.to?.trim()) parts.push(`Delivered to ${entry.to.trim()}`)
+      if (source) parts.push(`Auto-reply for ${source} enquiry`)
+      return parts.length ? parts.join(' · ') : 'Email delivered successfully'
+    }
+    if (entry.status === 'failed') {
+      return entry.error?.trim() || 'Could not send thank-you email'
+    }
+    if (entry.status === 'skipped') {
+      return entry.reason === 'no_email' ? 'Lead has no email address' : 'Email was not sent'
+    }
+    if (entry.to?.trim()) return `Dev log only · ${entry.to.trim()}`
+    return 'Logged in development (SMTP not configured)'
+  }
   if (isWebhookTimelineEntry(entry)) {
     if (entry.message?.trim()) parts.push(entry.message.trim())
     if (entry.city?.trim()) parts.push(entry.city.trim())
@@ -99,6 +134,7 @@ function entrySubtitle(entry: LeadActivityTimelineEntry) {
 
 function timelineEntryIcon(entry: LeadActivityTimelineEntry): TimelineFeedItem['icon'] {
   if (isWebhookTimelineEntry(entry)) return 'created'
+  if (isEmailAutoReplyEntry(entry)) return 'email'
   return entry.type === 'call' ? 'call' : 'email'
 }
 
@@ -129,26 +165,39 @@ function enrichInterestedProjects(
 function groupTimelineByProject(entries: LeadActivityTimelineEntry[]) {
   const map = new Map<string, { projectId: string; projectName: string; entries: LeadActivityTimelineEntry[] }>()
   for (const e of sortTimeline(entries)) {
-    const projectId = isWebhookTimelineEntry(e) ? e.propertyId || 'other' : e.projectId || 'other'
-    const projectName = isWebhookTimelineEntry(e)
-      ? e.propertyId?.trim() || 'Other'
-      : e.projectName?.trim() || 'Other'
+    const projectId = isEmailAutoReplyEntry(e)
+      ? 'automated-messages'
+      : isWebhookTimelineEntry(e)
+        ? e.propertyId || 'other'
+        : e.projectId || 'other'
+    const projectName = isEmailAutoReplyEntry(e)
+      ? 'Automated messages'
+      : isWebhookTimelineEntry(e)
+        ? e.propertyId?.trim() || 'Other'
+        : e.projectName?.trim() || 'Other'
     const row = map.get(projectId) ?? { projectId, projectName, entries: [] }
     row.entries.push(e)
     map.set(projectId, row)
   }
-  return Array.from(map.values()).sort((a, b) => a.projectName.localeCompare(b.projectName))
+  const groups = Array.from(map.values())
+  return groups.sort((a, b) => {
+    if (a.projectId === 'automated-messages') return -1
+    if (b.projectId === 'automated-messages') return 1
+    return a.projectName.localeCompare(b.projectName)
+  })
 }
 
 function buildTimelineFeed(entries: LeadActivityTimelineEntry[], lead: LeadDTO): TimelineFeedItem[] {
   const items: TimelineFeedItem[] = entries.map((entry, idx) => {
     const webhook = isWebhookTimelineEntry(entry)
-    const projectKey = webhook ? entry.propertyId : entry.projectId
-    const whenKey = webhook ? entry.at : `${entry.date}-${entry.time}`
+    const autoEmail = isEmailAutoReplyEntry(entry)
+    const projectKey = webhook ? entry.propertyId : autoEmail ? 'automated' : entry.projectId
+    const whenKey =
+      webhook || autoEmail ? entry.at : `${entry.date}-${entry.time}`
     return {
       id: `entry-${idx}-${projectKey}-${entry.type}-${whenKey}`,
       icon: timelineEntryIcon(entry),
-      dotTone: webhook || entry.type === 'call' ? 'mint' : 'sand',
+      dotTone: webhook || entry.type === 'call' || (autoEmail && entry.status === 'sent') ? 'mint' : 'sand',
       title: timelineTitle(entry),
       subtitle: entrySubtitle(entry),
       when: entryWhen(entry),
@@ -217,6 +266,31 @@ function ActivityIcon({ icon }: { icon: TimelineFeedItem['icon'] }) {
 function IconDot({ tone }: { tone: 'mint' | 'sand' }) {
   const cls = tone === 'mint' ? 'bg-[#6FAF8F]' : 'bg-[#8B7355]'
   return <span className={`mt-1 inline-block h-2 w-2 shrink-0 rounded-full ${cls}`} />
+}
+
+function EmailDeliveryBadge({ entry }: { entry: LeadEmailAutoReplyTimelineEntry }) {
+  if (entry.status === 'sent') {
+    return (
+      <span className="mt-1.5 inline-flex items-center rounded-full bg-[#6FAF8F]/15 px-2 py-0.5 text-[10px] font-semibold text-[#6FAF8F]">
+        Delivered
+      </span>
+    )
+  }
+  if (entry.status === 'failed') {
+    return (
+      <span className="mt-1.5 inline-flex items-center rounded-full bg-[#D96B6B]/15 px-2 py-0.5 text-[10px] font-semibold text-[#D96B6B]">
+        Failed
+      </span>
+    )
+  }
+  if (entry.status === 'skipped') {
+    return (
+      <span className="mt-1.5 inline-flex items-center rounded-full bg-[#E8DCCB] px-2 py-0.5 text-[10px] font-semibold text-[#8B7355]">
+        Skipped
+      </span>
+    )
+  }
+  return null
 }
 
 type LeadDetailsTab = 'overview' | 'activity' 
@@ -901,6 +975,9 @@ export function LeadDetails({ leadId }: { leadId: string }) {
                                   </div>
                                   {subtitle ? (
                                     <div className="mt-1 text-[11px] text-[#8B7355]">{subtitle}</div>
+                                  ) : null}
+                                  {isEmailAutoReplyEntry(entry) ? (
+                                    <EmailDeliveryBadge entry={entry} />
                                   ) : null}
                                   <div className="mt-1 text-[10.5px] text-[#8B7355]">
                                     {entryWhen(entry)}

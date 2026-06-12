@@ -78,7 +78,20 @@ export type LeadWebhookTimelineEntry = {
   payload?: Record<string, unknown>
 }
 
-export type LeadActivityTimelineEntry = LeadManualTimelineEntry | LeadWebhookTimelineEntry
+export type LeadEmailAutoReplyTimelineEntry = {
+  type: 'email_auto_reply'
+  at: string
+  status: 'sent' | 'failed' | 'skipped' | 'dev_logged'
+  to?: string | null
+  source?: string | null
+  error?: string | null
+  reason?: string | null
+}
+
+export type LeadActivityTimelineEntry =
+  | LeadManualTimelineEntry
+  | LeadWebhookTimelineEntry
+  | LeadEmailAutoReplyTimelineEntry
 
 export type LeadInterestedProject = {
   projectId: string
