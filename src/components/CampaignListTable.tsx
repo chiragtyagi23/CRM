@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import type { ExistingCampaign } from '../types/dtos'
 import { IoEyeSharp } from 'react-icons/io5'
@@ -7,6 +7,7 @@ import { WiDirectionUpRight } from 'react-icons/wi'
 import type { LeadDTO } from '../lib/dashboardDummyApi'
 import { useACL } from '../acl/useACL'
 import { apiSend } from '../lib/crmApi'
+import { fetchAssignees } from '../lib/usersApi'
 
 const campaignSiteBase =
   (import.meta.env.VITE_CAMPAIGN_SITE_URL || 'http://localhost:3000').replace(/\/$/, '')
@@ -86,16 +87,33 @@ export function CampaignListTable(props: CampaignListTableProps) {
   const [assigneeOverrides, setAssigneeOverrides] = useState<Record<string, string>>({})
   const [savedAssigneeByCampaignId, setSavedAssigneeByCampaignId] = useState<Record<string, string>>({})
   const [savingCampaignId, setSavingCampaignId] = useState<string | null>(null)
+  const [assigneeDirectory, setAssigneeDirectory] = useState<string[]>([])
+
+  useEffect(() => {
+    if (props.variant === 'leads' || !canCampaignAssign) {
+      setAssigneeDirectory([])
+      return
+    }
+    let cancelled = false
+    fetchAssignees({ roles: ['admin', 'manager'] })
+      .then((res) => {
+        if (cancelled) return
+        setAssigneeDirectory(
+          (res.items ?? []).map((u) => String(u.name ?? '').trim()).filter(Boolean),
+        )
+      })
+      .catch(() => {
+        if (!cancelled) setAssigneeDirectory([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [canCampaignAssign, props.variant])
 
   const assigneeOptions = useMemo(() => {
     if (props.variant === 'leads') return []
-    const names = props.campaigns
-      .map((c) => String(c.assignTo ?? '').trim())
-      .filter(Boolean)
-    const me = String(user?.name ?? '').trim()
-    if (me) names.push(me)
-    return [...new Set(names)]
-  }, [props, user?.name])
+    return [...new Set(assigneeDirectory.filter(Boolean))].sort((a, b) => a.localeCompare(b))
+  }, [assigneeDirectory, props.variant])
 
   const baseAssigneeByCampaignId = useMemo(() => {
     if (props.variant === 'leads') return {}

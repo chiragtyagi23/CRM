@@ -6,8 +6,12 @@ import type { AclRoleDTO } from '../acl/types'
 export type { AssigneeOptionDTO, CrmUserDTO } from '../types/dtos'
 
 /** Scoped names for Lead Received By — workers get self; managers get all active users. */
-export async function fetchAssignees(): Promise<{ items: AssigneeOptionDTO[] }> {
-  return await apiGet<{ items: AssigneeOptionDTO[] }>('/api/auth/assignees')
+export async function fetchAssignees(options?: {
+  roles?: string[]
+}): Promise<{ items: AssigneeOptionDTO[] }> {
+  const roles = options?.roles?.map((r) => r.trim().toLowerCase()).filter(Boolean)
+  const query = roles?.length ? `?roles=${encodeURIComponent(roles.join(','))}` : ''
+  return await apiGet<{ items: AssigneeOptionDTO[] }>(`/api/auth/assignees${query}`)
 }
 
 /** Full directory with email/role — Profile admin table only. */
