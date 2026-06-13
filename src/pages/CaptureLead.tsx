@@ -46,7 +46,7 @@ import { toPng } from 'html-to-image'
 const fieldIconCls = 'h-[18px] w-[18px] shrink-0'
 
 const QR_FORM_BASE_URL = (
-  import.meta.env.VITE_CAMPAIGN_SITE_URL || 'http://localhost:5174'
+  import.meta.env.VITE_QR_FORM_URL || 'http://localhost:5174'
 ).replace(/\/$/, '')
 
 function buildQrFormUrl(id: string) {

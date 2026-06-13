@@ -11,6 +11,10 @@ import { apiSend } from '../lib/crmApi'
 const campaignSiteBase =
   (import.meta.env.VITE_CAMPAIGN_SITE_URL || 'http://localhost:3000').replace(/\/$/, '')
 
+function campaignSlug(title: string): string {
+  return title.trim().toLowerCase().replace(/\s+/g, '-')
+}
+
 function assigneeOptionsWithCurrent(options: string[], current?: string): string[] {
   const name = current?.trim()
   if (!name || name === '—' || options.includes(name)) return options
@@ -281,7 +285,7 @@ export function CampaignListTable(props: CampaignListTableProps) {
                         </button>
                       )}
                       <a
-                        href={`${campaignSiteBase}/${c.title.toLowerCase().replace(/ /g, '-')}/${c.id}?template=${c.templateKey}`}
+                        href={`${campaignSiteBase}/${campaignSlug(c.title)}/${c.id}?template=${encodeURIComponent(c.templateKey ?? 'luxury-template')}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-[#8B7355]"
