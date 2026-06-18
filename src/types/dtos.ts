@@ -9,7 +9,7 @@ export type ExistingCampaign = {
   address: string | null
   regNo: string | null
   logo?: string | null
-  templateKey?: 'luxury-template' | 'affordable-template'
+  templateKey?: 'default-template' | 'luxury-template' | 'affordable-template'
   createdAt: string
 }
 

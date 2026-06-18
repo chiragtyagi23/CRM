@@ -5,6 +5,7 @@ import type { BannerImage } from '../../../types/dtos'
 import { Field } from '../../../ui/campaign/Field'
 import { SectionCard } from '../../../ui/campaign/SectionCard'
 import { inputClassName, textareaClassName } from '../../../ui/campaign/classNames'
+import { useBuilderFieldRequired, useBuilderSectionTitle } from '../BuilderFieldsContext'
 
 export function BenefitsSection({
   benefitItems,
@@ -21,9 +22,11 @@ export function BenefitsSection({
   benefitBackgroundImages: BannerImage[]
   setBenefitBackgroundImages: Dispatch<SetStateAction<BannerImage[]>>
 }) {
+  const sectionTitle = useBuilderSectionTitle
+  const fieldRequired = useBuilderFieldRequired
   return (
     <>
-      <SectionCard title="Benefits *" subtitle="Add benefit items (heading + description), stats, and background images.">
+      <SectionCard title={sectionTitle('Benefits', true)} subtitle="Add benefit items (heading + description), stats, and background images.">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="rounded-xl border border-[#E8DCCB] bg-gray-50 p-4">
             <div className="text-sm font-semibold text-[#2E2E2E]">Benefit items</div>
@@ -46,7 +49,7 @@ export function BenefitsSection({
                     </button>
                   </div>
                   <div className="mt-3 grid grid-cols-1 gap-3">
-                    <Field label="Heading" required>
+                    <Field label="Heading" required={fieldRequired(true)}>
                       <input
                         className={inputClassName()}
                         value={b.heading}

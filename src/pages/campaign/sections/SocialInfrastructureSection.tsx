@@ -4,6 +4,7 @@ import type { SocialInfraGroup } from '../../../types/dtos'
 import { Field } from '../../../ui/campaign/Field'
 import { SectionCard } from '../../../ui/campaign/SectionCard'
 import { inputClassName } from '../../../ui/campaign/classNames'
+import { useBuilderFieldRequired } from '../BuilderFieldsContext'
 
 export function SocialInfrastructureSection({
   socialInfrastructureGroups,
@@ -12,6 +13,7 @@ export function SocialInfrastructureSection({
   socialInfrastructureGroups: SocialInfraGroup[]
   setSocialInfrastructureGroups: Dispatch<SetStateAction<SocialInfraGroup[]>>
 }) {
+  const fieldRequired = useBuilderFieldRequired
   return (
     <SectionCard
       title="Social infrastructure"
@@ -24,7 +26,7 @@ export function SocialInfrastructureSection({
           <div key={groupIdx} className="rounded-xl border border-[#E8DCCB] bg-gray-50 p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
-                <Field label="Main heading" required>
+                <Field label="Main heading" required={fieldRequired(true)}>
                   <input
                     className={inputClassName()}
                     placeholder="e.g. Transportation"

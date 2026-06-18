@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { CampaignImageListSection } from '../../../components/CampaignImageListSection'
 import type { BannerImage, GalleryCell } from '../../../types/dtos'
 import { GallerySection } from './GallerySection'
+import { useBuilderSectionTitle } from '../BuilderFieldsContext'
 
 type ImagesTab = 'banners' | 'offers' | 'usp' | 'gallery'
 
@@ -26,6 +27,7 @@ export function ImagesSection({
   setGalleryCells: (next: GalleryCell[] | ((prev: GalleryCell[]) => GalleryCell[])) => void
 }) {
   const [tab, setTab] = useState<ImagesTab>('banners')
+  const sectionTitle = useBuilderSectionTitle
 
   return (
     <div className="flex flex-col gap-4">
@@ -78,7 +80,7 @@ export function ImagesSection({
 
       {tab === 'banners' ? (
         <CampaignImageListSection
-          title="Banner images *"
+          title={sectionTitle('Banner images', true)}
           subtitle="Add up to 5 banner images for the hero slider. Paste image URLs (recommended)."
           max={5}
           aspect="banner"

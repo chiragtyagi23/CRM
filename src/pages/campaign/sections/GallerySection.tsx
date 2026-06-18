@@ -5,6 +5,7 @@ import type { GalleryCell } from '../../../types/dtos'
 import { Field } from '../../../ui/campaign/Field'
 import { SectionCard } from '../../../ui/campaign/SectionCard'
 import { inputClassName } from '../../../ui/campaign/classNames'
+import { useBuilderFieldRequired, useBuilderSectionTitle } from '../BuilderFieldsContext'
 
 type GalleryPart = 'external' | 'internal'
 
@@ -21,6 +22,8 @@ export function GallerySection({
 }) {
   const [part, setPart] = useState<GalleryPart>('external')
   const multiIds = useId()
+  const sectionTitle = useBuilderSectionTitle
+  const fieldRequired = useBuilderFieldRequired
 
   const sorted = useMemo(() => {
     return galleryCells.map((c, idx) => ({ c, idx }))
@@ -37,7 +40,7 @@ export function GallerySection({
   return (
     <>
       <SectionCard
-        title="Gallery *"
+        title={sectionTitle('Gallery', true)}
         subtitle="Split into External (first) and Internal (second). Groups follow strict storytelling order."
       >
         <div className="flex items-center justify-between gap-3">
@@ -91,7 +94,7 @@ export function GallerySection({
             <div key={cellIdx} className="rounded-xl border border-[#E8DCCB] bg-gray-50 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <Field label="Group tag" required>
+                  <Field label="Group tag" required={fieldRequired(true)}>
                     <input
                       className={inputClassName()}
                       placeholder={part === 'external' ? 'Exterior / Amenities - Gym ...' : 'Interiors - Living Room ...'}

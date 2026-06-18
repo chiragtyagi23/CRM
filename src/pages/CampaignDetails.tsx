@@ -99,7 +99,7 @@ function CampaignDetails() {
     return [...new Set(names.filter((n) => n && n !== '—'))].sort((a, b) => a.localeCompare(b))
   }, [assigneeDirectory, items, user?.name])
 
-  const title = stateTitle || 'Campaign'
+  const title = stateTitle || 'Project'
 
   return (
     <div className="crm-page">
@@ -109,12 +109,12 @@ function CampaignDetails() {
         onClick={() => navigate('/campaign')}
       >
         <FiChevronLeft size={16} aria-hidden />
-        Back to Campaign List
+        Back to Project List
       </button>
 
       <div className="crm-page-header mt-3">
         <h1 className="crm-page-title">{`${title} Details`}</h1>
-        <p className="crm-page-subtitle">Leads linked by campaign id</p>
+        <p className="crm-page-subtitle">Leads linked by project id</p>
       </div>
 
       {loading ? (

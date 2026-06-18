@@ -229,7 +229,7 @@ export function CampaignUploadTile({
         </div>
       </div>
       <div className={`mt-3 rounded-xl border border-[#E8DCCB] bg-white ${aspectClass} grid place-items-center overflow-hidden`}>
-        {value?.src ? <img src={value.src} alt={value.alt || label} className="w-full h-full object-cover" /> : value?.file ? <div className="px-3 text-center text-[#8B7355] text-xs">File selected. It will upload when you save the campaign.</div> : <div className="text-[#8B7355] text-xs">Preview</div>}
+        {value?.src ? <img src={value.src} alt={value.alt || label} className="w-full h-full object-cover" /> : value?.file ? <div className="px-3 text-center text-[#8B7355] text-xs">File selected. It will upload when you save the project.</div> : <div className="text-[#8B7355] text-xs">Preview</div>}
       </div>
       {onChange ? (
         <div className="mt-3 grid grid-cols-1 gap-2">

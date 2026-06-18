@@ -19,7 +19,7 @@ const LEGACY_NAV_MENU_ITEMS: NavMenuItem[] = [
   { id: 'leads', label: 'Leads', link: '#leads', icon: 'user' },
   { id: 'capture', label: 'Capture Lead', link: '#capture-lead', icon: 'userPlus' },
   { id: 'visits', label: 'Site Visits', link: '#site-visits', icon: 'pin' },
-  { id: 'campaign', label: 'Campaign', link: '#campaign', icon: 'chart' },
+  { id: 'campaign', label: 'Projects', link: '#campaign', icon: 'chart' },
 ]
 
 function NavIconGlyph({ name }: { name: NavIcon }) {
@@ -51,6 +51,12 @@ function mapModuleIcon(icon?: string | null): NavIcon {
   return 'grid'
 }
 
+/** UI display names — module_key stays `campaign` for ACL/API compatibility. */
+function navModuleLabel(moduleKey: string, name: string): string {
+  if (moduleKey === 'campaign') return 'Projects'
+  return name
+}
+
 function modulesToMenuItems(modules: AclModuleDTO[]): NavMenuItem[] {
   const seen = new Set<string>()
   return modules
@@ -64,7 +70,7 @@ function modulesToMenuItems(modules: AclModuleDTO[]): NavMenuItem[] {
     })
     .map((m) => ({
       id: m.module_key,
-      label: m.name,
+      label: navModuleLabel(m.module_key, m.name),
       link: m.route.startsWith('/') ? m.route : `/${m.route}`,
       icon: mapModuleIcon(m.icon),
     }))

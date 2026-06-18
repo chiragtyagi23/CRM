@@ -4,6 +4,7 @@ import { CampaignUploadTile } from '../../../components/CampaignUploadTile'
 import type { BannerImage, FloorRow, FloorTabKey } from '../../../types/dtos'
 import { SectionCard } from '../../../ui/campaign/SectionCard'
 import { inputClassName } from '../../../ui/campaign/classNames'
+import { useBuilderSectionTitle } from '../BuilderFieldsContext'
 
 export function FloorplansSection({
   floorBlueprintImage,
@@ -28,8 +29,9 @@ export function FloorplansSection({
   floorPlanImages: Record<string, BannerImage[]>
   setFloorPlanImages: Dispatch<SetStateAction<Record<string, BannerImage[]>>>
 }) {
+  const sectionTitle = useBuilderSectionTitle
   return (
-    <SectionCard title="Floor plans *" subtitle="BHK tabs and type-wise images (add 1BHK/2BHK/3BHK/...).">
+    <SectionCard title={sectionTitle('Floor plans', true)} subtitle="BHK tabs and type-wise images (add 1BHK/2BHK/3BHK/...).">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="rounded-xl border border-[#E8DCCB] bg-gray-50 p-4">
           <div className="flex items-center justify-between gap-3">

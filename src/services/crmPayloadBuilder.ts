@@ -4,8 +4,7 @@ import type {
   CaptureLeadPatchPayload,
   SiteVisitCreatePayload,
 } from '../types/dtos'
-
-type TemplateKey = 'luxury-template' | 'affordable-template'
+import { isDefaultTemplate, type TemplateKey } from '../lib/campaign/templateKeys'
 
 /** Raw form / page state for “Add New Lead” → {@link CaptureLeadCreatePayload}. */
 export type CaptureLeadCreateInput = {
@@ -128,7 +127,9 @@ export function buildCampaignPayload({
 }) {
   return {
     master: {
-      title: builderForSave.campaignName,
+      title:
+        String(builderForSave.campaignName ?? '').trim() ||
+        (isDefaultTemplate(templateKey) ? 'Untitled Project' : ''),
       address: builderForSave.projectLocation,
       reg_no: builderForSave.reraNo,
       logo: builderForSave.logoUrl,
@@ -215,9 +216,11 @@ export function buildCampaignPayload({
           const iconUrls = Array.isArray(a?.icons)
             ? a.icons.map((ic: any) => String(ic?.src ?? '')).filter((s: string) => s.trim().length > 0)
             : []
-          return { name: a.name, icon: iconUrls.length ? JSON.stringify(iconUrls) : null }
+          const item: { name: string; icon?: string } = { name: String(a?.name ?? '').trim() }
+          if (iconUrls.length) item.icon = JSON.stringify(iconUrls)
+          return item
         })
-        .filter((a: any) => a.name.trim().length > 0),
+        .filter((a: { name: string }) => a.name.length > 0),
     },
     benefits: {
       sectionLabel: 'Benefits',

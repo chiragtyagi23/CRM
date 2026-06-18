@@ -169,7 +169,7 @@ export function CampaignListTable(props: CampaignListTableProps) {
     return (
       <div className="mt-5 rounded-xl border border-[#E8DCCB] bg-white overflow-hidden shadow-sm">
         <div className="px-4 py-3 text-xs tracking-widest uppercase text-[#8B7355] border-b border-[#E8DCCB]">
-          Campaign leads
+          Project leads
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -253,7 +253,7 @@ export function CampaignListTable(props: CampaignListTableProps) {
   return (
     <div className="mt-5 rounded-xl border border-[#E8DCCB] bg-white overflow-hidden shadow-sm">
       <div className="px-4 py-3 text-xs tracking-widest uppercase text-[#8B7355] border-b border-[#E8DCCB]">
-        Campaign list
+        Project list
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -278,7 +278,7 @@ export function CampaignListTable(props: CampaignListTableProps) {
             ) : visibleCampaigns.length === 0 ? (
               <tr>
                 <td className="px-4 py-4 text-[#8B7355]" colSpan={colSpan}>
-                  No campaigns yet.
+                  No projects yet.
                 </td>
               </tr>
             ) : (
@@ -303,7 +303,7 @@ export function CampaignListTable(props: CampaignListTableProps) {
                         </button>
                       )}
                       <a
-                        href={`${campaignSiteBase}/${campaignSlug(c.title)}/${c.id}?template=${encodeURIComponent(c.templateKey ?? 'luxury-template')}`}
+                        href={`${campaignSiteBase}/${campaignSlug(c.title)}/${c.id}?template=${encodeURIComponent(c.templateKey ?? 'default-template')}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-[#8B7355]"

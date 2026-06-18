@@ -557,7 +557,7 @@ export function LeadDetails({ leadId }: { leadId: string }) {
         }}
       >
         <FiChevronLeft size={16} aria-hidden />
-        {fromCampaign ? 'Back to Campaign Details' : 'Back to Leads'}
+        {fromCampaign ? 'Back to Project Details' : 'Back to Leads'}
       </button>
 
       <section className="mt-3 px-1">

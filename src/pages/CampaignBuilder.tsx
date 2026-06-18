@@ -8,6 +8,7 @@ import { campaignBuilderActions } from '../store/campaignBuilderSlice'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { crmPayloadBuilder } from '../services/crmPayloadBuilder'
 import { TEMPLATE_SECTIONS } from '../lib/campaign/templateSections'
+import { isDefaultTemplate, type TemplateKey } from '../lib/campaign/templateKeys'
 import { AmenitiesSection } from './campaign/sections/AmenitiesSection'
 import { BenefitsSection } from './campaign/sections/BenefitsSection'
 import { FloorplansSection } from './campaign/sections/FloorplansSection'
@@ -16,9 +17,30 @@ import { ImagesSection } from './campaign/sections/ImagesSection'
 import { MediaSection } from './campaign/sections/MediaSection'
 import { OverviewSection } from './campaign/sections/OverviewSection'
 import { SocialInfrastructureSection } from './campaign/sections/SocialInfrastructureSection'
+import { BuilderFieldsOptionalProvider } from './campaign/BuilderFieldsContext'
 
 function resolveSetState<T>(current: T, next: T | ((prev: T) => T)) {
   return typeof next === 'function' ? (next as (p: T) => T)(current) : next
+}
+
+function formatSaveError(e: unknown): string {
+  if (e && typeof e === 'object' && 'body' in e) {
+    const body = (e as { body?: unknown }).body
+    if (body && typeof body === 'object' && body !== null && 'error' in body) {
+      const msg = String((body as { error: unknown }).error)
+      const details = (body as { details?: unknown }).details
+      if (details && typeof details === 'object') {
+        const fieldErrors = (details as { fieldErrors?: Record<string, string[]> }).fieldErrors
+        const lines = fieldErrors
+          ? Object.entries(fieldErrors).flatMap(([k, vals]) => (vals ?? []).map((v) => `${k}: ${v}`))
+          : []
+        if (lines.length) return `${msg}\n\n${lines.join('\n')}`
+      }
+      return msg
+    }
+  }
+  if (e && typeof e === 'object' && 'message' in e) return String((e as { message?: string }).message)
+  return 'Save failed'
 }
 
 function nonEmpty(s: unknown) {
@@ -28,6 +50,8 @@ function nonEmpty(s: unknown) {
 type RequiredIssue = { section: (typeof TEMPLATE_SECTIONS)[number]['key']; message: string }
 
 function validateRequired(builder: any): RequiredIssue[] {
+  if (isDefaultTemplate(builder?.templateKey)) return []
+
   const issues: RequiredIssue[] = []
 
   const bannerCount = Array.isArray(builder?.bannerImages)
@@ -275,14 +299,14 @@ export function CampaignBuilder({ initialCampaignId }: { initialCampaignId?: str
     showFlash('Draft saved.')
   }
 
-  const doSave = async (templateKey: 'luxury-template' | 'affordable-template') => {
+  const doSave = async (templateKey: TemplateKey) => {
     if (saveState.type === 'saving') return
     const issues = validateRequired(builder)
     if (issues.length) {
       const first = issues[0]
       dispatch(campaignBuilderActions.setActiveSection(first.section))
       window.alert(
-        `Please fill the required sections before saving the campaign.\n\nMissing:\n${issues
+        `Please fill the required sections before saving the project.\n\nMissing:\n${issues
           .map((i) => `- ${i.message}`)
           .join('\n')}`,
       )
@@ -310,7 +334,7 @@ export function CampaignBuilder({ initialCampaignId }: { initialCampaignId?: str
         dispatch(campaignBuilderActions.setTemplateKey(templateKey))
       }
 
-      showFlash(updating ? 'Your dashboard is updated successfully.' : 'Campaign created successfully.')
+      showFlash(updating ? 'Your dashboard is updated successfully.' : 'Project created successfully.')
       setSaveState({ type: 'saved' })
       window.setTimeout(() => setSaveState({ type: 'idle' }), 1200)
 
@@ -323,7 +347,7 @@ export function CampaignBuilder({ initialCampaignId }: { initialCampaignId?: str
     } catch (e: unknown) {
       setSaveState({
         type: 'error',
-        message: e && typeof e === 'object' && 'message' in e ? String((e as { message?: string }).message) : 'Save failed',
+        message: formatSaveError(e),
       })
     }
   }
@@ -352,7 +376,7 @@ export function CampaignBuilder({ initialCampaignId }: { initialCampaignId?: str
               Back
             </button>
             <h2 className="m-0 text-3xl font-semibold text-[#2E2E2E]">
-              {isEditing ? 'Edit campaign' : 'Create campaign'}
+              {isEditing ? 'Edit project' : 'Create project'}
             </h2>
           </div>
           <p className="mt-1 text-[14px] font-medium text-[#8B7355]">Fill the form to generate your microsite.</p>
@@ -375,22 +399,28 @@ export function CampaignBuilder({ initialCampaignId }: { initialCampaignId?: str
             className="inline-flex h-11 items-center justify-center rounded-xl bg-[#8B7355] px-5 text-[13px] font-semibold text-white shadow-sm hover:bg-[#6d5a43]"
             onClick={onSaveClick}
           >
-            {saveState.type === 'saving' ? 'Saving…' : saveState.type === 'saved' ? 'Saved' : 'Save campaign'}
+            {saveState.type === 'saving' ? 'Saving…' : saveState.type === 'saved' ? 'Saved' : 'Save project'}
           </button>
         </div>
       </header>
 
       {builder.selectedCampaignId ? (
         <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-[13px] font-semibold text-violet-900">
-          You are editing: <span className="font-bold">{builder.campaignName || 'Untitled campaign'}</span>
+          You are editing: <span className="font-bold">{builder.campaignName || 'Untitled project'}</span>
           <span className="ml-2 text-[12px] font-medium text-violet-700">({builder.selectedCampaignId})</span>
           {loadingSelectedCampaign ? <span className="ml-2 text-[12px] font-medium text-violet-700">Loading full data…</span> : null}
         </div>
       ) : (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] font-semibold text-amber-900">
-          You are creating a new campaign.
+          You are creating a new project.
         </div>
       )}
+
+      {isDefaultTemplate(builder.templateKey) ? (
+        <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] font-medium text-emerald-900">
+          Default template — no fields are required. You can save and publish with empty sections.
+        </div>
+      ) : null}
 
       
 
@@ -398,6 +428,7 @@ export function CampaignBuilder({ initialCampaignId }: { initialCampaignId?: str
         <section className="rounded-xl border border-[#8B7355]/10 bg-[#FFFFFF] p-4 ">
           <CampaignSidebar
             activeSection={builder.activeSection}
+            templateKey={builder.templateKey}
             onSectionChange={(k) => {
               const curIdx = TEMPLATE_SECTIONS.findIndex((s) => s.key === builder.activeSection)
               const targetIdx = TEMPLATE_SECTIONS.findIndex((s) => s.key === k)
@@ -417,6 +448,7 @@ export function CampaignBuilder({ initialCampaignId }: { initialCampaignId?: str
         </section>
 
         <section className="rounded-xl border border-[#8B7355]/10 bg-[#FFFFFF] p-4 ">
+          <BuilderFieldsOptionalProvider optional={isDefaultTemplate(builder.templateKey)}>
           <div className="flex flex-col gap-4">
             <CampaignSectionHeader
               label={sectionMeta.label}
@@ -558,6 +590,7 @@ export function CampaignBuilder({ initialCampaignId }: { initialCampaignId?: str
               />
             ) : null}
           </div>
+          </BuilderFieldsOptionalProvider>
         </section>
       </div>
     </section>

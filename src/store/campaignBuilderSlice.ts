@@ -1,11 +1,14 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 
 import type { BannerImage, FloorRow, FloorTabKey, GalleryCell, MediaFile, OverviewFactsState, TemplateSectionKey } from '../types/dtos'
+import { DEFAULT_TEMPLATE_KEY, isTemplateKey, type TemplateKey } from '../lib/campaign/templateKeys'
+
+export type { TemplateKey } from '../lib/campaign/templateKeys'
 
 export type CampaignBuilderState = {
   activeSection: TemplateSectionKey
   selectedCampaignId: string | null
-  templateKey: 'luxury-template' | 'affordable-template'
+  templateKey: TemplateKey
 
   campaignName: string
   projectLocation: string
@@ -54,7 +57,7 @@ export type CampaignBuilderState = {
 const initialState: CampaignBuilderState = {
   activeSection: 'images',
   selectedCampaignId: null,
-  templateKey: 'luxury-template',
+  templateKey: DEFAULT_TEMPLATE_KEY,
 
   campaignName: '',
   projectLocation: '',
@@ -131,7 +134,7 @@ const slice = createSlice({
     setSelectedCampaignId(state, action: PayloadAction<string | null>) {
       state.selectedCampaignId = action.payload
     },
-    setTemplateKey(state, action: PayloadAction<'luxury-template' | 'affordable-template'>) {
+    setTemplateKey(state, action: PayloadAction<TemplateKey>) {
       state.templateKey = action.payload
     },
 
@@ -260,7 +263,7 @@ const slice = createSlice({
         regNo: string | null
         logo?: string | null
         coverImage?: string | null
-        templateKey?: 'luxury-template' | 'affordable-template'
+        templateKey?: TemplateKey
       }>,
     ) {
       state.selectedCampaignId = String(action.payload.id)
@@ -269,7 +272,7 @@ const slice = createSlice({
       state.reraNo = action.payload.regNo ?? ''
       state.logoUrl = action.payload.logo ?? ''
       state.coverImageUrl = action.payload.coverImage ?? ''
-      state.templateKey = action.payload.templateKey ?? state.templateKey
+      state.templateKey = isTemplateKey(action.payload.templateKey) ? action.payload.templateKey : state.templateKey
     },
 
     // Full hydrate from GET /api/campaigns/:id response (CampaignMaster + associations)
@@ -279,8 +282,7 @@ const slice = createSlice({
       if (typeof c.id === 'string' || typeof c.id === 'number') {
         state.selectedCampaignId = String(c.id)
       }
-      state.templateKey =
-        c.templateKey === 'affordable-template' || c.templateKey === 'luxury-template' ? c.templateKey : state.templateKey
+      state.templateKey = isTemplateKey(c.templateKey) ? c.templateKey : state.templateKey
 
       state.campaignName = typeof c.title === 'string' ? c.title : state.campaignName
       state.projectLocation = typeof c.address === 'string' ? c.address : state.projectLocation

@@ -9,6 +9,7 @@ import { useACL } from '../acl/useACL'
 import { PageHeader } from '../components/PageHeader'
 import { d } from '../lib/designClasses'
 import { CampaignTemplateModal } from '../components/CampaignTemplateModal'
+import { DEFAULT_TEMPLATE_KEY, type TemplateKey } from '../lib/campaign/templateKeys'
 import type { CampaignListResponse, ExistingCampaign } from '../types/dtos'
 
 export function CampaignList() {
@@ -17,7 +18,7 @@ export function CampaignList() {
   const { permissions } = useACL()
   const canCampaignEdit = permissions.campaign.edit
   const [templateModalOpen, setTemplateModalOpen] = useState(false)
-  const [selectedTemplateKey, setSelectedTemplateKey] = useState<'luxury-template' | 'affordable-template'>('luxury-template')
+  const [selectedTemplateKey, setSelectedTemplateKey] = useState<TemplateKey>(DEFAULT_TEMPLATE_KEY)
 
   const [campaigns, setCampaigns] = useState<ExistingCampaign[]>([])
   const [loadingCampaigns, setLoadingCampaigns] = useState(true)
@@ -33,19 +34,19 @@ export function CampaignList() {
   return (
     <section className="w-full">
       <PageHeader
-        title="Campaigns"
-        subtitle="Create and manage campaign microsites."
+        title="Projects"
+        subtitle="Create and manage project microsites."
         actions={
           canCampaignEdit ? (
             <button
               type="button"
               className={d.btnPrimary}
               onClick={() => {
-                setSelectedTemplateKey('luxury-template')
+                setSelectedTemplateKey(DEFAULT_TEMPLATE_KEY)
                 setTemplateModalOpen(true)
               }}
             >
-              Create new campaign
+              Create new project
             </button>
           ) : null
         }

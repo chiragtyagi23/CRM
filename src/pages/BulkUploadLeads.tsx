@@ -214,7 +214,7 @@ export function BulkUploadLeads() {
 
   const handleUpload = async () => {
     if (!selectedCampaignId) {
-      setFlash({ type: 'err', message: 'Please select a campaign.' })
+      setFlash({ type: 'err', message: 'Please select a project.' })
       return
     }
 
@@ -390,7 +390,7 @@ export function BulkUploadLeads() {
 
           <div>
             <label htmlFor="bulk-upload-campaign" className="mb-2 block text-[13px] font-semibold text-[#2E2E2E]">
-              Campaign <span className="text-red-600">*</span>
+              Project <span className="text-red-600">*</span>
             </label>
             <select
               id="bulk-upload-campaign"
@@ -401,10 +401,10 @@ export function BulkUploadLeads() {
             >
               <option value="">
                 {campaignsLoading
-                  ? 'Loading campaigns…'
+                  ? 'Loading projects…'
                   : campaigns.length === 0
-                    ? 'No campaigns found'
-                    : 'Select a campaign'}
+                    ? 'No projects found'
+                    : 'Select a project'}
               </option>
               {campaigns.map((c) => (
                 <option key={c.id} value={c.id}>

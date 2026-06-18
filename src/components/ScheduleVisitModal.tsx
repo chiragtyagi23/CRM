@@ -189,9 +189,9 @@ export function ScheduleVisitModal({
               >
                 <div className="max-h-[220px] overflow-auto p-2">
                   {projectsLoading ? (
-                    <div className="px-3 py-2 text-[12px] text-[#8B7355]">Loading campaigns…</div>
+                    <div className="px-3 py-2 text-[12px] text-[#8B7355]">Loading projects…</div>
                   ) : projects.length === 0 ? (
-                    <div className="px-3 py-2 text-[12px] text-[#8B7355]">No campaigns found</div>
+                    <div className="px-3 py-2 text-[12px] text-[#8B7355]">No projects found</div>
                   ) : (
                     projects.map((p) => {
                       const checked = selectedProjectIds.has(p.id)

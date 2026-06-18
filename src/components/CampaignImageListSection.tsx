@@ -3,7 +3,7 @@ import type { BannerImage } from '../types/dtos'
 import { SectionCard } from '../ui/campaign/SectionCard'
 import { CampaignUploadTile } from './CampaignUploadTile'
 
-const defaultTileHint = 'Paste image URL or select a file. Upload will happen when you save the campaign.'
+const defaultTileHint = 'Paste image URL or select a file. Upload will happen when you save the project.'
 
 export function CampaignImageListSection({
   title,
