@@ -27,7 +27,7 @@ import { asRecentLeadScore, asRecentLeadStatus } from '../utils/leads'
 
 export function Dashboard() {
   const navigate = useNavigate()
-  const [range, setRange] = useState<DashboardRange>('today')
+  const [range, setRange] = useState<DashboardRange>('overall')
   const [stats, setStats] = useState<DashboardStatDTO[]>([])
   const [salesFunnel, setSalesFunnel] = useState<SalesFunnelPointDTO[]>([])
   const [leadSources, setLeadSources] = useState<LeadSourcePointDTO[]>([])
@@ -38,12 +38,9 @@ export function Dashboard() {
 
   const getRangeStart = (r: DashboardRange) => {
     const now = new Date()
-    if (r === 'today') {
-      return new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    }
-    if (r === 'week') {
-      return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-    }
+    if (r === 'overall') return new Date(0)
+    if (r === 'today') return new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    if (r === 'week') return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
     return new Date(now.getFullYear(), now.getMonth(), 1)
   }
 
@@ -60,6 +57,7 @@ export function Dashboard() {
   }
 
   const isWithinRange = (d: Date, r: DashboardRange) => {
+    if (r === 'overall') return true
     const now = new Date()
     const t = d.getTime()
     return t >= getRangeStart(r).getTime() && t <= now.getTime()
@@ -68,83 +66,38 @@ export function Dashboard() {
   useEffect(() => {
     let cancelled = false
     setLoadingSummary(true)
+    setLoadingCharts(true)
+    setLoadingLeads(true)
+
     Promise.all([fetchCaptureLeads(), fetchSiteVisits()])
       .then(([leadsRes, visitsRes]) => {
         if (cancelled) return
 
-        const items = leadsRes.items.filter((lead) => {
+        const inRangeLeads = leadsRes.items.filter((lead) => {
+          if (range === 'overall') return true
           const d = getLeadDate(lead)
           return d ? isWithinRange(d, range) : false
         })
-        const totalLeads = items.length
-        const hotLeads = items.filter((l) => {
+
+        const totalLeads = inRangeLeads.length
+        const hotLeads = inRangeLeads.filter((l) => {
           const score = (l.leadScore ?? l.status ?? '').trim().toLowerCase()
           return score === 'hot'
         }).length
 
-        const contactedInRange = items.filter((l: CaptureLeadDTO) => {
+        const contactedInRange = inRangeLeads.filter((l: CaptureLeadDTO) => {
+          if (range === 'overall') return Boolean(l.firstCallDate)
           const d = new Date(l.firstCallDate ?? '')
           if (Number.isNaN(d.getTime())) return false
           return isWithinRange(d, range)
         }).length
 
         const siteVisits = visitsRes.items.filter((visit) => {
+          if (range === 'overall') return true
           const d = getSiteVisitDate(visit)
           return d ? isWithinRange(d, range) : false
         }).length
         setStats(buildDashboardStats(totalLeads, hotLeads, contactedInRange, siteVisits))
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingSummary(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [range])
-
-  useEffect(() => {
-    let cancelled = false
-    setLoadingLeads(true)
-    fetchCaptureLeads()
-      .then((res) => {
-        if (cancelled) return
-        const rows = res.items
-          .filter((lead) => {
-            const d = getLeadDate(lead)
-            return d ? isWithinRange(d, range) : false
-          })
-          .sort((a, b) => toMs(b.created_at ?? b.firstCallDate) - toMs(a.created_at ?? a.firstCallDate))
-          .slice(0, 5)
-          .map((l): RecentLeadDTO => ({
-            id: l.id,
-            name: l.name ?? '—',
-            contact: l.number ?? '',
-            source: l.source ?? '—',
-            status: asRecentLeadStatus(l.status),
-            score: asRecentLeadScore(l.status, l.leadScore),
-            assignedTo: l.callBy ?? '—',
-          }))
-        setRecentLeads(rows)
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingLeads(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [range])
-
-  useEffect(() => {
-    let cancelled = false
-    setLoadingCharts(true)
-    fetchCaptureLeads()
-      .then((res) => {
-        if (cancelled) return
-
-        const inRangeLeads = res.items.filter((lead) => {
-          const d = getLeadDate(lead)
-          return d ? isWithinRange(d, range) : false
-        })
 
         const stageCounts = new Map<string, number>(BUYING_STAGE_OPTIONS.map((stage) => [stage, 0]))
         inRangeLeads.forEach((lead) => {
@@ -152,12 +105,12 @@ export function Dashboard() {
           if (!stageCounts.has(stage)) return
           stageCounts.set(stage, (stageCounts.get(stage) ?? 0) + 1)
         })
-
-        const salesFunnelData: SalesFunnelPointDTO[] = BUYING_STAGE_OPTIONS.map((stage) => ({
-          stage,
-          value: stageCounts.get(stage) ?? 0,
-        }))
-        setSalesFunnel(salesFunnelData)
+        setSalesFunnel(
+          BUYING_STAGE_OPTIONS.map((stage) => ({
+            stage,
+            value: stageCounts.get(stage) ?? 0,
+          })),
+        )
 
         const sourceMeta = CAPTURE_LEAD_SOURCE_TILE_OPTIONS.map((s, idx) => ({
           id: idx + 1,
@@ -182,23 +135,45 @@ export function Dashboard() {
         })
 
         const totalSources = inRangeLeads.length
-        const leadSourceData: LeadSourcePointDTO[] = sourceMeta
-          .map((s) => {
-            const count = sourceCounts.get(s.key) ?? 0
-            const value = totalSources > 0 ? Math.round((count / totalSources) * 100) : 0
-            return {
-              id: s.id,
-              label: s.label,
-              value,
-              color: s.color,
-            }
-          })
-          .filter((p) => p.value > 0)
-        setLeadSources(leadSourceData)
+        setLeadSources(
+          sourceMeta
+            .map((s) => {
+              const count = sourceCounts.get(s.key) ?? 0
+              const value = totalSources > 0 ? Math.round((count / totalSources) * 100) : 0
+              return {
+                id: s.id,
+                label: s.label,
+                value,
+                color: s.color,
+              }
+            })
+            .filter((p) => p.value > 0),
+        )
+
+        setRecentLeads(
+          [...inRangeLeads]
+            .sort((a, b) => toMs(b.created_at ?? b.firstCallDate) - toMs(a.created_at ?? a.firstCallDate))
+            .slice(0, 5)
+            .map(
+              (l): RecentLeadDTO => ({
+                id: l.id,
+                name: l.name ?? '—',
+                contact: l.number ?? '',
+                source: l.source ?? '—',
+                status: asRecentLeadStatus(l.status),
+                score: asRecentLeadScore(l.status, l.leadScore),
+                assignedTo: l.callBy ?? '—',
+              }),
+            ),
+        )
       })
       .finally(() => {
-        if (!cancelled) setLoadingCharts(false)
+        if (cancelled) return
+        setLoadingSummary(false)
+        setLoadingCharts(false)
+        setLoadingLeads(false)
       })
+
     return () => {
       cancelled = true
     }
@@ -215,6 +190,15 @@ export function Dashboard() {
       </header>
 
       <div className="crm-range-group mb-6" role="tablist" aria-label="Dashboard range">
+        <button
+          type="button"
+          className={rangeBtn(range === 'overall')}
+          role="tab"
+          aria-selected={range === 'overall'}
+          onClick={() => setRange('overall')}
+        >
+          Overall
+        </button>
         <button
           type="button"
           className={rangeBtn(range === 'today')}
@@ -258,77 +242,77 @@ export function Dashboard() {
       </div>
 
       <CanAccess moduleKey="reports" fallback={<p className="text-sm text-[#8B7355]">Analytics charts require Reports access.</p>}>
-      <div className="mt-6 grid grid-cols-1 gap-6 min-[900px]:grid-cols-2">
-        <section className="crm-card p-5">
-          <div className="text-sm font-semibold text-[#2E2E2E]">Sales Funnel</div>
-          <div className="mt-3" aria-busy={loadingCharts}>
-            {loadingCharts ? (
-              <p className="m-0 px-1 py-5 text-[13px] text-[#8B7355]">Loading chart…</p>
-            ) : (
-              <BarChart
-                xAxis={[
-                  {
-                    id: 'funnelStages',
-                    data: salesFunnel.map((p) => getBuyingStageChartLabel(p.stage)),
-                    scaleType: 'band',
-                    tickLabelInterval: () => true,
-                    tickLabelStyle: {
-                      angle: -35,
-                      textAnchor: 'end',
-                      fontSize: 8,
+        <div className="mt-6 grid grid-cols-1 gap-6 min-[900px]:grid-cols-2">
+          <section className="crm-card p-5">
+            <div className="text-sm font-semibold text-[#2E2E2E]">Sales Funnel</div>
+            <div className="mt-3" aria-busy={loadingCharts}>
+              {loadingCharts ? (
+                <p className="m-0 px-1 py-5 text-[13px] text-[#8B7355]">Loading chart…</p>
+              ) : (
+                <BarChart
+                  xAxis={[
+                    {
+                      id: 'funnelStages',
+                      data: salesFunnel.map((p) => getBuyingStageChartLabel(p.stage)),
+                      scaleType: 'band',
+                      tickLabelInterval: () => true,
+                      tickLabelStyle: {
+                        angle: -35,
+                        textAnchor: 'end',
+                        fontSize: 8,
+                      },
                     },
-                  },
-                ]}
-                series={[
-                  {
-                    data: salesFunnel.map((p) => p.value),
-                    color: '#8B7355',
-                  },
-                ]}
-                height={280}
-                margin={{ top: 20, left: 42, right: 16, bottom: 56 }}
-                grid={{ horizontal: true }}
-                sx={{
-                  '& .MuiChartsAxis-tickLabel': { fill: '#6b7280', fontSize: '8px' },
-                  '& .MuiChartsAxis-line': { stroke: 'rgba(17,24,39,0.15)' },
-                  '& .MuiChartsAxis-tick': { stroke: 'rgba(17,24,39,0.15)' },
-                  '& .MuiChartsGrid-line': { stroke: 'rgba(17,24,39,0.08)' },
-                }}
-              />
-            )}
-          </div>
-        </section>
+                  ]}
+                  series={[
+                    {
+                      data: salesFunnel.map((p) => p.value),
+                      color: '#8B7355',
+                    },
+                  ]}
+                  height={280}
+                  margin={{ top: 20, left: 42, right: 16, bottom: 56 }}
+                  grid={{ horizontal: true }}
+                  sx={{
+                    '& .MuiChartsAxis-tickLabel': { fill: '#6b7280', fontSize: '8px' },
+                    '& .MuiChartsAxis-line': { stroke: 'rgba(17,24,39,0.15)' },
+                    '& .MuiChartsAxis-tick': { stroke: 'rgba(17,24,39,0.15)' },
+                    '& .MuiChartsGrid-line': { stroke: 'rgba(17,24,39,0.08)' },
+                  }}
+                />
+              )}
+            </div>
+          </section>
 
-        <section className="crm-card p-5">
-          <div className="text-sm font-semibold text-[#2E2E2E]">Lead Sources</div>
-          <div className="mt-3 flex items-center justify-center" aria-busy={loadingCharts}>
-            {loadingCharts ? (
-              <p className="m-0 px-1 py-5 text-[13px] text-[#8B7355]">Loading chart…</p>
-            ) : leadSources.length === 0 ? (
-              <p className="m-0 px-1 py-5 text-[13px] text-[#8B7355]">No lead source data for this range.</p>
-            ) : (
-              <PieChart
-                height={280}
-                series={[
-                  {
-                    data: leadSources.map((p) => ({
-                      id: p.id,
-                      value: p.value,
-                      label: `${p.label}: ${p.value}%`,
-                      color: p.color,
-                    })),
-                    innerRadius: 0,
-                    outerRadius: 90,
-                    paddingAngle: 1,
-                    cornerRadius: 3,
-                  },
-                ]}
-                margin={{ top: 10, left: 10, right: 10, bottom: 10 }}
-              />
-            )}
-          </div>
-        </section>
-      </div>
+          <section className="crm-card p-5">
+            <div className="text-sm font-semibold text-[#2E2E2E]">Lead Sources</div>
+            <div className="mt-3 flex items-center justify-center" aria-busy={loadingCharts}>
+              {loadingCharts ? (
+                <p className="m-0 px-1 py-5 text-[13px] text-[#8B7355]">Loading chart…</p>
+              ) : leadSources.length === 0 ? (
+                <p className="m-0 px-1 py-5 text-[13px] text-[#8B7355]">No lead source data for this range.</p>
+              ) : (
+                <PieChart
+                  height={280}
+                  series={[
+                    {
+                      data: leadSources.map((p) => ({
+                        id: p.id,
+                        value: p.value,
+                        label: `${p.label}: ${p.value}%`,
+                        color: p.color,
+                      })),
+                      innerRadius: 0,
+                      outerRadius: 90,
+                      paddingAngle: 1,
+                      cornerRadius: 3,
+                    },
+                  ]}
+                  margin={{ top: 10, left: 10, right: 10, bottom: 10 }}
+                />
+              )}
+            </div>
+          </section>
+        </div>
       </CanAccess>
 
       <section className="crm-card mt-6 p-5">
@@ -353,7 +337,6 @@ export function Dashboard() {
           )}
         </div>
       </section>
-
     </section>
   )
 }

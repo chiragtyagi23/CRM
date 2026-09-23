@@ -12,6 +12,8 @@ import { fetchAssignees } from '../lib/usersApi'
 const campaignSiteBase =
   (import.meta.env.VITE_CAMPAIGN_SITE_URL || 'http://localhost:3000').replace(/\/$/, '')
 
+const PROJECTS_PAGE_SIZE = 10
+
 function campaignSlug(title: string): string {
   return title.trim().toLowerCase().replace(/\s+/g, '-')
 }
@@ -88,6 +90,8 @@ export function CampaignListTable(props: CampaignListTableProps) {
   const [savedAssigneeByCampaignId, setSavedAssigneeByCampaignId] = useState<Record<string, string>>({})
   const [savingCampaignId, setSavingCampaignId] = useState<string | null>(null)
   const [assigneeDirectory, setAssigneeDirectory] = useState<string[]>([])
+  const [leadsPage, setLeadsPage] = useState(1)
+  const [campaignPage, setCampaignPage] = useState(1)
 
   useEffect(() => {
     if (props.variant === 'leads' || !canCampaignAssign) {
@@ -153,6 +157,29 @@ export function CampaignListTable(props: CampaignListTableProps) {
     }
   }
 
+  const campaigns = props.variant === 'leads' ? [] : props.campaigns
+  const currentUserName = String(user?.name ?? '').trim().toLowerCase()
+  const visibleCampaigns = useMemo(() => {
+    if (props.variant === 'leads') return []
+    if (canManageCampaignAssignments || !currentUserName) return campaigns
+    return campaigns.filter((c) => displayAssignee(c.id).trim().toLowerCase() === currentUserName)
+  }, [campaigns, canManageCampaignAssignments, currentUserName, baseAssigneeByCampaignId, assigneeOverrides, props.variant])
+
+  const campaignTotalPages = Math.max(1, Math.ceil(visibleCampaigns.length / PROJECTS_PAGE_SIZE))
+  const campaignPageSafe = Math.min(campaignPage, campaignTotalPages)
+  const pagedCampaigns = useMemo(() => {
+    const start = (campaignPageSafe - 1) * PROJECTS_PAGE_SIZE
+    return visibleCampaigns.slice(start, start + PROJECTS_PAGE_SIZE)
+  }, [campaignPageSafe, visibleCampaigns])
+
+  useEffect(() => {
+    setCampaignPage(1)
+  }, [campaigns.length, canManageCampaignAssignments, currentUserName])
+
+  useEffect(() => {
+    if (props.variant === 'leads') setLeadsPage(1)
+  }, [props.variant === 'leads' ? props.leads.length : 0, props.variant])
+
   if (props.variant === 'leads') {
     const {
       leads,
@@ -165,6 +192,12 @@ export function CampaignListTable(props: CampaignListTableProps) {
       onViewDetails,
     } = props
     const colSpan = 6
+    const leadsTotalPages = Math.max(1, Math.ceil(leads.length / PROJECTS_PAGE_SIZE))
+    const leadsPageSafe = Math.min(leadsPage, leadsTotalPages)
+    const pagedLeads = leads.slice(
+      (leadsPageSafe - 1) * PROJECTS_PAGE_SIZE,
+      leadsPageSafe * PROJECTS_PAGE_SIZE,
+    )
 
     return (
       <div className="mt-5 rounded-xl border border-[#E8DCCB] bg-white overflow-hidden shadow-sm">
@@ -197,7 +230,7 @@ export function CampaignListTable(props: CampaignListTableProps) {
                   </td>
                 </tr>
               ) : (
-                leads.map((lead) => (
+                pagedLeads.map((lead) => (
                   <tr key={lead.id} className="border-b border-[#E8DCCB] last:border-b-0">
                     <td className="px-4 py-3 font-semibold">{lead.name}</td>
                     <td className="px-4 py-3 text-[#8B7355]">{lead.contact || '—'}</td>
@@ -238,16 +271,34 @@ export function CampaignListTable(props: CampaignListTableProps) {
             </tbody>
           </table>
         </div>
+        {!loading && leads.length > 0 ? (
+          <div className="flex flex-wrap items-center justify-center gap-3 border-t border-[#E8DCCB] px-4 py-3">
+            <button
+              type="button"
+              className="rounded-lg border border-[#E8DCCB] bg-white px-4 py-2 text-[13px] font-semibold text-[#8B7355] transition-colors hover:bg-[#F5EFE7] disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={leadsPageSafe <= 1}
+              onClick={() => setLeadsPage((p) => Math.max(1, p - 1))}
+            >
+              Previous
+            </button>
+            <span className="text-[13px] font-medium text-[#8B7355]">
+              Page {leadsPageSafe} of {leadsTotalPages}
+            </span>
+            <button
+              type="button"
+              className="rounded-lg border border-[#E8DCCB] bg-white px-4 py-2 text-[13px] font-semibold text-[#8B7355] transition-colors hover:bg-[#F5EFE7] disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={leadsPageSafe >= leadsTotalPages}
+              onClick={() => setLeadsPage((p) => Math.min(leadsTotalPages, p + 1))}
+            >
+              Next
+            </button>
+          </div>
+        ) : null}
       </div>
     )
   }
 
-  const { campaigns, loadingCampaigns, selectedCampaignId, onSelectCampaign } = props
-  const currentUserName = String(user?.name ?? '').trim().toLowerCase()
-  const visibleCampaigns = useMemo(() => {
-    if (canManageCampaignAssignments || !currentUserName) return campaigns
-    return campaigns.filter((c) => displayAssignee(c.id).trim().toLowerCase() === currentUserName)
-  }, [campaigns, canManageCampaignAssignments, currentUserName, baseAssigneeByCampaignId, assigneeOverrides])
+  const { loadingCampaigns, selectedCampaignId, onSelectCampaign } = props
   const colSpan = 6
 
   return (
@@ -282,7 +333,7 @@ export function CampaignListTable(props: CampaignListTableProps) {
                 </td>
               </tr>
             ) : (
-              visibleCampaigns.map((c) => (
+              pagedCampaigns.map((c) => (
                 <tr key={c.id} className="border-b border-[#E8DCCB] last:border-b-0">
                   <td className="px-4 py-3 font-semibold">{c.title}</td>
                   <td className="px-4 py-3 text-[#8B7355]">{c.address ?? '—'}</td>
@@ -349,6 +400,29 @@ export function CampaignListTable(props: CampaignListTableProps) {
           </tbody>
         </table>
       </div>
+      {!loadingCampaigns && visibleCampaigns.length > 0 ? (
+        <div className="flex flex-wrap items-center justify-center gap-3 border-t border-[#E8DCCB] px-4 py-3">
+          <button
+            type="button"
+            className="rounded-lg border border-[#E8DCCB] bg-white px-4 py-2 text-[13px] font-semibold text-[#8B7355] transition-colors hover:bg-[#F5EFE7] disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={campaignPageSafe <= 1}
+            onClick={() => setCampaignPage((p) => Math.max(1, p - 1))}
+          >
+            Previous
+          </button>
+          <span className="text-[13px] font-medium text-[#8B7355]">
+            Page {campaignPageSafe} of {campaignTotalPages}
+          </span>
+          <button
+            type="button"
+            className="rounded-lg border border-[#E8DCCB] bg-white px-4 py-2 text-[13px] font-semibold text-[#8B7355] transition-colors hover:bg-[#F5EFE7] disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={campaignPageSafe >= campaignTotalPages}
+            onClick={() => setCampaignPage((p) => Math.min(campaignTotalPages, p + 1))}
+          >
+            Next
+          </button>
+        </div>
+      ) : null}
     </div>
   )
 }

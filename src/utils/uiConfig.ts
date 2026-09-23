@@ -21,6 +21,8 @@ export function buildDashboardStats(
 
 export function dashboardSubtitle(range: DashboardRange) {
   switch (range) {
+    case 'overall':
+      return "Welcome back! Here's your overall lead management overview."
     case 'today':
       return "Welcome back! Here's your lead management overview for today."
     case 'month':
