@@ -7,10 +7,15 @@ import {
   type CaptureLeadCreatePayload,
   type CaptureLeadDTO,
   type CaptureLeadPatchPayload,
+  type CaptureLeadsListResponse,
+  type FetchCaptureLeadsParams,
 } from '../lib/captureLeadsApi'
 
 export type CaptureLeadsState = {
   items: CaptureLeadDTO[]
+  total: number
+  page: number
+  pageSize: number
   loading: boolean
   creating: boolean
   error: string | null
@@ -19,18 +24,23 @@ export type CaptureLeadsState = {
 
 const initialState: CaptureLeadsState = {
   items: [],
+  total: 0,
+  page: 1,
+  pageSize: 10,
   loading: false,
   creating: false,
   error: null,
   lastCreatedId: null,
 }
 
-export const loadCaptureLeads = createAsyncThunk<
-  { items: CaptureLeadDTO[] },
-  { force?: boolean } | undefined
->(
+export type LoadCaptureLeadsArg = FetchCaptureLeadsParams & { force?: boolean }
+
+export const loadCaptureLeads = createAsyncThunk<CaptureLeadsListResponse, LoadCaptureLeadsArg | undefined>(
   'captureLeads/load',
-  async () => await fetchCaptureLeads(),
+  async (arg) => {
+    const { force: _force, ...params } = arg ?? {}
+    return await fetchCaptureLeads(params)
+  },
   {
     condition: (arg, { getState }) => {
       if (arg?.force) return true
@@ -67,6 +77,9 @@ const slice = createSlice({
     b.addCase(loadCaptureLeads.fulfilled, (state, action) => {
       state.loading = false
       state.items = action.payload.items
+      state.total = action.payload.total
+      state.page = action.payload.page
+      state.pageSize = action.payload.pageSize
     })
     b.addCase(loadCaptureLeads.rejected, (state, action) => {
       state.loading = false
@@ -81,6 +94,7 @@ const slice = createSlice({
     b.addCase(submitCaptureLead.fulfilled, (state, action) => {
       state.creating = false
       state.items = [action.payload, ...state.items]
+      state.total += 1
       state.lastCreatedId = action.payload.id
     })
     b.addCase(submitCaptureLead.rejected, (state, action) => {
@@ -103,4 +117,3 @@ const slice = createSlice({
 
 export const captureLeadsActions = slice.actions
 export const captureLeadsReducer = slice.reducer
-
