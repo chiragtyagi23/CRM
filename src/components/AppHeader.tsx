@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { FiBarChart2, FiGrid, FiMapPin, FiShield, FiUser, FiUserPlus } from 'react-icons/fi'
+import { FiBarChart2, FiGrid, FiMapPin, FiSettings, FiShield, FiUser, FiUserPlus } from 'react-icons/fi'
 import { confirmLeaveFromBulkUploadIfNeeded } from '../lib/bulkUploadNavigation'
 import { useACL } from '../acl/useACL'
 import { defaultAuthedPath } from '../acl/hasAccess'
@@ -193,8 +193,26 @@ export function AppHeader() {
         </nav>
 
         <div className="app-header__user-desktop ml-auto hidden items-center gap-3 lg:flex">
-          {user ? (
+              {user ? (
             <>
+              <button
+                type="button"
+                className={[
+                  'app-header__profile-btn',
+                  location.pathname === '/settings' || location.pathname.startsWith('/settings/')
+                    ? 'app-header__profile-btn--active'
+                    : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                aria-current={location.pathname.startsWith('/settings') ? 'page' : undefined}
+                onClick={() => {
+                  if (!confirmLeaveFromBulkUploadIfNeeded(location.pathname)) return
+                  navigate('/settings/integrations')
+                }}
+              >
+                Settings
+              </button>
               {can('profile') || isLegacyFullAccess ? (
                 <button
                   type="button"
@@ -260,6 +278,24 @@ export function AppHeader() {
               </li>
             )
           })}
+
+          {user ? (
+            <li>
+              <button
+                type="button"
+                className={`${navLinkClass('/settings', 'settings')} app-header__link--mobile`}
+                aria-current={location.pathname.startsWith('/settings') ? 'page' : undefined}
+                onClick={() => {
+                  if (!confirmLeaveFromBulkUploadIfNeeded(location.pathname)) return
+                  setMenuOpen(false)
+                  navigate('/settings/integrations')
+                }}
+              >
+                <FiSettings className="app-header__nav-icon" aria-hidden />
+                <span>Settings</span>
+              </button>
+            </li>
+          ) : null}
 
           {user && (can('profile') || isLegacyFullAccess) ? (
             <li>

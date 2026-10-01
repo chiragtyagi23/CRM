@@ -19,6 +19,8 @@ import { ForgotPassword } from './pages/ForgotPassword'
 import { Login } from './pages/Login'
 import { ResetPassword } from './pages/ResetPassword'
 import { Profile } from './pages/Profile'
+import { IntegrationsPage } from './pages/settings/IntegrationsPage'
+import { NinetyNineAcresPage } from './pages/settings/NinetyNineAcresPage'
 import { Reports } from './pages/Reports'
 import { SessionExpired } from './pages/SessionExpired'
 import { SiteVisits } from './pages/SiteVisits'
@@ -167,6 +169,15 @@ function App() {
               }
             />
             <Route path="/profile" element={<AppMain id="profile"><Profile /></AppMain>} />
+            <Route path="/settings" element={<Navigate to="/settings/integrations" replace />} />
+            <Route
+              path="/settings/integrations"
+              element={<AppMain id="settings-integrations"><IntegrationsPage /></AppMain>}
+            />
+            <Route
+              path="/settings/integrations/99acres"
+              element={<AppMain id="settings-99acres"><NinetyNineAcresPage /></AppMain>}
+            />
             <Route
               path="/admin/acl"
               element={
