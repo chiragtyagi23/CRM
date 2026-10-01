@@ -495,6 +495,9 @@
 .acl-modal-panel--wide {
   width: min(720px, 100%);
 }
+.acl-modal-panel--xl {
+  width: min(1120px, 100%);
+}
 
 .acl-modal-header {
   display: flex;
