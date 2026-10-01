@@ -96,6 +96,8 @@ export function CaptureLead() {
   const [remarks, setRemarks] = useState('')
   const [callbackDate, setCallbackDate] = useState('')
   const [callbackTime, setCallbackTime] = useState('')
+  const [callRetryFrequencyMinutes, setCallRetryFrequencyMinutes] = useState('30')
+  const [callRetryCount, setCallRetryCount] = useState('2')
   const [preferredDropdownOpen, setPreferredDropdownOpen] = useState(false)
   const preferredDropdownRef = useRef<HTMLDivElement>(null)
   const [receivedByOptions, setReceivedByOptions] = useState<{ id: string; value: string; label: string }[]>([])
@@ -195,6 +197,14 @@ export function CaptureLead() {
     if (preferredLocationOtherSelected && !preferredLocationOther.trim()) {
       missing.push('Custom Preferred Location')
     }
+    const freq = Number(callRetryFrequencyMinutes)
+    if (!Number.isInteger(freq) || freq < 1 || freq > 1440) {
+      missing.push('Call Retry Frequency (1–1440 minutes)')
+    }
+    const retries = Number(callRetryCount)
+    if (callRetryCount.trim() === '' || !Number.isInteger(retries) || retries < 0 || retries > 10) {
+      missing.push('Number of Retries (0–10)')
+    }
     return missing
   }
 
@@ -228,6 +238,8 @@ export function CaptureLead() {
       buyingStage,
       callbackDate,
       callbackTime,
+      callRetryFrequencyMinutes,
+      callRetryCount,
     })
 
     await dispatch(submitCaptureLead(payload)).unwrap()
@@ -686,6 +698,46 @@ export function CaptureLead() {
                 onChange={(e) => setCallbackTime(e.target.value)}
                 step={60}
                 className={fieldDateTimeInputClass}
+                required
+                aria-required
+              />
+            </IconInsetField>
+
+            <IconInsetField
+              label="CALL RETRY FREQUENCY (Minutes)"
+              required
+              icon={<FaClock className={fieldIconCls} aria-hidden />}
+            >
+              <input
+                type="number"
+                min={1}
+                max={1440}
+                step={1}
+                value={callRetryFrequencyMinutes}
+                onChange={(e) => setCallRetryFrequencyMinutes(e.target.value)}
+                placeholder="30"
+                className={fieldInputClass}
+                inputMode="numeric"
+                required
+                aria-required
+              />
+            </IconInsetField>
+
+            <IconInsetField
+              label="NUMBER OF RETRIES"
+              required
+              icon={<FaPhone className={fieldIconCls} aria-hidden />}
+            >
+              <input
+                type="number"
+                min={0}
+                max={10}
+                step={1}
+                value={callRetryCount}
+                onChange={(e) => setCallRetryCount(e.target.value)}
+                placeholder="2"
+                className={fieldInputClass}
+                inputMode="numeric"
                 required
                 aria-required
               />

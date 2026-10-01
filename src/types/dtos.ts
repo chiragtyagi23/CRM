@@ -125,6 +125,10 @@ export type CaptureLeadDTO = {
   callbackDate: string | null
   /** Local time string from `<input type="time">`, e.g. `14:30` */
   callbackTime: string | null
+  /** Minutes between call-initiate retries (default 30) */
+  callRetryFrequencyMinutes?: number
+  /** Number of call-initiate retries (default 2) */
+  callRetryCount?: number
   activityTimeline?: LeadActivityTimelineEntry[]
   interestedProjects?: LeadInterestedProject[]
   created_at?: string

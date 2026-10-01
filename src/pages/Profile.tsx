@@ -5,7 +5,15 @@ import { FiMail, FiUser, FiUsers } from 'react-icons/fi'
 import { Modal } from '../components/acl/Modal'
 import { SearchableSelect } from '../components/uiPrimitives'
 import { confirmLeaveFromBulkUploadIfNeeded } from '../lib/bulkUploadNavigation'
-import { createUser, fetchRoles, fetchUsers, type CrmUserDTO } from '../lib/usersApi'
+import {
+  createUser,
+  deleteMySummary,
+  fetchMySummary,
+  fetchRoles,
+  fetchUsers,
+  saveMySummary,
+  type CrmUserDTO,
+} from '../lib/usersApi'
 import type { AclRoleDTO } from '../acl/types'
 import type { ApiError } from '../lib/crmApi'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
@@ -48,6 +56,73 @@ export function Profile() {
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+  const [summary, setSummary] = useState<string | null>(null)
+  const [summaryLoading, setSummaryLoading] = useState(true)
+  const [summaryError, setSummaryError] = useState<string | null>(null)
+  const [summaryEditing, setSummaryEditing] = useState(false)
+  const [summaryDraft, setSummaryDraft] = useState('')
+  const [summarySaving, setSummarySaving] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    setSummaryLoading(true)
+    fetchMySummary()
+      .then((res) => {
+        if (!cancelled) setSummary(res.summary)
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setSummaryError(extractError(err))
+      })
+      .finally(() => {
+        if (!cancelled) setSummaryLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const startEditSummary = () => {
+    setSummaryDraft(summary ?? '')
+    setSummaryError(null)
+    setSummaryEditing(true)
+  }
+
+  const cancelEditSummary = () => {
+    if (summarySaving) return
+    setSummaryEditing(false)
+    setSummaryError(null)
+  }
+
+  const onSaveSummary = async () => {
+    if (!summaryDraft.trim() || summarySaving) return
+    setSummarySaving(true)
+    setSummaryError(null)
+    try {
+      const res = await saveMySummary(summaryDraft.trim())
+      setSummary(res.summary)
+      setSummaryEditing(false)
+    } catch (err) {
+      setSummaryError(extractError(err))
+    } finally {
+      setSummarySaving(false)
+    }
+  }
+
+  const onDeleteSummary = async () => {
+    if (summarySaving || !window.confirm('Delete your summary?')) return
+    setSummarySaving(true)
+    setSummaryError(null)
+    try {
+      await deleteMySummary()
+      setSummary(null)
+      setSummaryEditing(false)
+    } catch (err) {
+      setSummaryError(extractError(err))
+    } finally {
+      setSummarySaving(false)
+    }
+  }
 
   const loadUsers = () => {
     if (!canViewAllUsers) {
@@ -257,6 +332,79 @@ export function Profile() {
           >
             Log out
           </button>
+        </div>
+      </div>
+
+      <div className="mt-6 rounded-xl border border-[#8B7355]/10 bg-[#FFFFFF] p-6 min-[520px]:p-8">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-[16px] font-bold text-[#2E2E2E]">Summary</h2>
+            <p className="mt-1 text-[12px] font-medium text-[#8B7355]">A short introduction about yourself</p>
+          </div>
+          {!summaryLoading && !summaryEditing ? (
+            <div className="flex shrink-0 gap-2">
+              {summary ? (
+                <button
+                  type="button"
+                  onClick={() => void onDeleteSummary()}
+                  disabled={summarySaving}
+                  className="inline-flex h-9 items-center justify-center rounded-lg border border-[#E8DCCB] bg-white px-4 text-[12px] font-semibold text-[#D96B6B] hover:bg-[#F5EFE7] disabled:opacity-60"
+                >
+                  Delete
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={startEditSummary}
+                className="inline-flex h-9 items-center justify-center rounded-lg bg-[#8B7355] px-4 text-[12px] font-semibold text-white hover:bg-[#6d5a43]"
+              >
+                {summary ? 'Edit' : 'Add summary'}
+              </button>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="mt-4">
+          {summaryLoading ? (
+            <div className="text-[13px] font-medium text-[#8B7355]">Loading…</div>
+          ) : summaryEditing ? (
+            <>
+              <textarea
+                value={summaryDraft}
+                onChange={(e) => setSummaryDraft(e.target.value)}
+                maxLength={5000}
+                placeholder="Write a few lines about yourself, your role, experience, areas you handle…"
+                className="min-h-[140px] w-full resize-y rounded-lg border border-[#E8DCCB] bg-white px-4 py-3 text-[13px] text-[#2E2E2E] placeholder:text-[#8B7355]/60 focus:border-[#8B7355] focus:outline-none"
+                autoFocus
+              />
+              <div className="mt-1 text-right text-[11px] text-[#8B7355]">{summaryDraft.length}/5000</div>
+              <div className="mt-3 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={cancelEditSummary}
+                  disabled={summarySaving}
+                  className="inline-flex h-9 items-center justify-center rounded-lg border border-[#E8DCCB] bg-white px-4 text-[12px] font-semibold text-[#2E2E2E] hover:bg-[#F5EFE7] disabled:opacity-60"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void onSaveSummary()}
+                  disabled={summarySaving || !summaryDraft.trim()}
+                  className="inline-flex h-9 items-center justify-center rounded-lg bg-[#8B7355] px-4 text-[12px] font-semibold text-white hover:bg-[#6d5a43] disabled:opacity-60"
+                >
+                  {summarySaving ? 'Saving…' : 'Save'}
+                </button>
+              </div>
+            </>
+          ) : summary ? (
+            <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-[#2E2E2E]">{summary}</p>
+          ) : (
+            <p className="text-[13px] font-medium text-[#8B7355]/80">No summary yet.</p>
+          )}
+          {summaryError ? (
+            <div className="mt-3 text-[13px] font-medium text-[#D96B6B]">{summaryError}</div>
+          ) : null}
         </div>
       </div>
 
