@@ -1,26 +1,30 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import * as XLSX from 'xlsx'
 import {
   FiAlertCircle,
   FiArrowLeft,
   FiCheckCircle,
   FiDownload,
+  FiPhone,
   FiTrash2,
   FiUpload,
   FiXCircle,
 } from 'react-icons/fi'
 
+import { BulkProjectModal } from '../components/BulkProjectModal'
 import { apiGet } from '../lib/crmApi'
 import {
   BULK_UPLOAD_LEAVE_MESSAGE,
   registerBulkUploadDirty,
 } from '../lib/bulkUploadNavigation'
 import { createCaptureLeadsBulk } from '../lib/captureLeadsApi'
-import type { CampaignListResponse } from '../types/dtos'
+import type { CampaignListResponse, ExistingCampaign } from '../types/dtos'
 import { crmPayloadBuilder } from '../services/crmPayloadBuilder'
 import { useAppDispatch } from '../store/hooks'
 import { loadCaptureLeads } from '../store/captureLeadsSlice'
+
+type BulkMode = 'upload' | 'call'
 
 type UploadedLead = {
   rowNumber: number
@@ -90,17 +94,28 @@ async function parseLeadRowsWithPromiseAll(rows: Record<string, unknown>[], chun
 
 export function BulkUploadLeads() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const dispatch = useAppDispatch()
-  const [campaigns, setCampaigns] = useState<{ id: string; title: string }[]>([])
+  const mode: BulkMode = searchParams.get('mode') === 'call' ? 'call' : 'upload'
+  const [campaigns, setCampaigns] = useState<ExistingCampaign[]>([])
   const [campaignsLoading, setCampaignsLoading] = useState(true)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [selectedCampaignId, setSelectedCampaignId] = useState('')
+  const [projectModalOpen, setProjectModalOpen] = useState(false)
   const [uploadedLeads, setUploadedLeads] = useState<UploadedLead[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [callQueued, setCallQueued] = useState(false)
   const [flash, setFlash] = useState<null | { type: 'ok' | 'err'; message: string }>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dirtyRef = useRef(false)
+
+  const setMode = (next: BulkMode) => {
+    setCallQueued(false)
+    setFlash(null)
+    if (next === 'call') setSearchParams({ mode: 'call' })
+    else setSearchParams({})
+  }
 
   const dirty =
     isProcessing || isUploading || selectedFile !== null || uploadedLeads.length > 0
@@ -141,7 +156,7 @@ export function BulkUploadLeads() {
       .then((d) =>
         setCampaigns(
           (d.items ?? []).map((c) => ({
-            id: c.id,
+            ...c,
             title: String(c.title ?? '').trim() || c.id,
           })),
         ),
@@ -185,6 +200,7 @@ export function BulkUploadLeads() {
       /\.xlsx?$/i.test(file.name)
     if (okType) {
       setSelectedFile(file)
+      setCallQueued(false)
       void processFile(file)
     } else {
       setFlash({ type: 'err', message: 'Please select a valid Excel file (.xlsx or .xls).' })
@@ -209,6 +225,7 @@ export function BulkUploadLeads() {
     setSelectedFile(null)
     setUploadedLeads([])
     setSelectedCampaignId('')
+    setCallQueued(false)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -284,8 +301,19 @@ export function BulkUploadLeads() {
   const validLeadsCount = uploadedLeads.filter((lead) => lead.isValid).length
   const errorLeadsCount = uploadedLeads.filter((lead) => !lead.isValid).length
 
+  const handleBulkCall = () => {
+    if (!selectedCampaignId || uploadedLeads.length === 0 || errorLeadsCount > 0) return
+    setCallQueued(true)
+    setFlash({
+      type: 'ok',
+      message: `Prepared ${validLeadsCount} contact(s) for ${selectedCampaignTitle}. The call action will be connected next.`,
+    })
+  }
+
+  const selectedCampaign = campaigns.find((c) => c.id === selectedCampaignId)
+
   return (
-    <section className="w-full px-4 py-6">
+    <section className="mx-auto w-full max-w-5xl px-4 py-6">
       {flash ? (
         <div
           className={`mb-4 rounded-xl border px-4 py-3 text-[13px] font-medium ${
@@ -298,7 +326,7 @@ export function BulkUploadLeads() {
         </div>
       ) : null}
 
-      <div className="mb-8">
+      <div className="mb-6">
         <button
           type="button"
           className="mb-4 inline-flex items-center gap-2 border-0 bg-transparent p-0 text-[13px] font-semibold text-[#8B7355] hover:text-[#6d5a43]"
@@ -310,48 +338,74 @@ export function BulkUploadLeads() {
           <FiArrowLeft className="h-5 w-5" aria-hidden />
           Back to Leads
         </button>
-        <div className="flex flex-col gap-2">
-        <p className="m-0 text-[28px] font-semibold tracking-[-0.03em] text-[#2E2E2E]">Bulk Upload Leads</p>
-        <p className="mt-1 text-[14px] font-medium text-[#8B7355]">Upload multiple leads at once using an Excel file</p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="m-0 text-[28px] font-semibold tracking-[-0.03em] text-[#2E2E2E]">
+              {mode === 'call' ? 'Bulk Call' : 'Bulk Upload Leads'}
+            </p>
+            <p className="mt-1 mb-0 text-[14px] text-[#8B7355]">
+              {mode === 'call'
+                ? 'Load a contact sheet and choose a project. Calling starts once the action is connected.'
+                : 'Create many leads at once from an Excel file and a project.'}
+            </p>
+          </div>
+          <div className="inline-flex rounded-xl border border-[#E8DCCB] bg-[#FAF7F2] p-1" role="tablist" aria-label="Bulk mode">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === 'upload'}
+              onClick={() => setMode('upload')}
+              className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-[13px] font-semibold ${
+                mode === 'upload' ? 'bg-white text-[#2E2E2E] ring-1 ring-[#E8DCCB]' : 'text-[#8B7355] hover:text-[#2E2E2E]'
+              }`}
+            >
+              <FiUpload className="h-4 w-4" aria-hidden />
+              Bulk Upload
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === 'call'}
+              onClick={() => setMode('call')}
+              className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-[13px] font-semibold ${
+                mode === 'call' ? 'bg-white text-[#2E2E2E] ring-1 ring-[#E8DCCB]' : 'text-[#8B7355] hover:text-[#2E2E2E]'
+              }`}
+            >
+              <FiPhone className="h-4 w-4" aria-hidden />
+              Bulk Call
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="mb-6 rounded-xl border border-[#8B7355]/10 bg-white p-6 ">
+      <div className="mb-6 rounded-2xl border border-[#8B7355]/10 bg-white p-6">
         <div className="mb-6 flex gap-3 rounded-xl border border-[#e7ddcf] bg-[#F5EFE7] p-4">
           <FiAlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-[#8B7355]" aria-hidden />
           <div className="text-[13px] text-[#2E2E2E]">
-            <p className="m-0 mb-1 font-semibold">Upload Excel file with the following columns:</p>
-            <ul className="m-0 list-disc pl-5 text-[#8B7355]">
-              <li>
-                <strong>Name</strong> — full name (required)
-              </li>
-              <li>
-                <strong>Mobile No.</strong> — phone with country code (required)
-              </li>
-              <li>
-                <strong>Email Id</strong> — valid email (required)
-              </li>
-            </ul>
+            <p className="m-0 mb-1 font-semibold">Excel columns</p>
+            <p className="m-0 text-[#8B7355]">
+              <strong className="font-semibold text-[#2E2E2E]">Name</strong>,{' '}
+              <strong className="font-semibold text-[#2E2E2E]">Mobile No.</strong>, and{' '}
+              <strong className="font-semibold text-[#2E2E2E]">Email Id</strong> are required on every row.
+            </p>
           </div>
         </div>
 
-        <div className="mb-6">
-          <button
-            type="button"
-            onClick={handleDownloadTemplate}
-            className="inline-flex items-center gap-2 rounded-xl border border-[#8B7355] px-4 py-2.5 text-[13px] font-semibold text-[#8B7355] hover:bg-[#FAF7F2]"
-          >
-            <FiDownload className="h-4 w-4" aria-hidden />
-            Download Template
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={handleDownloadTemplate}
+          className="mb-6 inline-flex items-center gap-2 rounded-xl border border-[#8B7355] px-4 py-2.5 text-[13px] font-semibold text-[#8B7355] hover:bg-[#FAF7F2]"
+        >
+          <FiDownload className="h-4 w-4" aria-hidden />
+          Download template
+        </button>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div>
-            <label className="mb-2 block text-[13px] font-semibold text-[#2E2E2E]">
-              Select Excel File <span className="text-red-600">*</span>
-            </label>
-            <div className="rounded-xl border-2 border-dashed border-[#e7ddcf] p-8 text-center hover:border-[#E8DCCB]">
+            <p className="mb-2 text-[13px] font-semibold text-[#2E2E2E]">
+              Excel file <span className="text-red-600">*</span>
+            </p>
+            <div className="rounded-xl border-2 border-dashed border-[#e7ddcf] bg-[#FAF7F2]/40 p-8 text-center hover:border-[#8B7355]/50">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -361,11 +415,11 @@ export function BulkUploadLeads() {
                 id="crm-bulk-file-upload"
               />
               <label htmlFor="crm-bulk-file-upload" className="cursor-pointer">
-                <FiUpload className="mx-auto mb-3 h-12 w-12 text-[#8B7355]" aria-hidden />
+                <FiUpload className="mx-auto mb-3 h-10 w-10 text-[#8B7355]" aria-hidden />
                 {selectedFile ? (
                   <div>
                     <p className="m-0 font-semibold text-[#2E2E2E]">{selectedFile.name}</p>
-                    <p className="mt-1 text-[13px] text-[#8B7355]">{(selectedFile.size / 1024).toFixed(2)} KB</p>
+                    <p className="mt-1 mb-0 text-[13px] text-[#8B7355]">{(selectedFile.size / 1024).toFixed(2)} KB</p>
                     <button
                       type="button"
                       onClick={(e) => {
@@ -375,45 +429,78 @@ export function BulkUploadLeads() {
                       className="mt-3 inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-[13px] font-semibold text-red-700 hover:bg-red-50"
                     >
                       <FiTrash2 className="h-4 w-4" aria-hidden />
-                      Remove File
+                      Remove file
                     </button>
                   </div>
                 ) : (
                   <div>
-                    <p className="m-0 font-semibold text-[#2E2E2E]">Click to select Excel file</p>
-                    <p className="mt-1 text-[13px] text-[#8B7355]">.xlsx or .xls</p>
+                    <p className="m-0 font-semibold text-[#2E2E2E]">Click to select an Excel file</p>
+                    <p className="mt-1 mb-0 text-[13px] text-[#8B7355]">.xlsx or .xls</p>
                   </div>
                 )}
               </label>
             </div>
           </div>
 
-          <div>
-            <label htmlFor="bulk-upload-campaign" className="mb-2 block text-[13px] font-semibold text-[#2E2E2E]">
-              Project <span className="text-red-600">*</span>
-            </label>
-            <select
-              id="bulk-upload-campaign"
-              value={selectedCampaignId}
-              onChange={(e) => setSelectedCampaignId(e.target.value)}
-              className="h-12 w-full rounded-xl border border-[#E8DCCB] bg-white px-3 text-[13px] text-[#2E2E2E] focus:border-[#8B7355] focus:outline-none disabled:opacity-60"
-              disabled={campaignsLoading}
-            >
-              <option value="">
-                {campaignsLoading
-                  ? 'Loading projects…'
-                  : campaigns.length === 0
-                    ? 'No projects found'
-                    : 'Select a project'}
-              </option>
-              {campaigns.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.title}
+          {mode === 'upload' ? (
+            <div>
+              <label htmlFor="bulk-upload-campaign" className="mb-2 block text-[13px] font-semibold text-[#2E2E2E]">
+                Project <span className="text-red-600">*</span>
+              </label>
+              <select
+                id="bulk-upload-campaign"
+                value={selectedCampaignId}
+                onChange={(e) => {
+                  setSelectedCampaignId(e.target.value)
+                  setCallQueued(false)
+                }}
+                className="h-12 w-full rounded-xl border border-[#E8DCCB] bg-white px-3 text-[13px] text-[#2E2E2E] focus:border-[#8B7355] focus:outline-none disabled:opacity-60"
+                disabled={campaignsLoading}
+              >
+                <option value="">
+                  {campaignsLoading
+                    ? 'Loading projects…'
+                    : campaigns.length === 0
+                      ? 'No projects found'
+                      : 'Select a project'}
                 </option>
-              ))}
-            </select>
-            <p className="mt-2 text-[12px] font-medium text-[#8B7355]">Stored as lead &quot;source&quot; for reporting.</p>
-          </div>
+                {campaigns.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.title}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-2 mb-0 text-[12px] text-[#8B7355]">Stored as the lead source for reporting.</p>
+            </div>
+          ) : (
+            <div>
+              <p className="mb-2 text-[13px] font-semibold text-[#2E2E2E]">
+                Project <span className="text-red-600">*</span>
+              </p>
+              <button
+                type="button"
+                onClick={() => setProjectModalOpen(true)}
+                className="flex min-h-36 w-full flex-col items-start justify-center rounded-xl border border-[#E8DCCB] bg-white px-5 py-4 text-left hover:border-[#8B7355] hover:bg-[#FAF7F2]"
+              >
+                {selectedCampaign ? (
+                  <>
+                    <p className="m-0 text-[15px] font-semibold text-[#2E2E2E]">{selectedCampaign.title}</p>
+                    <p className="mt-1 mb-0 text-[12px] text-[#8B7355]">
+                      {String(selectedCampaign.address ?? '').trim() || 'No address'}
+                      {' · '}
+                      {String(selectedCampaign.assignTo ?? '').trim() || 'Unassigned'}
+                    </p>
+                    <span className="mt-3 text-[12px] font-semibold text-[#8B7355]">Change project</span>
+                  </>
+                ) : (
+                  <>
+                    <p className="m-0 text-[15px] font-semibold text-[#2E2E2E]">Choose a project</p>
+                    <p className="mt-1 mb-0 text-[12px] text-[#8B7355]">Opens filters for assignee, template, and search.</p>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -505,39 +592,71 @@ export function BulkUploadLeads() {
               onClick={handleClearFile}
               className="flex-1 rounded-xl border border-[#E8DCCB] bg-white py-3 text-[13px] font-semibold text-[#2E2E2E] hover:bg-[#F5EFE7]"
             >
-              Clear &amp; Start Over
+              Clear and start over
             </button>
-            <button
-              type="button"
-              onClick={() => void handleUpload()}
-              disabled={
-                isUploading ||
-                uploadedLeads.length === 0 ||
-                !selectedCampaignId ||
-                errorLeadsCount > 0
-              }
-              title={
-                errorLeadsCount > 0
-                  ? 'Fix or remove rows with errors before uploading.'
-                  : undefined
-              }
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#8B7355] py-3 text-[13px] font-semibold text-white hover:bg-[#6d5a43] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isUploading ? (
-                <>
-                  <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden />
-                  Uploading…
-                </>
-              ) : (
-                <>
-                  <FiUpload className="h-5 w-5" aria-hidden />
-                  Upload {uploadedLeads.length} Lead{uploadedLeads.length === 1 ? '' : 's'}
-                </>
-              )}
-            </button>
+            {mode === 'upload' ? (
+              <button
+                type="button"
+                onClick={() => void handleUpload()}
+                disabled={
+                  isUploading ||
+                  uploadedLeads.length === 0 ||
+                  !selectedCampaignId ||
+                  errorLeadsCount > 0
+                }
+                title={
+                  errorLeadsCount > 0
+                    ? 'Fix or remove rows with errors before uploading.'
+                    : undefined
+                }
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#8B7355] py-3 text-[13px] font-semibold text-white hover:bg-[#6d5a43] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isUploading ? (
+                  <>
+                    <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden />
+                    Uploading…
+                  </>
+                ) : (
+                  <>
+                    <FiUpload className="h-5 w-5" aria-hidden />
+                    Upload {uploadedLeads.length} lead{uploadedLeads.length === 1 ? '' : 's'}
+                  </>
+                )}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleBulkCall}
+                disabled={uploadedLeads.length === 0 || !selectedCampaignId || errorLeadsCount > 0}
+                title={
+                  errorLeadsCount > 0
+                    ? 'Fix or remove rows with errors before calling.'
+                    : !selectedCampaignId
+                      ? 'Choose a project first.'
+                      : undefined
+                }
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#8B7355] py-3 text-[13px] font-semibold text-white hover:bg-[#6d5a43] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <FiPhone className="h-5 w-5" aria-hidden />
+                {callQueued ? 'Call list prepared' : `Bulk call ${validLeadsCount} contact${validLeadsCount === 1 ? '' : 's'}`}
+              </button>
+            )}
           </div>
         </>
       ) : null}
+
+      <BulkProjectModal
+        open={projectModalOpen}
+        campaigns={campaigns}
+        loading={campaignsLoading}
+        selectedId={selectedCampaignId}
+        onClose={() => setProjectModalOpen(false)}
+        onConfirm={(id) => {
+          setSelectedCampaignId(id)
+          setCallQueued(false)
+          setProjectModalOpen(false)
+        }}
+      />
     </section>
   )
 }
