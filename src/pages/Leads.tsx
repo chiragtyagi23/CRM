@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { FiSearch, FiSliders, FiTrendingUp, FiUpload } from 'react-icons/fi'
+import { FiPhone, FiSearch, FiSliders, FiTrendingUp, FiUpload } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 
 import type { LeadScoreDTO, LeadStatusDTO } from '../lib/dashboardDummyApi'
@@ -125,6 +125,16 @@ export function Leads() {
             >
               <FiUpload className="h-4 w-4 shrink-0" aria-hidden />
               Bulk Upload
+            </button>
+            <button
+              type="button"
+              className="crm-btn-secondary h-10"
+              onClick={() => {
+                navigate('/leads/bulk-upload?mode=call')
+              }}
+            >
+              <FiPhone className="h-4 w-4 shrink-0" aria-hidden />
+              Bulk Call
             </button>
             <button
               type="button"

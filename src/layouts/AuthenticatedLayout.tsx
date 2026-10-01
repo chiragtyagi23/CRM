@@ -42,7 +42,8 @@ export function AuthenticatedLayout() {
 
   const publicPaths = ['/profile', '/403', '/session-expired']
   const path = location.pathname
-  if (!isLegacyFullAccess && !publicPaths.includes(path) && !canAccessRoute(path)) {
+  const isSettingsPath = path === '/settings' || path.startsWith('/settings/')
+  if (!isLegacyFullAccess && !publicPaths.includes(path) && !isSettingsPath && !canAccessRoute(path)) {
     return <Navigate to="/403" replace state={{ from: path }} />
   }
 
