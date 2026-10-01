@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { FiBarChart2, FiGrid, FiMapPin, FiSettings, FiShield, FiUser, FiUserPlus } from 'react-icons/fi'
+import { FiBarChart2, FiGrid, FiHome, FiMapPin, FiSettings, FiShield, FiUser, FiUserPlus } from 'react-icons/fi'
 import { confirmLeaveFromBulkUploadIfNeeded } from '../lib/bulkUploadNavigation'
 import { useACL } from '../acl/useACL'
 import { defaultAuthedPath } from '../acl/hasAccess'
 import { useAppSelector } from '../store/hooks'
 import type { AclModuleDTO } from '../acl/types'
 
-type NavIcon = 'grid' | 'user' | 'userPlus' | 'pin' | 'chart' | 'shield'
+type NavIcon = 'grid' | 'user' | 'userPlus' | 'pin' | 'chart' | 'shield' | 'home'
 
 type NavMenuItem = { id: string; label: string; link: string; icon: NavIcon }
 
@@ -21,6 +21,14 @@ const LEGACY_NAV_MENU_ITEMS: NavMenuItem[] = [
   { id: 'visits', label: 'Site Visits', link: '#site-visits', icon: 'pin' },
   { id: 'campaign', label: 'Projects', link: '#campaign', icon: 'chart' },
 ]
+
+/** Shown to every signed-in user regardless of ACL modules. */
+const PROPERTY_LISTINGS_NAV_ITEM: NavMenuItem = {
+  id: 'property_listings',
+  label: 'Property Listings',
+  link: '/property-listings',
+  icon: 'home',
+}
 
 function NavIconGlyph({ name }: { name: NavIcon }) {
   switch (name) {
@@ -36,6 +44,8 @@ function NavIconGlyph({ name }: { name: NavIcon }) {
       return <FiBarChart2 className="app-header__nav-icon" aria-hidden />
     case 'shield':
       return <FiShield className="app-header__nav-icon" aria-hidden />
+    case 'home':
+      return <FiHome className="app-header__nav-icon" aria-hidden />
     default:
       return <FiGrid className="app-header__nav-icon" aria-hidden />
   }
@@ -84,7 +94,10 @@ export function AppHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   const aclMenuItems = modulesToMenuItems(navModules)
-  const visibleMenuItems = isLegacyFullAccess ? LEGACY_NAV_MENU_ITEMS : aclMenuItems
+  const visibleMenuItems = [
+    ...(isLegacyFullAccess ? LEGACY_NAV_MENU_ITEMS : aclMenuItems),
+    ...(user ? [PROPERTY_LISTINGS_NAV_ITEM] : []),
+  ]
 
   useEffect(() => {
     if (!menuOpen) return

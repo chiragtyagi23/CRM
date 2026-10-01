@@ -76,9 +76,10 @@ export function LeadCard({
   onDelete,
   dirty,
   onUpdate,
+  readOnly = false,
 }: {
   lead: LeadDTO
-  onViewDetails: (lead: LeadDTO) => void
+  onViewDetails?: (lead: LeadDTO) => void
   onChangeScore?: (score: LeadScoreDTO) => void
   onChangeStatus?: (status: LeadStatusDTO) => void
   canEditAssignee?: boolean
@@ -88,6 +89,8 @@ export function LeadCard({
   onDelete?: (lead: LeadDTO) => void
   dirty?: boolean
   onUpdate?: () => void
+  /** Display-only card (Property Listings): static badges; no assignee, last contact or contact/edit actions. View Details shows when `onViewDetails` is passed. */
+  readOnly?: boolean
 }) {
   const telHref = lead.contact?.trim() ? toIndiaTelHref(lead.contact) : undefined
   const waHref = lead.contact?.trim() ? toWhatsAppHref(lead.contact) : undefined
@@ -118,34 +121,47 @@ export function LeadCard({
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <label className="sr-only" htmlFor={`lead-score-${lead.id}`}>
-                Lead score
-              </label>
-              <BadgeSelect
-                id={`lead-score-${lead.id}`}
-                value={lead.score}
-                onChange={(e) => onChangeScore?.(e.target.value as LeadScoreDTO)}
-                badgeClassName={getScoreBadgeColor(lead.score)}
-              >
-                <option value="Hot">Hot</option>
-                <option value="Warm">Warm</option>
-                <option value="Cold">Cold</option>
-              </BadgeSelect>
-              <label className="sr-only" htmlFor={`lead-status-${lead.id}`}>
-                Lead status
-              </label>
-              <BadgeSelect
-                id={`lead-status-${lead.id}`}
-                value={lead.status}
-                onChange={(e) => onChangeStatus?.(e.target.value as LeadStatusDTO)}
-                badgeClassName={getStatusBadgeColor(lead.status)}
-              >
-                <option value="New">New</option>
-                <option value="Contacted">Contacted</option>
-                <option value="Qualified">Qualified</option>
-                <option value="Opportunity">Opportunity</option>
-                <option value="Site Visit">Site Visit</option>
-              </BadgeSelect>
+              {readOnly ? (
+                <>
+                  <span className={`rounded-full px-3 py-1 text-xs font-medium ${getScoreBadgeColor(lead.score)}`}>
+                    {lead.score}
+                  </span>
+                  <span className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusBadgeColor(lead.status)}`}>
+                    {lead.status}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <label className="sr-only" htmlFor={`lead-score-${lead.id}`}>
+                    Lead score
+                  </label>
+                  <BadgeSelect
+                    id={`lead-score-${lead.id}`}
+                    value={lead.score}
+                    onChange={(e) => onChangeScore?.(e.target.value as LeadScoreDTO)}
+                    badgeClassName={getScoreBadgeColor(lead.score)}
+                  >
+                    <option value="Hot">Hot</option>
+                    <option value="Warm">Warm</option>
+                    <option value="Cold">Cold</option>
+                  </BadgeSelect>
+                  <label className="sr-only" htmlFor={`lead-status-${lead.id}`}>
+                    Lead status
+                  </label>
+                  <BadgeSelect
+                    id={`lead-status-${lead.id}`}
+                    value={lead.status}
+                    onChange={(e) => onChangeStatus?.(e.target.value as LeadStatusDTO)}
+                    badgeClassName={getStatusBadgeColor(lead.status)}
+                  >
+                    <option value="New">New</option>
+                    <option value="Contacted">Contacted</option>
+                    <option value="Qualified">Qualified</option>
+                    <option value="Opportunity">Opportunity</option>
+                    <option value="Site Visit">Site Visit</option>
+                  </BadgeSelect>
+                </>
+              )}
             </div>
           </div>
 
@@ -173,29 +189,33 @@ export function LeadCard({
               <FiCalendar className="h-3 w-3 shrink-0" aria-hidden />
               Created {formatRelativeDate(lead.createdAtISO)}
             </span>
-            <span>•</span>
-            <span>Last contact {formatRelativeDate(lead.lastContactAtISO)}</span>
-            <span>•</span>
-            {canEditAssignee ? (
-              <span className="inline-flex flex-wrap items-center gap-2">
-                <span>Assigned to</span>
-                <select
-                  value={lead.assignedTo === '—' ? '' : lead.assignedTo}
-                  onChange={(e) => onChangeAssignee?.(e.target.value)}
-                  className="max-w-[160px] rounded-lg border border-[#E8DCCB] bg-white px-2 py-1 text-xs font-medium text-[#2E2E2E] focus:border-[#8B7355] focus:outline-none"
-                >
-                  <option value="" disabled>
-                    Select
-                  </option>
-                  {assigneeSelectOptions.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </select>
-              </span>
-            ) : (
-              <span>Assigned to {lead.assignedTo}</span>
+            {readOnly ? null : (
+              <>
+                <span>•</span>
+                <span>Last contact {formatRelativeDate(lead.lastContactAtISO)}</span>
+                <span>•</span>
+                {canEditAssignee ? (
+                  <span className="inline-flex flex-wrap items-center gap-2">
+                    <span>Assigned to</span>
+                    <select
+                      value={lead.assignedTo === '—' ? '' : lead.assignedTo}
+                      onChange={(e) => onChangeAssignee?.(e.target.value)}
+                      className="max-w-[160px] rounded-lg border border-[#E8DCCB] bg-white px-2 py-1 text-xs font-medium text-[#2E2E2E] focus:border-[#8B7355] focus:outline-none"
+                    >
+                      <option value="" disabled>
+                        Select
+                      </option>
+                      {assigneeSelectOptions.map((p) => (
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
+                      ))}
+                    </select>
+                  </span>
+                ) : (
+                  <span>Assigned to {lead.assignedTo}</span>
+                )}
+              </>
             )}
             {lead.repeatCustomer ? (
               <>
@@ -206,65 +226,71 @@ export function LeadCard({
           </div>
         </div>
 
-        <div className="flex flex-col gap-2 lg:flex-col">
-          <button
-            type="button"
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#8B7355] px-4 py-2 text-sm text-white transition-colors hover:bg-[#6d5a43] lg:flex-none"
-            onClick={() => onViewDetails(lead)}
-          >
-            <FiEye className="h-4 w-4 shrink-0" aria-hidden />
-            View Details
-          </button>
-          {telHref ? (
-            <a
-              href={telHref}
-              className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-[#8B7355] px-4 py-2 text-sm text-[#8B7355] transition-colors hover:bg-[#F5EFE7] lg:flex-none no-underline"
-            >
-              <FiPhone className="h-4 w-4 shrink-0" aria-hidden />
-              Call
-            </a>
-          ) : (
-            <span className="flex flex-1 cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-[#E8DCCB] px-4 py-2 text-sm text-[#8B7355]/50 lg:flex-none">
-              <FiPhone className="h-4 w-4" aria-hidden />
-              Call
-            </span>
-          )}
-          {waHref ? (
-            <a
-              href={waHref}
-              target="_blank"
-              rel="noreferrer"
-              className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-[#6FAF8F] px-4 py-2 text-sm text-[#6FAF8F] transition-colors hover:bg-[#6FAF8F]/10 lg:flex-none no-underline"
-            >
-              <FiMessageSquare className="h-4 w-4 shrink-0" aria-hidden />
-              WhatsApp
-            </a>
-          ) : (
-            <span className="flex flex-1 cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-[#E8DCCB] px-4 py-2 text-sm text-[#6FAF8F]/50 lg:flex-none">
-              <FiMessageSquare className="h-4 w-4" aria-hidden />
-              WhatsApp
-            </span>
-          )}
-          {dirty ? (
+        {readOnly && !onViewDetails ? null : (
+          <div className="flex flex-col gap-2 lg:flex-col">
             <button
               type="button"
-              className="flex flex-1 items-center justify-center rounded-lg border border-[#E8DCCB] bg-[#F5EFE7] px-4 py-2 text-sm font-semibold text-[#8B7355] transition-colors hover:bg-[#ede4d8] lg:flex-none"
-              onClick={() => onUpdate?.()}
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#8B7355] px-4 py-2 text-sm text-white transition-colors hover:bg-[#6d5a43] lg:flex-none"
+              onClick={() => onViewDetails?.(lead)}
             >
-              Update
+              <FiEye className="h-4 w-4 shrink-0" aria-hidden />
+              View Details
             </button>
-          ) : null}
-          {canDelete ? (
-            <button
-              type="button"
-              className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-[#D96B6B]/40 px-4 py-2 text-sm font-semibold text-[#D96B6B] transition-colors hover:bg-[#D96B6B]/10 lg:flex-none"
-              onClick={() => onDelete?.(lead)}
-            >
-              <FiTrash2 className="h-4 w-4 shrink-0" aria-hidden />
-              Delete
-            </button>
-          ) : null}
-        </div>
+            {readOnly ? null : (
+              <>
+                {telHref ? (
+                  <a
+                    href={telHref}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-[#8B7355] px-4 py-2 text-sm text-[#8B7355] transition-colors hover:bg-[#F5EFE7] lg:flex-none no-underline"
+                  >
+                    <FiPhone className="h-4 w-4 shrink-0" aria-hidden />
+                    Call
+                  </a>
+                ) : (
+                  <span className="flex flex-1 cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-[#E8DCCB] px-4 py-2 text-sm text-[#8B7355]/50 lg:flex-none">
+                    <FiPhone className="h-4 w-4" aria-hidden />
+                    Call
+                  </span>
+                )}
+                {waHref ? (
+                  <a
+                    href={waHref}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-[#6FAF8F] px-4 py-2 text-sm text-[#6FAF8F] transition-colors hover:bg-[#6FAF8F]/10 lg:flex-none no-underline"
+                  >
+                    <FiMessageSquare className="h-4 w-4 shrink-0" aria-hidden />
+                    WhatsApp
+                  </a>
+                ) : (
+                  <span className="flex flex-1 cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-[#E8DCCB] px-4 py-2 text-sm text-[#6FAF8F]/50 lg:flex-none">
+                    <FiMessageSquare className="h-4 w-4" aria-hidden />
+                    WhatsApp
+                  </span>
+                )}
+                {dirty ? (
+                  <button
+                    type="button"
+                    className="flex flex-1 items-center justify-center rounded-lg border border-[#E8DCCB] bg-[#F5EFE7] px-4 py-2 text-sm font-semibold text-[#8B7355] transition-colors hover:bg-[#ede4d8] lg:flex-none"
+                    onClick={() => onUpdate?.()}
+                  >
+                    Update
+                  </button>
+                ) : null}
+                {canDelete ? (
+                  <button
+                    type="button"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-[#D96B6B]/40 px-4 py-2 text-sm font-semibold text-[#D96B6B] transition-colors hover:bg-[#D96B6B]/10 lg:flex-none"
+                    onClick={() => onDelete?.(lead)}
+                  >
+                    <FiTrash2 className="h-4 w-4 shrink-0" aria-hidden />
+                    Delete
+                  </button>
+                ) : null}
+              </>
+            )}
+          </div>
+        )}
       </div>
     </article>
   )

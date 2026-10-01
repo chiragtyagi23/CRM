@@ -62,15 +62,24 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  max-width: 1280px;
+  /* Match AppMain: max-w-7xl (1280px) content inside p-4 / sm:p-6 / lg:p-8 */
+  max-width: calc(1280px + 2 * 16px);
   margin: 0 auto;
   padding: 12px 16px;
   min-height: 64px;
   box-sizing: border-box;
 }
 
+@media (min-width: 640px) {
+  .app-header__bar {
+    max-width: calc(1280px + 2 * 24px);
+    padding: 12px 24px;
+  }
+}
+
 @media (min-width: 1024px) {
   .app-header__bar {
+    max-width: calc(1280px + 2 * 32px);
     padding: 12px 32px;
   }
 }
@@ -153,6 +162,36 @@ body {
   cursor: pointer;
   width: 100%;
   text-align: left;
+  white-space: nowrap;
+}
+
+/* Desktop nav: keep every item on one line */
+@media (min-width: 1024px) {
+  .app-header__menu:not(.app-header__menu--mobile) {
+    gap: 2px;
+  }
+
+  .app-header__menu:not(.app-header__menu--mobile) .app-header__link {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+}
+
+/* Narrower desktops: drop icons and tagline so the bar still fits */
+@media (min-width: 1024px) and (max-width: 1365px) {
+  .app-header__menu:not(.app-header__menu--mobile) .app-header__nav-icon,
+  .app-header__tagline {
+    display: none;
+  }
+
+  .app-header__menu:not(.app-header__menu--mobile) .app-header__link {
+    font-size: 0.8125rem;
+    padding: 8px;
+  }
+
+  .app-header__bar {
+    gap: 12px;
+  }
 }
 
 .app-header__link:hover,
@@ -194,6 +233,7 @@ body {
   color: var(--ah-text);
   cursor: pointer;
   transition: background 0.15s ease;
+  white-space: nowrap;
 }
 
 .app-header__profile-btn:hover,

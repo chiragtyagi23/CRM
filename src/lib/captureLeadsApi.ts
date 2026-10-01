@@ -24,6 +24,8 @@ export type FetchCaptureLeadsParams = {
   status?: string
   score?: string
   source?: string
+  bhk?: string
+  budget?: string
 }
 
 export type CaptureLeadsListResponse = {
@@ -47,6 +49,8 @@ function buildCaptureLeadsQuery(params?: FetchCaptureLeadsParams | string): stri
   if (params.status && params.status !== 'all') qs.set('status', params.status)
   if (params.score && params.score !== 'all') qs.set('score', params.score)
   if (params.source && params.source !== 'all') qs.set('source', params.source)
+  if (params.bhk && params.bhk !== 'all') qs.set('bhk', params.bhk)
+  if (params.budget && params.budget !== 'all') qs.set('budget', params.budget)
 
   const s = qs.toString()
   return s ? `?${s}` : ''
@@ -67,6 +71,11 @@ export async function fetchCaptureLeads(
   }
 }
 
+/** Property Listings details: any signed-in user, assignee omitted. */
+export async function fetchPropertyListingById(id: string): Promise<CaptureLeadDTO> {
+  return await apiGet<CaptureLeadDTO>(`/api/capture-leads/listings/${id}`)
+}
+
 export async function fetchCaptureLeadById(id: string): Promise<CaptureLeadDTO> {
   return await apiGet<CaptureLeadDTO>(`/api/capture-leads/${id}`)
 }
@@ -84,4 +93,22 @@ export async function createCaptureLeadsBulk(payload: {
 
 export async function patchCaptureLead(id: string, payload: CaptureLeadPatchPayload): Promise<CaptureLeadDTO> {
   return await apiSend<CaptureLeadDTO>(`/api/capture-leads/${id}`, 'PATCH', payload)
+}
+
+/** Property Listings: all leads for any signed-in user (no assignment filter, no assignee field). */
+export async function fetchPropertyListings(
+  params?: FetchCaptureLeadsParams,
+  signal?: AbortSignal,
+): Promise<CaptureLeadsListResponse> {
+  const data = await apiGet<Partial<CaptureLeadsListResponse> & { items: CaptureLeadDTO[] }>(
+    `/api/capture-leads/listings${buildCaptureLeadsQuery(params)}`,
+    { signal },
+  )
+  const items = data.items ?? []
+  return {
+    items,
+    total: data.total ?? items.length,
+    page: data.page ?? 1,
+    pageSize: data.pageSize ?? items.length,
+  }
 }

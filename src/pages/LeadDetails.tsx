@@ -18,7 +18,7 @@ import {
   type LeadDTO,
 } from '../lib/dashboardDummyApi'
 import { fetchCampaignProjects, type CampaignProjectOption } from '../lib/campaignsApi'
-import { fetchCaptureLeadById, patchCaptureLead } from '../lib/captureLeadsApi'
+import { fetchCaptureLeadById, fetchPropertyListingById, patchCaptureLead } from '../lib/captureLeadsApi'
 import type {
   LeadActivityTimelineEntry,
   LeadEmailAutoReplyTimelineEntry,
@@ -359,7 +359,11 @@ function ActionBtn({
   )
 }
 
-export function LeadDetails({ leadId }: { leadId: string }) {
+/**
+ * `readOnly` (Property Listings): loads via the listings endpoint (no assignment check, no assignee)
+ * and hides contact actions, scheduling, assignee, notes and every edit control.
+ */
+export function LeadDetails({ leadId, readOnly = false }: { leadId: string; readOnly?: boolean }) {
   const navigate = useNavigate()
   const location = useLocation()
   const fromCampaign = (location.state as { fromCampaign?: { id: string; title: string } } | null)?.fromCampaign
@@ -416,7 +420,8 @@ export function LeadDetails({ leadId }: { leadId: string }) {
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    Promise.all([fetchCaptureLeadById(leadId), fetchCampaignProjects()])
+    const fetchLead = readOnly ? fetchPropertyListingById : fetchCaptureLeadById
+    Promise.all([fetchLead(leadId), fetchCampaignProjects()])
       .then(([d, campaignList]) => {
         if (cancelled) return
         setLead(toLeadDetailsRow(d))
@@ -445,7 +450,7 @@ export function LeadDetails({ leadId }: { leadId: string }) {
     return () => {
       cancelled = true
     }
-  }, [leadId])
+  }, [leadId, readOnly])
 
   const handleUpdateBuyingStage = async () => {
     setSavingStage(true)
@@ -547,6 +552,10 @@ export function LeadDetails({ leadId }: { leadId: string }) {
         type="button"
         className="inline-flex items-center gap-2 px-1 py-2 text-[12px] font-medium text-[#8B7355] hover:text-[#2E2E2E]"
         onClick={() => {
+          if (readOnly) {
+            navigate('/property-listings')
+            return
+          }
           if (fromCampaign?.id) {
             navigate(`/campaign/${fromCampaign.id}`, {
               state: { title: fromCampaign.title },
@@ -557,7 +566,7 @@ export function LeadDetails({ leadId }: { leadId: string }) {
         }}
       >
         <FiChevronLeft size={16} aria-hidden />
-        {fromCampaign ? 'Back to Project Details' : 'Back to Leads'}
+        {readOnly ? 'Back to Property Listings' : fromCampaign ? 'Back to Project Details' : 'Back to Leads'}
       </button>
 
       <section className="mt-3 px-1">
@@ -608,54 +617,58 @@ export function LeadDetails({ leadId }: { leadId: string }) {
                   </div>
                 </div>
 
-                <div className="grid w-full shrink-0 grid-cols-2 gap-2 min-[980px]:flex min-[980px]:w-auto min-[980px]:flex-col min-[980px]:items-end">
-                  <div className="order-1 min-[980px]:order-1">
-                    <ActionBtn
-                      tone="call"
-                      icon={<FiPhone size={14} aria-hidden />}
-                      label="Call"
-                      onClick={() => window.alert(`Call (dummy): ${lead.contact}`)}
-                    />
+                {readOnly ? null : (
+                  <div className="grid w-full shrink-0 grid-cols-2 gap-2 min-[980px]:flex min-[980px]:w-auto min-[980px]:flex-col min-[980px]:items-end">
+                    <div className="order-1 min-[980px]:order-1">
+                      <ActionBtn
+                        tone="call"
+                        icon={<FiPhone size={14} aria-hidden />}
+                        label="Call"
+                        onClick={() => window.alert(`Call (dummy): ${lead.contact}`)}
+                      />
+                    </div>
+                    <div className="order-2 min-[980px]:order-3">
+                      <ActionBtn
+                        tone="outline"
+                        icon={<FiMail size={14} aria-hidden />}
+                        label="Email"
+                        onClick={() => window.alert(`Email (dummy): ${lead.email}`)}
+                      />
+                    </div>
+                    <div className="order-3 min-[980px]:order-2">
+                      <ActionBtn
+                        tone="wa"
+                        icon={<FiMessageSquare size={14} aria-hidden />}
+                        label="WhatsApp"
+                        onClick={() => window.alert(`WhatsApp (dummy): ${lead.contact}`)}
+                      />
+                    </div>
+                    <div className="order-4 min-[980px]:order-4">
+                      <ActionBtn
+                        tone="outline"
+                        icon={<FiCalendar size={14} aria-hidden />}
+                        label="Schedule Visit"
+                        onClick={() => {
+                          setScheduleOpen(true)
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div className="order-2 min-[980px]:order-3">
-                    <ActionBtn
-                      tone="outline"
-                      icon={<FiMail size={14} aria-hidden />}
-                      label="Email"
-                      onClick={() => window.alert(`Email (dummy): ${lead.email}`)}
-                    />
-                  </div>
-                  <div className="order-3 min-[980px]:order-2">
-                    <ActionBtn
-                      tone="wa"
-                      icon={<FiMessageSquare size={14} aria-hidden />}
-                      label="WhatsApp"
-                      onClick={() => window.alert(`WhatsApp (dummy): ${lead.contact}`)}
-                    />
-                  </div>
-                  <div className="order-4 min-[980px]:order-4">
-                    <ActionBtn
-                      tone="outline"
-                      icon={<FiCalendar size={14} aria-hidden />}
-                      label="Schedule Visit"
-                      onClick={() => {
-                        setScheduleOpen(true)
-                      }}
-                    />
-                  </div>
-                </div>
+                )}
               </div>
             </section>
 
-            <ScheduleVisitModal
-              open={scheduleOpen}
-              leadId={leadId}
-              leadAssignee={lead?.assignedTo}
-              onClose={() => setScheduleOpen(false)}
-              onScheduled={() => {
-                navigate('/site-visits')
-              }}
-            />
+            {readOnly ? null : (
+              <ScheduleVisitModal
+                open={scheduleOpen}
+                leadId={leadId}
+                leadAssignee={lead?.assignedTo}
+                onClose={() => setScheduleOpen(false)}
+                onScheduled={() => {
+                  navigate('/site-visits')
+                }}
+              />
+            )}
 
             
 
@@ -680,72 +693,80 @@ export function LeadDetails({ leadId }: { leadId: string }) {
                         <div className="text-[11px] font-medium text-[#8B7355]">Location</div>
                         <div className="mt-1 font-semibold text-[#2E2E2E]">{lead.locationLabel || '—'}</div>
                       </div>
-                      <div>
-                        <div className="text-[11px] font-medium text-[#8B7355]">Assigned To</div>
-                        <div className="mt-1 font-semibold text-[#2E2E2E]">{lead.assignedTo || '—'}</div>
-                      </div>
+                      {readOnly ? null : (
+                        <div>
+                          <div className="text-[11px] font-medium text-[#8B7355]">Assigned To</div>
+                          <div className="mt-1 font-semibold text-[#2E2E2E]">{lead.assignedTo || '—'}</div>
+                        </div>
+                      )}
                       <div>
                         <div className="text-[11px] font-medium text-[#8B7355]">Property Buying Stage</div>
-                        <div className="mt-1 flex items-center gap-2">
-                          <select
-                            value={buyingStage}
-                            onChange={(e) => setBuyingStage(e.target.value as (typeof BUYING_STAGE_OPTIONS)[number])}
-                            className="h-9 min-w-[180px] rounded-lg border border-[#E8DCCB] bg-white px-3 text-[12px] font-semibold text-[#2E2E2E] focus:border-[#8B7355] focus:outline-none"
-                            disabled={savingStage}
-                          >
-                            {BUYING_STAGE_OPTIONS.map((stage) => (
-                              <option key={stage} value={stage}>
-                                {stage}
-                              </option>
-                            ))}
-                          </select>
-                          <button
-                            type="button"
-                            className="inline-flex h-9 items-center justify-center rounded-lg bg-[#8B7355] px-3 text-[11px] font-semibold text-white hover:bg-[#6d5a43] disabled:opacity-60"
-                            disabled={savingStage}
-                            onClick={handleUpdateBuyingStage}
-                          >
-                            {savingStage ? 'Saving…' : 'Update'}
-                          </button>
-                        </div>
+                        {readOnly ? (
+                          <div className="mt-1 font-semibold text-[#2E2E2E]">{buyingStage}</div>
+                        ) : (
+                          <div className="mt-1 flex items-center gap-2">
+                            <select
+                              value={buyingStage}
+                              onChange={(e) => setBuyingStage(e.target.value as (typeof BUYING_STAGE_OPTIONS)[number])}
+                              className="h-9 min-w-[180px] rounded-lg border border-[#E8DCCB] bg-white px-3 text-[12px] font-semibold text-[#2E2E2E] focus:border-[#8B7355] focus:outline-none"
+                              disabled={savingStage}
+                            >
+                              {BUYING_STAGE_OPTIONS.map((stage) => (
+                                <option key={stage} value={stage}>
+                                  {stage}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              className="inline-flex h-9 items-center justify-center rounded-lg bg-[#8B7355] px-3 text-[11px] font-semibold text-white hover:bg-[#6d5a43] disabled:opacity-60"
+                              disabled={savingStage}
+                              onClick={handleUpdateBuyingStage}
+                            >
+                              {savingStage ? 'Saving…' : 'Update'}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </section>
 
-                  <section className="rounded-xl border border-[#8B7355]/10 bg-[#FFFFFF] p-6 shadow-[0_10px_24px_rgba(17,24,39,0.05)]">
-                    <div className="text-[16px] font-semibold text-[#2E2E2E]">Notes</div>
+                  {readOnly ? null : (
+                    <section className="rounded-xl border border-[#8B7355]/10 bg-[#FFFFFF] p-6 shadow-[0_10px_24px_rgba(17,24,39,0.05)]">
+                      <div className="text-[16px] font-semibold text-[#2E2E2E]">Notes</div>
 
-                    <div className="mt-4 flex flex-col gap-3">
-                      {notes.slice(0, 2).map((n, idx) => (
-                        <div key={idx} className="rounded-xl bg-[#F5EFE7] px-4 py-3 text-[12px] text-[#2E2E2E]">
-                          {n}
-                        </div>
-                      ))}
-                    </div>
+                      <div className="mt-4 flex flex-col gap-3">
+                        {notes.slice(0, 2).map((n, idx) => (
+                          <div key={idx} className="rounded-xl bg-[#F5EFE7] px-4 py-3 text-[12px] text-[#2E2E2E]">
+                            {n}
+                          </div>
+                        ))}
+                      </div>
 
-                    <div className="mt-4 flex items-center gap-3">
-                      <input
-                        value={noteDraft}
-                        onChange={(e) => setNoteDraft(e.target.value)}
-                        placeholder="Add a new note..."
-                        className="h-11 flex-1 rounded-xl border border-[#E8DCCB] bg-white px-4 text-[12px] text-[#2E2E2E] placeholder:text-[#8B7355] focus:border-[#8B7355] focus:outline-none"
-                      />
-                      <button
-                        type="button"
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[#8B7355] text-[18px] font-semibold text-white shadow-sm hover:bg-[#6d5a43] disabled:opacity-60"
-                        disabled={!noteDraft.trim()}
-                        onClick={() => {
-                          const v = noteDraft.trim()
-                          if (!v) return
-                          setNotes((prev) => [v, ...prev])
-                          setNoteDraft('')
-                        }}
-                        aria-label="Add note"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </section>
+                      <div className="mt-4 flex items-center gap-3">
+                        <input
+                          value={noteDraft}
+                          onChange={(e) => setNoteDraft(e.target.value)}
+                          placeholder="Add a new note..."
+                          className="h-11 flex-1 rounded-xl border border-[#E8DCCB] bg-white px-4 text-[12px] text-[#2E2E2E] placeholder:text-[#8B7355] focus:border-[#8B7355] focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[#8B7355] text-[18px] font-semibold text-white shadow-sm hover:bg-[#6d5a43] disabled:opacity-60"
+                          disabled={!noteDraft.trim()}
+                          onClick={() => {
+                            const v = noteDraft.trim()
+                            if (!v) return
+                            setNotes((prev) => [v, ...prev])
+                            setNoteDraft('')
+                          }}
+                          aria-label="Add note"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </section>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-6">
@@ -760,13 +781,15 @@ export function LeadDetails({ leadId }: { leadId: string }) {
                         >
                           View more
                         </button>
-                        <button
-                          type="button"
-                          className="inline-flex h-8 items-center justify-center rounded-xl bg-[#8B7355] px-3 text-[11px] font-semibold text-white hover:bg-[#6d5a43]"
-                          onClick={() => scrollToActivity('form')}
-                        >
-                          Add timeline
-                        </button>
+                        {readOnly ? null : (
+                          <button
+                            type="button"
+                            className="inline-flex h-8 items-center justify-center rounded-xl bg-[#8B7355] px-3 text-[11px] font-semibold text-white hover:bg-[#6d5a43]"
+                            onClick={() => scrollToActivity('form')}
+                          >
+                            Add timeline
+                          </button>
+                        )}
                       </div>
                     </div>
                     <div className="mt-4 flex flex-col gap-4 text-[12px] text-[#2E2E2E]">
@@ -791,38 +814,40 @@ export function LeadDetails({ leadId }: { leadId: string }) {
                   <section className="rounded-xl border border-[#8B7355]/10 bg-[#FFFFFF] p-6 shadow-[0_10px_24px_rgba(17,24,39,0.05)]">
                     <div className="text-[16px] font-semibold text-[#2E2E2E]">Interested Projects</div>
                     <div className="mt-4 flex flex-col gap-3">
-                      <div className="flex flex-col gap-2 min-[480px]:flex-row min-[480px]:items-end">
-                        <label className="block flex-1">
-                          <span className="mb-1 block text-[11px] font-medium text-[#8B7355]">Add project</span>
-                          <select
-                            value={interestedProjectPickId}
-                            onChange={(e) => setInterestedProjectPickId(e.target.value)}
-                            className="h-10 w-full rounded-lg border border-[#E8DCCB] bg-white px-3 text-[12px] text-[#2E2E2E] focus:border-[#8B7355] focus:outline-none"
-                            disabled={savingInterested || availableInterestedProjects.length === 0}
-                          >
-                            <option value="">
-                              {projects.length === 0
-                                ? 'Loading projects…'
-                                : availableInterestedProjects.length === 0
-                                  ? 'All projects added'
-                                  : 'Select project'}
-                            </option>
-                            {availableInterestedProjects.map((p) => (
-                              <option key={p.id} value={p.id}>
-                                {p.name}
+                      {readOnly ? null : (
+                        <div className="flex flex-col gap-2 min-[480px]:flex-row min-[480px]:items-end">
+                          <label className="block flex-1">
+                            <span className="mb-1 block text-[11px] font-medium text-[#8B7355]">Add project</span>
+                            <select
+                              value={interestedProjectPickId}
+                              onChange={(e) => setInterestedProjectPickId(e.target.value)}
+                              className="h-10 w-full rounded-lg border border-[#E8DCCB] bg-white px-3 text-[12px] text-[#2E2E2E] focus:border-[#8B7355] focus:outline-none"
+                              disabled={savingInterested || availableInterestedProjects.length === 0}
+                            >
+                              <option value="">
+                                {projects.length === 0
+                                  ? 'Loading projects…'
+                                  : availableInterestedProjects.length === 0
+                                    ? 'All projects added'
+                                    : 'Select project'}
                               </option>
-                            ))}
-                          </select>
-                        </label>
-                        <button
-                          type="button"
-                          className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-[#8B7355] px-4 text-[11px] font-semibold text-white hover:bg-[#6d5a43] disabled:opacity-60"
-                          disabled={savingInterested || !interestedProjectPickId}
-                          onClick={handleAddInterestedProject}
-                        >
-                          {savingInterested ? 'Saving…' : 'Add'}
-                        </button>
-                      </div>
+                              {availableInterestedProjects.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                  {p.name}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <button
+                            type="button"
+                            className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-[#8B7355] px-4 text-[11px] font-semibold text-white hover:bg-[#6d5a43] disabled:opacity-60"
+                            disabled={savingInterested || !interestedProjectPickId}
+                            onClick={handleAddInterestedProject}
+                          >
+                            {savingInterested ? 'Saving…' : 'Add'}
+                          </button>
+                        </div>
+                      )}
                       {interestedProjects.length === 0 ? (
                         <div className="text-[11px] text-[#8B7355]">No interested projects yet.</div>
                       ) : (
@@ -832,15 +857,17 @@ export function LeadDetails({ leadId }: { leadId: string }) {
                             className="flex items-center justify-between gap-3 rounded-xl bg-[#F5EFE7] px-4 py-3 text-[12px] font-medium text-[#2E2E2E]"
                           >
                             <span className="min-w-0 truncate">{p.projectName}</span>
-                            <button
-                              type="button"
-                              className="shrink-0 text-[11px] font-semibold text-[#8B7355] hover:text-[#6d5a43] disabled:opacity-60"
-                              disabled={savingInterested}
-                              onClick={() => handleRemoveInterestedProject(p.projectId)}
-                              aria-label={`Remove ${p.projectName}`}
-                            >
-                              Remove
-                            </button>
+                            {readOnly ? null : (
+                              <button
+                                type="button"
+                                className="shrink-0 text-[11px] font-semibold text-[#8B7355] hover:text-[#6d5a43] disabled:opacity-60"
+                                disabled={savingInterested}
+                                onClick={() => handleRemoveInterestedProject(p.projectId)}
+                                aria-label={`Remove ${p.projectName}`}
+                              >
+                                Remove
+                              </button>
+                            )}
                           </div>
                         ))
                       )}
@@ -853,106 +880,108 @@ export function LeadDetails({ leadId }: { leadId: string }) {
                 <div ref={activityTopRef} />
                 <div className="text-[16px] font-semibold text-[#2E2E2E]">Activity History</div>
 
-                <div ref={addTimelineFormRef} className="mt-4 rounded-xl border border-[#E8DCCB] bg-[#FAFAF8]">
-                  <div className="flex items-center justify-between gap-3 px-4 py-3">
-                    <div className="text-[13px] font-semibold text-[#2E2E2E]">Add timeline</div>
+                {readOnly ? null : (
+                  <div ref={addTimelineFormRef} className="mt-4 rounded-xl border border-[#E8DCCB] bg-[#FAFAF8]">
+                    <div className="flex items-center justify-between gap-3 px-4 py-3">
+                      <div className="text-[13px] font-semibold text-[#2E2E2E]">Add timeline</div>
+                      <button
+                        type="button"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E8DCCB] bg-white text-[#8B7355] hover:bg-[#F5EFE7]"
+                        aria-expanded={addTimelineOpen}
+                        aria-label={addTimelineOpen ? 'Collapse add timeline' : 'Expand add timeline'}
+                        onClick={() => setAddTimelineOpen((o) => !o)}
+                      >
+                        {addTimelineOpen ? (
+                          <FiChevronUp size={18} aria-hidden />
+                        ) : (
+                          <FiChevronDown size={18} aria-hidden />
+                        )}
+                      </button>
+                    </div>
+                    {addTimelineOpen ? (
+                    <div className="border-t border-[#E8DCCB] px-4 pb-4 pt-3">
+                    <div className="grid grid-cols-1 gap-3 min-[640px]:grid-cols-2">
+                      <label className="block min-[640px]:col-span-2">
+                        <span className="mb-1 block text-[11px] font-medium text-[#8B7355]">Project</span>
+                        <select
+                          value={timelineProjectId}
+                          onChange={(e) => setTimelineProjectId(e.target.value)}
+                          className="h-10 w-full rounded-lg border border-[#E8DCCB] bg-white px-3 text-[12px] text-[#2E2E2E]"
+                          disabled={savingTimeline || projects.length === 0}
+                        >
+                          <option value="">{projects.length === 0 ? 'No projects found' : 'Select project'}</option>
+                          {projects.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="block min-[640px]:col-span-2">
+                        <span className="mb-1 block text-[11px] font-medium text-[#8B7355]">Type</span>
+                        <select
+                          value={timelineType}
+                          onChange={(e) => setTimelineType(e.target.value as LeadManualTimelineEntry['type'])}
+                          className="h-10 w-full rounded-lg border border-[#E8DCCB] bg-white px-3 text-[12px] text-[#2E2E2E]"
+                          disabled={savingTimeline}
+                        >
+                          <option value="call">Call Connected</option>
+                          <option value="email">Email Sent</option>
+                        </select>
+                      </label>
+                      <label className="block min-[640px]:col-span-2">
+                        <span className="mb-1 block text-[11px] font-medium text-[#8B7355]">Note (optional)</span>
+                        <input
+                          value={timelineNote}
+                          onChange={(e) => setTimelineNote(e.target.value)}
+                          placeholder="e.g. Duration 5m, brochures shared"
+                          className="h-10 w-full rounded-lg border border-[#E8DCCB] bg-white px-3 text-[12px] text-[#2E2E2E] placeholder:text-[#8B7355]/70"
+                          disabled={savingTimeline}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="mb-1 block text-[11px] font-medium text-[#8B7355]">Date</span>
+                        <input
+                          type="date"
+                          value={timelineDate}
+                          onChange={(e) => setTimelineDate(e.target.value)}
+                          className="h-10 w-full rounded-lg border border-[#E8DCCB] bg-white px-3 text-[12px] text-[#2E2E2E]"
+                          disabled={savingTimeline}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="mb-1 block text-[11px] font-medium text-[#8B7355]">Time</span>
+                        <input
+                          type="time"
+                          value={timelineTime}
+                          onChange={(e) => setTimelineTime(e.target.value)}
+                          step={60}
+                          className="h-10 w-full rounded-lg border border-[#E8DCCB] bg-white px-3 text-[12px] text-[#2E2E2E]"
+                          disabled={savingTimeline}
+                        />
+                      </label>
+                    </div>
                     <button
                       type="button"
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E8DCCB] bg-white text-[#8B7355] hover:bg-[#F5EFE7]"
-                      aria-expanded={addTimelineOpen}
-                      aria-label={addTimelineOpen ? 'Collapse add timeline' : 'Expand add timeline'}
-                      onClick={() => setAddTimelineOpen((o) => !o)}
+                      className="mt-3 inline-flex h-10 items-center justify-center rounded-lg bg-[#8B7355] px-4 text-[12px] font-semibold text-white hover:bg-[#6d5a43] disabled:opacity-60"
+                      disabled={
+                        savingTimeline ||
+                        !timelineProjectId ||
+                        !timelineDate.trim() ||
+                        !timelineTime.trim()
+                      }
+                      onClick={handleAddTimeline}
                     >
-                      {addTimelineOpen ? (
-                        <FiChevronUp size={18} aria-hidden />
-                      ) : (
-                        <FiChevronDown size={18} aria-hidden />
-                      )}
+                      {savingTimeline ? 'Adding…' : 'Add to timeline'}
                     </button>
+                    </div>
+                    ) : null}
                   </div>
-                  {addTimelineOpen ? (
-                  <div className="border-t border-[#E8DCCB] px-4 pb-4 pt-3">
-                  <div className="grid grid-cols-1 gap-3 min-[640px]:grid-cols-2">
-                    <label className="block min-[640px]:col-span-2">
-                      <span className="mb-1 block text-[11px] font-medium text-[#8B7355]">Project</span>
-                      <select
-                        value={timelineProjectId}
-                        onChange={(e) => setTimelineProjectId(e.target.value)}
-                        className="h-10 w-full rounded-lg border border-[#E8DCCB] bg-white px-3 text-[12px] text-[#2E2E2E]"
-                        disabled={savingTimeline || projects.length === 0}
-                      >
-                        <option value="">{projects.length === 0 ? 'No projects found' : 'Select project'}</option>
-                        {projects.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="block min-[640px]:col-span-2">
-                      <span className="mb-1 block text-[11px] font-medium text-[#8B7355]">Type</span>
-                      <select
-                        value={timelineType}
-                        onChange={(e) => setTimelineType(e.target.value as LeadManualTimelineEntry['type'])}
-                        className="h-10 w-full rounded-lg border border-[#E8DCCB] bg-white px-3 text-[12px] text-[#2E2E2E]"
-                        disabled={savingTimeline}
-                      >
-                        <option value="call">Call Connected</option>
-                        <option value="email">Email Sent</option>
-                      </select>
-                    </label>
-                    <label className="block min-[640px]:col-span-2">
-                      <span className="mb-1 block text-[11px] font-medium text-[#8B7355]">Note (optional)</span>
-                      <input
-                        value={timelineNote}
-                        onChange={(e) => setTimelineNote(e.target.value)}
-                        placeholder="e.g. Duration 5m, brochures shared"
-                        className="h-10 w-full rounded-lg border border-[#E8DCCB] bg-white px-3 text-[12px] text-[#2E2E2E] placeholder:text-[#8B7355]/70"
-                        disabled={savingTimeline}
-                      />
-                    </label>
-                    <label className="block">
-                      <span className="mb-1 block text-[11px] font-medium text-[#8B7355]">Date</span>
-                      <input
-                        type="date"
-                        value={timelineDate}
-                        onChange={(e) => setTimelineDate(e.target.value)}
-                        className="h-10 w-full rounded-lg border border-[#E8DCCB] bg-white px-3 text-[12px] text-[#2E2E2E]"
-                        disabled={savingTimeline}
-                      />
-                    </label>
-                    <label className="block">
-                      <span className="mb-1 block text-[11px] font-medium text-[#8B7355]">Time</span>
-                      <input
-                        type="time"
-                        value={timelineTime}
-                        onChange={(e) => setTimelineTime(e.target.value)}
-                        step={60}
-                        className="h-10 w-full rounded-lg border border-[#E8DCCB] bg-white px-3 text-[12px] text-[#2E2E2E]"
-                        disabled={savingTimeline}
-                      />
-                    </label>
-                  </div>
-                  <button
-                    type="button"
-                    className="mt-3 inline-flex h-10 items-center justify-center rounded-lg bg-[#8B7355] px-4 text-[12px] font-semibold text-white hover:bg-[#6d5a43] disabled:opacity-60"
-                    disabled={
-                      savingTimeline ||
-                      !timelineProjectId ||
-                      !timelineDate.trim() ||
-                      !timelineTime.trim()
-                    }
-                    onClick={handleAddTimeline}
-                  >
-                    {savingTimeline ? 'Adding…' : 'Add to timeline'}
-                  </button>
-                  </div>
-                  ) : null}
-                </div>
+                )}
 
                 <div className="mt-4 overflow-hidden rounded-xl border border-[#8B7355]/10 bg-[#FFFFFF]">
                   {timelineByProject.length === 0 && systemFeed.length === 0 ? (
-                    <div className="px-4 py-6 text-[12px] text-[#8B7355]">No activity yet. Add a call or email above.</div>
+                    <div className="px-4 py-6 text-[12px] text-[#8B7355]">{readOnly ? 'No activity yet.' : 'No activity yet. Add a call or email above.'}</div>
                   ) : (
                     <>
                       {timelineByProject.map((group) => (

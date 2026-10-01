@@ -27,8 +27,8 @@ function authHeader(): Record<string, string> | undefined {
   }
 }
 
-export async function apiGet<T>(path: string): Promise<T> {
-  const res = await fetch(`${baseUrl()}${path}`, { headers: authHeader() })
+export async function apiGet<T>(path: string, init?: { signal?: AbortSignal }): Promise<T> {
+  const res = await fetch(`${baseUrl()}${path}`, { headers: authHeader(), signal: init?.signal })
   if (!res.ok) throw { message: `HTTP ${res.status}`, status: res.status, body: await safeJson(res) } satisfies ApiError
   return (await res.json()) as T
 }
