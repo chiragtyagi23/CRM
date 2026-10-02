@@ -160,6 +160,16 @@ const slice = createSlice({
       state.error = null
       persistSession(action.payload)
     },
+    /** Patch the signed-in user (e.g. new profile photo) so the header updates without a refetch. */
+    updateUser(state, action: { payload: Partial<AuthUserDTO> }) {
+      if (!state.user) return
+      state.user = { ...state.user, ...action.payload }
+      try {
+        writeJson(LS_USER, state.user)
+      } catch {
+        // ignore
+      }
+    },
     setAccess(state, action: { payload: AuthAccessDTO }) {
       state.access = action.payload
       writeStoredAccess(action.payload)

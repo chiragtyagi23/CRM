@@ -190,6 +190,7 @@ export type AuthUserDTO = {
   id: string
   name: string
   email: string
+  avatarUrl?: string | null
   role?: string | AuthRoleDTO | null
 }
 
@@ -250,6 +251,11 @@ export type CrmUserDTO = {
   name: string
   email: string
   role?: string | null
+  avatar_url?: string | null
+  phone?: string | null
+  designation?: string | null
+  location?: string | null
+  is_active?: boolean
   /** Sequelize uses these keys when model timestamps are `createdAt: "created_at"`. */
   created_at?: string
   updated_at?: string
