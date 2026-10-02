@@ -7,8 +7,8 @@ import { d } from '../../lib/designClasses'
 import { getApiErrorMessage } from '../../services/aclHttp'
 import {
   businessNumbersApi,
-  fmtLocation,
   fmtMoney,
+  fmtLocation,
   NUMBER_TYPE_LABEL,
   type AvailableNumber,
   type BnOverview,
@@ -28,6 +28,7 @@ export function GetNumberTab({ overview, onPurchased }: { overview: BnOverview; 
   const [countryIso, setCountryIso] = useState(overview.countries[0]?.iso ?? 'IN')
   const [type, setType] = useState('')
   const [contains, setContains] = useState('')
+  const [prefix, setPrefix] = useState('')
   const [city, setCity] = useState('')
   const [services, setServices] = useState('')
   const [results, setResults] = useState<AvailableNumber[] | null>(null)
@@ -48,6 +49,7 @@ export function GetNumberTab({ overview, onPurchased }: { overview: BnOverview; 
     const q: BnSearchQuery = {
       countryIso,
       type: type || undefined,
+      prefix: prefix || undefined,
       contains: contains.trim() || undefined,
       city: type === 'local' ? city.trim() || undefined : undefined,
       services: services || undefined,
@@ -108,7 +110,14 @@ export function GetNumberTab({ overview, onPurchased }: { overview: BnOverview; 
       >
         <label className="block">
           <span className={d.label}>Country</span>
-          <select className={d.select} value={countryIso} onChange={(e) => setCountryIso(e.target.value)}>
+          <select
+            className={d.select}
+            value={countryIso}
+            onChange={(e) => {
+              setCountryIso(e.target.value)
+              setPrefix('') // series are per country
+            }}
+          >
             {overview.countries.map((c) => (
               <option key={c.iso} value={c.iso}>
                 {c.name}
@@ -128,8 +137,19 @@ export function GetNumberTab({ overview, onPurchased }: { overview: BnOverview; 
           </select>
         </label>
         <label className="block">
-          <span className={d.label}>Contains digits</span>
-          <input className={d.input} value={contains} onChange={(e) => setContains(e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="e.g. 7777" inputMode="numeric" />
+          <span className={d.label}>{prefix ? `Digits after ${prefix}` : 'Starts with digits'}</span>
+          <div className="flex items-stretch">
+            {prefix ? (
+              <span className="inline-flex items-center rounded-l-lg border border-r-0 border-[#E8DCCB] bg-[#FAF7F2] px-3 font-mono text-sm text-[#8B7355]">{prefix}</span>
+            ) : null}
+            <input
+              className={`${d.input} ${prefix ? 'rounded-l-none' : ''}`}
+              value={contains}
+              onChange={(e) => setContains(e.target.value.replace(/\D/g, '').slice(0, 10))}
+              placeholder={prefix ? 'e.g. 6434' : 'e.g. 7777'}
+              inputMode="numeric"
+            />
+          </div>
         </label>
         {type === 'local' ? (
           <label className="block">
@@ -153,6 +173,25 @@ export function GetNumberTab({ overview, onPurchased }: { overview: BnOverview; 
             <FiSearch size={14} aria-hidden /> {searching ? 'Searching…' : 'Search'}
           </button>
         </div>
+        {(overview.prefixes[countryIso] ?? []).length ? (
+          <div className="sm:col-span-2 lg:col-span-5">
+            <span className={d.label}>Number prefix</span>
+            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Number prefix">
+              {[{ prefix: '', label: 'Any' }, ...(overview.prefixes[countryIso] ?? [])].map((p) => (
+                <button
+                  key={p.prefix || 'any'}
+                  type="button"
+                  role="radio"
+                  aria-checked={prefix === p.prefix}
+                  onClick={() => setPrefix(p.prefix)}
+                  className={prefix === p.prefix ? d.rangeActive : d.rangeIdle}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </form>
 
       {error ? <div className="rounded-lg border border-[#D96B6B]/40 bg-[#D96B6B]/10 px-4 py-3 text-sm text-[#9c3d3d]">{error}</div> : null}
@@ -163,7 +202,7 @@ export function GetNumberTab({ overview, onPurchased }: { overview: BnOverview; 
         <p className="text-sm text-[#8B7355]">No numbers match. Try another type, fewer digits, or a different city.</p>
       ) : (
         <div className={d.tableWrap}>
-          <table className="w-full min-w-[720px]">
+          <table className="w-full min-w-180">
             <thead>
               <tr className="border-b border-[#E8DCCB]">
                 <th className={d.th}>Number</th>
@@ -171,7 +210,6 @@ export function GetNumberTab({ overview, onPurchased }: { overview: BnOverview; 
                 <th className={d.th}>Type</th>
                 <th className={d.th}>Features</th>
                 <th className={d.th}>Monthly</th>
-                <th className={d.th}>One-time setup</th>
                 <th className={`${d.th} text-right`} />
               </tr>
             </thead>
@@ -182,8 +220,7 @@ export function GetNumberTab({ overview, onPurchased }: { overview: BnOverview; 
                   <td className={`${d.td} text-[#8B7355]`}>{fmtLocation(n)}</td>
                   <td className={d.td}>{NUMBER_TYPE_LABEL[n.type ?? ''] ?? n.type ?? '—'}</td>
                   <td className={d.td}><Capabilities voice={n.voiceEnabled} sms={n.smsEnabled} /></td>
-                  <td className={d.td}>{fmtMoney(n.monthlyPrice, n.currency)}</td>
-                  <td className={d.td}>{n.setupPrice ? fmtMoney(n.setupPrice, n.currency) : 'Free'}</td>
+                  <td className={d.td}>{fmtMoney(n.monthlyPrice)}</td>
                   <td className={`${d.td} text-right`}>
                     <button type="button" className={d.btnPrimarySm} disabled={atLimit} onClick={() => openBuy(n)}>
                       Get number
@@ -230,12 +267,15 @@ export function GetNumberTab({ overview, onPurchased }: { overview: BnOverview; 
             <dl className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <dt className="text-[#8B7355]">Monthly</dt>
-                <dd className="text-lg font-semibold text-[#2E2E2E]">{fmtMoney(choice.monthlyPrice, choice.currency)}</dd>
+                <dd className="text-lg font-semibold text-[#2E2E2E]">{fmtMoney(choice.monthlyPrice)}</dd>
               </div>
-              <div>
-                <dt className="text-[#8B7355]">One-time setup</dt>
-                <dd className="text-lg font-semibold text-[#2E2E2E]">{choice.setupPrice ? fmtMoney(choice.setupPrice, choice.currency) : 'Free'}</dd>
-              </div>
+              {/* Only shown when there is one, so the billing consent below always matches what's on screen. */}
+              {choice.setupPrice ? (
+                <div>
+                  <dt className="text-[#8B7355]">One-time setup</dt>
+                  <dd className="text-lg font-semibold text-[#2E2E2E]">{fmtMoney(choice.setupPrice)}</dd>
+                </div>
+              ) : null}
             </dl>
             <label className="block">
               <span className={d.label}>Label (optional)</span>
@@ -244,8 +284,8 @@ export function GetNumberTab({ overview, onPurchased }: { overview: BnOverview; 
             <label className="flex items-start gap-2 text-sm text-[#2E2E2E]">
               <input type="checkbox" className="mt-1" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
               <span>
-                I agree to be billed {fmtMoney(choice.monthlyPrice, choice.currency)} per month
-                {choice.setupPrice ? ` plus a one-time ${fmtMoney(choice.setupPrice, choice.currency)} setup fee` : ''} until I release this number.
+                I agree to be billed {fmtMoney(choice.monthlyPrice)} per month
+                {choice.setupPrice ? ` plus a one-time ${fmtMoney(choice.setupPrice)} setup fee` : ''} until I release this number.
               </span>
             </label>
           </div>

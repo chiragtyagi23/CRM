@@ -6,7 +6,7 @@ import { Modal } from '../acl/Modal'
 import { useToast } from '../acl/Toast'
 import { d } from '../../lib/designClasses'
 import { getApiErrorMessage } from '../../services/aclHttp'
-import { businessNumbersApi, fmtLocation, fmtMoney, NUMBER_TYPE_LABEL, type BusinessNumber } from '../../lib/businessNumbersApi'
+import { businessNumbersApi, fmtMoney, fmtLocation, NUMBER_TYPE_LABEL, type BusinessNumber } from '../../lib/businessNumbersApi'
 import { Capabilities, StatusBadge } from './shared'
 
 function fmtDate(iso: string | null) {
@@ -96,7 +96,7 @@ export function MyNumbersTab({ onBuy, onChanged }: { onBuy: () => void; onChange
         </div>
       ) : (
         <div className={d.tableWrap}>
-          <table className="w-full min-w-[760px]">
+          <table className="w-full min-w-190">
             <thead>
               <tr className="border-b border-[#E8DCCB]">
                 <th className={d.th}>Number</th>
@@ -124,7 +124,7 @@ export function MyNumbersTab({ onBuy, onChanged }: { onBuy: () => void; onChange
                     <td className={`${d.td} text-[#8B7355]`}>{fmtLocation(n)}</td>
                     <td className={d.td}>{NUMBER_TYPE_LABEL[n.type ?? ''] ?? n.type ?? '—'}</td>
                     <td className={d.td}><Capabilities voice={n.voiceEnabled} sms={n.smsEnabled} /></td>
-                    <td className={d.td}>{fmtMoney(n.monthlyPrice, n.currency)}</td>
+                    <td className={d.td}>{fmtMoney(n.monthlyPrice)}</td>
                     <td className={`${d.td} text-[#8B7355]`}>{fmtDate(n.purchasedAt)}</td>
                     <td className={d.td}><StatusBadge status={n.status} /></td>
                     <td className={`${d.td} text-right`}>

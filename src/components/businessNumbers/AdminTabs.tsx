@@ -8,8 +8,8 @@ import { d } from '../../lib/designClasses'
 import { getApiErrorMessage } from '../../services/aclHttp'
 import {
   businessNumbersApi,
-  fmtLocation,
   fmtMoney,
+  fmtLocation,
   NUMBER_TYPE_LABEL,
   type BnOverview,
   type BnUnassigned,
@@ -192,8 +192,8 @@ export function AllNumbersTab({ onChanged }: { onChanged: () => void }) {
                   </td>
                   <td className={`${d.td} text-[#8B7355]`}>{fmtLocation(n)}</td>
                   <td className={d.td}><Capabilities voice={n.voiceEnabled} sms={n.smsEnabled} /></td>
-                  <td className={d.td}>{fmtMoney(n.monthlyPrice, n.currency)}</td>
-                  <td className={`${d.td} text-[#8B7355]`}>{fmtMoney(n.monthlyCost, n.currency)}</td>
+                  <td className={d.td}>{fmtMoney(n.monthlyPrice)}</td>
+                  <td className={`${d.td} text-[#8B7355]`}>{fmtMoney(n.monthlyCost)}</td>
                   <td className={d.td}><StatusBadge status={n.status} /></td>
                   <td className={`${d.td} text-right`}>
                     {n.status !== 'released' ? (

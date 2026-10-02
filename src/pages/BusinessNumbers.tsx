@@ -1,22 +1,28 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { FiList, FiPhone, FiPlusCircle, FiSearch } from 'react-icons/fi'
+import { FiActivity, FiBarChart2, FiList, FiPhone, FiPhoneCall, FiPlusCircle, FiSearch } from 'react-icons/fi'
 
 import { PageHeader } from '../components/PageHeader'
 import { MyNumbersTab } from '../components/businessNumbers/MyNumbersTab'
 import { GetNumberTab } from '../components/businessNumbers/GetNumberTab'
 import { AllNumbersTab, UnassignedTab } from '../components/businessNumbers/AdminTabs'
+import { UsageTab } from '../components/businessNumbers/UsageTab'
+import { CallLogsTab } from '../components/businessNumbers/CallLogsTab'
 import { getApiErrorMessage } from '../services/aclHttp'
-import { businessNumbersApi, type BnOverview } from '../lib/businessNumbersApi'
+import { businessNumbersApi, setDisplayRate, type BnOverview } from '../lib/businessNumbersApi'
 
 const TABS = [
   { id: 'mine', label: 'My numbers', icon: FiPhone, managerOnly: false },
+  { id: 'usage', label: 'Usage & spend', icon: FiBarChart2, managerOnly: false },
+  { id: 'voice', label: 'Voice logs', icon: FiPhoneCall, managerOnly: false },
+  { id: 'sip', label: 'SIP trunk logs', icon: FiActivity, managerOnly: false },
   { id: 'get', label: 'Get a number', icon: FiPlusCircle, managerOnly: false },
   { id: 'all', label: 'All numbers', icon: FiList, managerOnly: true },
   { id: 'unassigned', label: 'Account check', icon: FiSearch, managerOnly: true },
 ] as const
 
 type TabId = (typeof TABS)[number]['id']
+
 
 export function BusinessNumbers() {
   const [params, setParams] = useSearchParams()
@@ -27,6 +33,8 @@ export function BusinessNumbers() {
     () =>
       businessNumbersApi.overview().then(
         (o) => {
+          // Before tabs render, so every price is formatted in ₹ from the start.
+          setDisplayRate(o.display.usdToInr)
           setOverview(o)
           setError(null)
         },
@@ -105,6 +113,9 @@ export function BusinessNumbers() {
               }}
             />
           ) : null}
+          {tab === 'usage' ? <UsageTab overview={overview} /> : null}
+          {tab === 'voice' ? <CallLogsTab key="voice" kind="voice" overview={overview} /> : null}
+          {tab === 'sip' ? <CallLogsTab key="sip" kind="sip" overview={overview} /> : null}
           {tab === 'all' ? <AllNumbersTab onChanged={() => void loadOverview()} /> : null}
           {tab === 'unassigned' ? <UnassignedTab overview={overview} onChanged={() => void loadOverview()} /> : null}
         </>
