@@ -25,6 +25,7 @@ import { Reports } from './pages/Reports'
 import { SessionExpired } from './pages/SessionExpired'
 import { SiteVisits } from './pages/SiteVisits'
 import { WhatsApp } from './pages/WhatsApp'
+import { BusinessNumbers } from './pages/BusinessNumbers'
 import { AclManagement } from './pages/admin/AclManagement'
 import { useAppDispatch, useAppSelector } from './store/hooks'
 import { hydrateAuth } from './store/authSlice'
@@ -158,6 +159,14 @@ function App() {
               element={
                 <ProtectedRoute moduleKey="site_visits">
                   <AppMain id="site-visits"><SiteVisits /></AppMain>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/business-numbers"
+              element={
+                <ProtectedRoute moduleKey="business_numbers">
+                  <AppMain id="business-numbers"><BusinessNumbers /></AppMain>
                 </ProtectedRoute>
               }
             />
