@@ -85,11 +85,14 @@ export function UsageTab({ overview }: { overview: BnOverview }) {
   const [users, setUsers] = useState<{ id: string; name: string; email: string }[]>([])
   const [loaded, setLoaded] = useState<{ key: string; data: BnAnalytics | null } | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [reloadTick, setReloadTick] = useState(0)
+  /** Reloads while a refresh is running: keep showing current data instead of a loading state. */
+  const [quietTick, setQuietTick] = useState(0)
 
   const manager = overview.canManage
-  const { from, to } = useMemo(() => rangeDates(rangeId), [rangeId])
-  const key = `${rangeId}|${userId}|${reloadTick}`
+  // Re-anchored on every reload so newly synced activity up to "now" falls inside the range.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const { from, to } = useMemo(() => rangeDates(rangeId), [rangeId, quietTick])
+  const key = `${rangeId}|${userId}`
 
   useEffect(() => {
     if (!manager) return
@@ -120,18 +123,21 @@ export function UsageTab({ overview }: { overview: BnOverview }) {
     return () => {
       cancelled = true
     }
-  }, [from, to, userId, manager, key])
+  }, [from, to, userId, manager, key, quietTick])
 
   const loading = loaded?.key !== key
   const a = loading ? null : (loaded?.data ?? null)
   const series = useMemo(() => (a ? bucket(a.daily, rangeId === '12m') : []), [a, rangeId])
 
   // Background refresh: the page stays usable and reloads itself when new activity lands.
-  const sync = useUsageSync((s) => {
-    if (s.error) return
-    toast(s.stored ? `Usage updated — ${s.stored} new record${s.stored === 1 ? '' : 's'}` : 'Usage is up to date', 'success')
-    setReloadTick((t) => t + 1)
-  })
+  const sync = useUsageSync(
+    (s) => {
+      if (s.error) return
+      toast(s.stored ? `Usage updated — ${s.stored} new record${s.stored === 1 ? '' : 's'}` : 'Usage is up to date', 'success')
+      setQuietTick((t) => t + 1)
+    },
+    () => setQuietTick((t) => t + 1),
+  )
 
   const t = a?.totals
   const selectedUser = users.find((u) => u.id === userId)

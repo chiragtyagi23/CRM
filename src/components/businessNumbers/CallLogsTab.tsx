@@ -100,7 +100,8 @@ export function CallLogsTab({ overview, kind }: { overview: BnOverview; kind: 'v
   const [userId, setUserId] = useState('all')
   const [users, setUsers] = useState<{ id: string; name: string; email: string }[]>([])
   const [offset, setOffset] = useState(0)
-  const [reloadTick, setReloadTick] = useState(0)
+  /** Reloads while a refresh is running: keep showing current rows instead of a loading state. */
+  const [quietTick, setQuietTick] = useState(0)
   const [loaded, setLoaded] = useState<{ key: string; page: SipCallPage | null } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [selected, setSelected] = useState<SipCall | null>(null)
@@ -112,12 +113,12 @@ export function CallLogsTab({ overview, kind }: { overview: BnOverview; kind: 'v
     const days = PRESETS.find((p) => p.id === preset)?.days ?? 7
     const end = new Date()
     return { from: new Date(end.getTime() - days * 864e5), to: end }
-    // reloadTick re-anchors "now" for presets on refresh
+    // quietTick re-anchors "now" for presets when a refresh lands
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [preset, customFrom, customTo, reloadTick])
+  }, [preset, customFrom, customTo, quietTick])
 
   const filterKey = [preset, customFrom, customTo, direction, status, hangupSource, q, userId].join('|')
-  const key = `${filterKey}|${offset}|${reloadTick}`
+  const key = `${filterKey}|${offset}`
 
   useEffect(() => {
     if (!manager) return
@@ -156,7 +157,7 @@ export function CallLogsTab({ overview, kind }: { overview: BnOverview; kind: 'v
       cancelled = true
       window.clearTimeout(timer)
     }
-  }, [key, kind, from, to, direction, status, hangupSource, q, manager, userId, offset])
+  }, [key, kind, from, to, direction, status, hangupSource, q, manager, userId, offset, quietTick])
 
   /** Filters change → back to the first page. */
   const change = <T,>(setter: (v: T) => void) => (v: T) => {
@@ -170,11 +171,14 @@ export function CallLogsTab({ overview, kind }: { overview: BnOverview; kind: 'v
   const total = page?.total ?? 0
 
   // Background refresh: filters and paging stay usable; the list reloads when new calls land.
-  const sync = useUsageSync((s) => {
-    if (s.error) return
-    toast('Call logs updated', 'success')
-    setReloadTick((t) => t + 1)
-  })
+  const sync = useUsageSync(
+    (s) => {
+      if (s.error) return
+      toast('Call logs updated', 'success')
+      setQuietTick((t) => t + 1)
+    },
+    () => setQuietTick((t) => t + 1),
+  )
 
   const isVoice = kind === 'voice'
   // Ended, Direction, From, To, Duration, Status, Ended by (+ caller ID for voice, + User for managers)
