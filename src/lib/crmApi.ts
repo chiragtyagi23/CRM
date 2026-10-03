@@ -117,6 +117,37 @@ export async function promoteLocalDraftImageUrl(url: string): Promise<string> {
   return apiUploadImage(file)
 }
 
+export async function startBulkCall(
+  file: File,
+  projectId: string,
+  contacts: { name: string; phone: string; email: string; additionalInfo?: Record<string, unknown> }[],
+): Promise<{ callSheet: string; batchId: string; count: number }> {
+  const form = new FormData()
+  form.append('sheet', file)
+  form.append('campaignId', projectId)
+  form.append('projectId', projectId)
+  form.append('contacts', JSON.stringify(contacts))
+  const res = await fetch(`${baseUrl()}/api/calls/bulk`, {
+    method: 'POST',
+    headers: authHeader(),
+    body: form,
+  })
+  const body = await safeJson(res)
+  if (!res.ok) {
+    const msg =
+      body && typeof body === 'object' && body !== null && 'error' in body
+        ? String((body as { error: unknown }).error)
+        : `HTTP ${res.status}`
+    throw { message: msg, status: res.status, body } satisfies ApiError
+  }
+  const data = body as { callSheet?: string; batchId?: string; count?: number }
+  return {
+    callSheet: String(data.callSheet || ''),
+    batchId: String(data.batchId || ''),
+    count: Number(data.count || contacts.length),
+  }
+}
+
 async function safeJson(res: Response) {
   try {
     return await res.json()
