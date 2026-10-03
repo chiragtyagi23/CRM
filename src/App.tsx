@@ -7,6 +7,7 @@ import { AppMain } from './components/AppMain'
 import { ToastProvider } from './components/acl/Toast'
 import { AuthenticatedLayout } from './layouts/AuthenticatedLayout'
 import { BulkUploadLeads } from './pages/BulkUploadLeads'
+import { CallHistoryDetail } from './pages/CallHistoryDetail'
 import { CampaignBuilder } from './pages/CampaignBuilder'
 import { CampaignList } from './pages/CampaignList'
 import { CaptureLead } from './pages/CaptureLead'
@@ -143,6 +144,14 @@ function App() {
               element={
                 <ProtectedRoute moduleKey="leads">
                   <AppMain id="leads-bulk-upload"><BulkUploadLeads /></AppMain>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/leads/call-history/:batchId"
+              element={
+                <ProtectedRoute moduleKey="leads">
+                  <AppMain id="call-history"><CallHistoryDetail /></AppMain>
                 </ProtectedRoute>
               }
             />

@@ -1,32 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { FiArrowRight } from 'react-icons/fi'
+import { Link } from 'react-router-dom'
+
 import { apiGet, apiSend } from '../lib/crmApi'
+import {
+  batchHeading,
+  formatWhen,
+  pitchedProject,
+  projectLabel,
+  resultLabel,
+  sheetFileName,
+  type BulkCallRow,
+} from '../lib/bulkCallHistory'
 import { useAppDispatch } from '../store/hooks'
 import { loadCaptureLeads } from '../store/captureLeadsSlice'
-
-type BulkCallRow = {
-  id: string
-  batchId: string
-  projectId: string
-  name: string
-  email: string | null
-  mobile: string
-  summary: string | null
-  leadScore: string | null
-  isLead: boolean | null
-  callStatus: string
-  callDuration: number | null
-  humanDiversion: boolean
-  captureLeadId: string | null
-  createdAt?: string
-}
-
-function rowGroup(row: BulkCallRow) {
-  if (row.captureLeadId) return 'Added to leads'
-  if (row.callStatus === 'not_sent') return 'Call not sent'
-  if (row.isLead === true) return 'Can become a lead'
-  if (row.isLead === false) return 'Cannot become a lead'
-  return 'Waiting for the call'
-}
 
 export function BulkCallResults({ activeBatchId }: { activeBatchId: string }) {
   const dispatch = useAppDispatch()
@@ -90,68 +77,88 @@ export function BulkCallResults({ activeBatchId }: { activeBatchId: string }) {
   }
 
   if (loading && items.length === 0) {
-    return <p className="mt-8 text-[13px] text-[#8B7355]">Loading call results…</p>
+    return <p className="mt-8 text-[13px] text-[#8B7355]">Loading call history…</p>
   }
 
   if (!loading && items.length === 0 && !error) {
-    return null
+    return (
+      <div className="mt-8 rounded-2xl border border-[#E8DCCB] bg-white p-6">
+        <h2 className="m-0 text-[18px] font-bold text-[#2E2E2E]">Call history</h2>
+        <p className="mt-2 mb-0 text-[13px] text-[#8B7355]">
+          Finished calls show up here with the person, the project, and the time. Open one to read the full conversation.
+        </p>
+      </div>
+    )
   }
 
   return (
     <div className="mt-8">
-      <h2 className="mb-2 text-[18px] font-bold text-[#2E2E2E]">Call results</h2>
+      <h2 className="mb-1 text-[18px] font-bold text-[#2E2E2E]">Call history</h2>
       <p className="mb-4 text-[13px] text-[#8B7355]">
-        People stay in this list until the call result arrives. Rows marked as a lead can be added to the lead list.
+        Each card is one call result. The name, project, and time tell you which upload it belongs to. Open it for the summary and conversation.
       </p>
       {error ? <p className="mb-4 text-[13px] text-red-700">{error}</p> : null}
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-3">
         {batches.map(({ batchId, rows }) => {
+          const first = rows[0]
+          const when = formatWhen(first?.createdAt)
+          const project = first ? projectLabel(first) : 'Project not set'
+          const pitched = first ? pitchedProject(first) : ''
+          const fileName = sheetFileName(first?.callSheetUrl)
           const eligible = rows.filter((row) => row.isLead === true && !row.captureLeadId).map((row) => row.id)
-          const canCount = rows.filter((row) => rowGroup(row) === 'Can become a lead').length
-          const cannotCount = rows.filter((row) => rowGroup(row) === 'Cannot become a lead').length
-          const waitingCount = rows.filter((row) => rowGroup(row) === 'Waiting for the call').length
+          const single = rows.length === 1 ? rows[0] : null
+          const result = single ? resultLabel(single) : ''
           return (
-            <section key={batchId} className="rounded-xl border border-[#E8DCCB] bg-white p-4">
-              <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <p className="m-0 text-[13px] text-[#2E2E2E]">
-                  {rows.length} contact{rows.length === 1 ? '' : 's'} · {canCount} can become leads · {cannotCount} cannot · {waitingCount} waiting
-                </p>
-                <button
-                  type="button"
-                  disabled={eligible.length === 0 || promotingId === batchId}
-                  onClick={() => void addAsLeads(batchId, eligible)}
-                  className="rounded-xl bg-[#8B7355] px-4 py-2 text-[13px] font-semibold text-white hover:bg-[#6d5a43] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {promotingId === batchId ? 'Adding…' : `Add ${eligible.length} as leads`}
-                </button>
+            <article key={batchId} className="rounded-xl border border-[#E8DCCB] bg-white p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <p className="m-0 text-[15px] font-semibold text-[#2E2E2E]">{batchHeading(rows)}</p>
+                  <p className="mt-1 mb-0 text-[13px] text-[#8B7355]">
+                    {project}
+                    {when ? ` · ${when}` : ''}
+                    {single ? ` · ${single.callStatus}` : ` · ${rows.length} people`}
+                    {single?.leadScore ? ` · ${single.leadScore}` : ''}
+                  </p>
+                  {single ? <p className="mt-1 mb-0 text-[13px] text-[#2E2E2E]">{single.mobile}</p> : null}
+                  {pitched ? <p className="mt-1 mb-0 text-[13px] text-[#8B7355]">Call was about {pitched}</p> : null}
+                  {fileName ? <p className="mt-1 mb-0 text-[13px] text-[#8B7355]">Sheet {fileName}</p> : null}
+                  {single?.summary ? (
+                    <p className="mt-2 mb-0 line-clamp-2 text-[13px] text-[#2E2E2E]">{single.summary}</p>
+                  ) : null}
+                  {!single ? (
+                    <p className="mt-2 mb-0 text-[13px] text-[#2E2E2E]">
+                      {rows.filter((row) => resultLabel(row) === 'Can become a lead').length} can become leads ·{' '}
+                      {rows.filter((row) => resultLabel(row) === 'Cannot become a lead').length} cannot ·{' '}
+                      {rows.filter((row) => resultLabel(row) === 'Waiting for the call').length} waiting
+                    </p>
+                  ) : null}
+                </div>
+                <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
+                  {result ? (
+                    <span className="inline-flex rounded-full bg-[#F5EFE7] px-3 py-1 text-[12px] font-semibold text-[#6d5a43]">
+                      {result}
+                    </span>
+                  ) : null}
+                  <Link
+                    to={`/leads/call-history/${batchId}`}
+                    className="inline-flex items-center justify-center gap-1 rounded-xl border border-[#E8DCCB] px-3 py-2 text-[13px] font-semibold text-[#2E2E2E] hover:bg-[#FAF7F2]"
+                  >
+                    Open details
+                    <FiArrowRight className="h-4 w-4" aria-hidden />
+                  </Link>
+                  {eligible.length > 0 ? (
+                    <button
+                      type="button"
+                      disabled={promotingId === batchId}
+                      onClick={() => void addAsLeads(batchId, eligible)}
+                      className="rounded-xl bg-[#8B7355] px-3 py-2 text-[13px] font-semibold text-white hover:bg-[#6d5a43] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {promotingId === batchId ? 'Adding…' : `Add ${eligible.length} as lead${eligible.length === 1 ? '' : 's'}`}
+                    </button>
+                  ) : null}
+                </div>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-[13px]">
-                  <thead>
-                    <tr className="border-b border-[#E8DCCB]">
-                      <th className="py-2 pr-3 font-semibold text-[#8B7355]">Name</th>
-                      <th className="py-2 pr-3 font-semibold text-[#8B7355]">Mobile</th>
-                      <th className="py-2 pr-3 font-semibold text-[#8B7355]">Status</th>
-                      <th className="py-2 pr-3 font-semibold text-[#8B7355]">Score</th>
-                      <th className="py-2 pr-3 font-semibold text-[#8B7355]">Summary</th>
-                      <th className="py-2 font-semibold text-[#8B7355]">Result</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row) => (
-                      <tr key={row.id} className="border-b border-[#E8DCCB]">
-                        <td className="py-2 pr-3 text-[#2E2E2E]">{row.name}</td>
-                        <td className="py-2 pr-3 text-[#2E2E2E]">{row.mobile}</td>
-                        <td className="py-2 pr-3 text-[#2E2E2E]">{row.callStatus}</td>
-                        <td className="py-2 pr-3 text-[#2E2E2E]">{row.leadScore || '—'}</td>
-                        <td className="max-w-[240px] py-2 pr-3 text-[#2E2E2E]">{row.summary || '—'}</td>
-                        <td className="py-2 text-[#2E2E2E]">{rowGroup(row)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+            </article>
           )
         })}
       </div>
