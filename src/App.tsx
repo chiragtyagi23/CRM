@@ -6,6 +6,8 @@ import { ProtectedRoute } from './acl/ProtectedRoute'
 import { AppMain } from './components/AppMain'
 import { ToastProvider } from './components/acl/Toast'
 import { AuthenticatedLayout } from './layouts/AuthenticatedLayout'
+import { BulkData } from './pages/BulkData'
+import { BulkDataDetails } from './pages/BulkDataDetails'
 import { BulkUploadLeads } from './pages/BulkUploadLeads'
 import { CampaignBuilder } from './pages/CampaignBuilder'
 import { CampaignList } from './pages/CampaignList'
@@ -42,6 +44,13 @@ function LeadDetailsRoute() {
   const leadId = params.id ?? ''
   if (!leadId) return <Navigate to="/leads" replace />
   return <LeadDetails leadId={leadId} />
+}
+
+function BulkDataDetailsRoute() {
+  const params = useParams()
+  const id = params.id ?? ''
+  if (!id) return <Navigate to="/bulk-data" replace />
+  return <BulkDataDetails key={id} id={id} />
 }
 
 function CampaignModule() {
@@ -141,6 +150,22 @@ function App() {
               element={
                 <ProtectedRoute moduleKey="leads">
                   <AppMain id="leads-bulk-upload"><BulkUploadLeads /></AppMain>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/bulk-data"
+              element={
+                <ProtectedRoute moduleKey="leads">
+                  <AppMain id="bulk-data"><BulkData /></AppMain>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/bulk-data/:id"
+              element={
+                <ProtectedRoute moduleKey="leads">
+                  <AppMain id="bulk-data-details"><BulkDataDetailsRoute /></AppMain>
                 </ProtectedRoute>
               }
             />

@@ -588,7 +588,8 @@
   position: fixed;
   bottom: 1.5rem;
   right: 1.5rem;
-  z-index: 300;
+  /* Above modals (z-50) and MUI overlays (up to 1500). */
+  z-index: 2000;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -607,12 +608,14 @@
 
 .acl-toast--success {
   border-color: var(--acl-success);
-  background: rgba(111, 175, 143, 0.12);
+  /* Solid equivalent of rgba(111, 175, 143, 0.12) on white, so modal backdrops don't show through. */
+  background: #f0f6f3;
 }
 
 .acl-toast--error {
   border-color: var(--acl-danger);
-  background: rgba(217, 107, 107, 0.1);
+  /* Solid equivalent of rgba(217, 107, 107, 0.1) on white. */
+  background: #fbf0f0;
 }
 
 /* 403 / session pages using acl-status-* */

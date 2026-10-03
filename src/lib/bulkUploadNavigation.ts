@@ -1,4 +1,4 @@
-/** Set while Bulk Upload page is mounted; used by AppHeader / beforeunload. */
+/** Set while the Bulk Upload or Bulk Data page is mounted; used by AppHeader / beforeunload. */
 let getDirty: (() => boolean) | null = null
 
 export const BULK_UPLOAD_LEAVE_MESSAGE =
@@ -17,7 +17,7 @@ export function isBulkUploadDirty() {
 
 /** Call before navigating away from the app or logging out from Bulk Upload. */
 export function confirmLeaveFromBulkUploadIfNeeded(pathname: string): boolean {
-  if (pathname === '/leads/bulk-upload' && isBulkUploadDirty()) {
+  if ((pathname === '/leads/bulk-upload' || pathname === '/bulk-data') && isBulkUploadDirty()) {
     return window.confirm(BULK_UPLOAD_LEAVE_MESSAGE)
   }
   return true

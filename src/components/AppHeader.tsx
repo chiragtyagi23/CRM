@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { FiBarChart2, FiGrid, FiMapPin, FiSettings, FiShield, FiUser, FiUserPlus } from 'react-icons/fi'
+import { FiBarChart2, FiDatabase, FiGrid, FiMapPin, FiSettings, FiShield, FiUser, FiUserPlus } from 'react-icons/fi'
 import { confirmLeaveFromBulkUploadIfNeeded } from '../lib/bulkUploadNavigation'
 import { useACL } from '../acl/useACL'
 import { defaultAuthedPath } from '../acl/hasAccess'
 import { useAppSelector } from '../store/hooks'
 import type { AclModuleDTO } from '../acl/types'
 
-type NavIcon = 'grid' | 'user' | 'userPlus' | 'pin' | 'chart' | 'shield'
+type NavIcon = 'grid' | 'user' | 'userPlus' | 'pin' | 'chart' | 'shield' | 'database'
 
 type NavMenuItem = { id: string; label: string; link: string; icon: NavIcon }
 
@@ -17,6 +17,7 @@ const APP_LOGO = { textMain: 'PropCRM', textSecondary: 'Real Estate Lead Managem
 const LEGACY_NAV_MENU_ITEMS: NavMenuItem[] = [
   { id: 'dashboard', label: 'Dashboard', link: '#dashboard', icon: 'grid' },
   { id: 'leads', label: 'Leads', link: '#leads', icon: 'user' },
+  { id: 'bulk_data', label: 'Bulk Data', link: '/bulk-data', icon: 'database' },
   { id: 'capture', label: 'Capture Lead', link: '#capture-lead', icon: 'userPlus' },
   { id: 'visits', label: 'Site Visits', link: '#site-visits', icon: 'pin' },
   { id: 'campaign', label: 'Projects', link: '#campaign', icon: 'chart' },
@@ -36,6 +37,8 @@ function NavIconGlyph({ name }: { name: NavIcon }) {
       return <FiBarChart2 className="app-header__nav-icon" aria-hidden />
     case 'shield':
       return <FiShield className="app-header__nav-icon" aria-hidden />
+    case 'database':
+      return <FiDatabase className="app-header__nav-icon" aria-hidden />
     default:
       return <FiGrid className="app-header__nav-icon" aria-hidden />
   }
@@ -76,6 +79,14 @@ function modulesToMenuItems(modules: AclModuleDTO[]): NavMenuItem[] {
     }))
 }
 
+/** Bulk Data is frontend-only for now (no ACL module yet): shown right after Leads for anyone with leads access. */
+function withBulkDataItem(items: NavMenuItem[]): NavMenuItem[] {
+  const leadsIdx = items.findIndex((i) => i.id === 'leads')
+  if (leadsIdx === -1 || items.some((i) => i.id === 'bulk_data')) return items
+  const bulkData: NavMenuItem = { id: 'bulk_data', label: 'Bulk Data', link: '/bulk-data', icon: 'database' }
+  return [...items.slice(0, leadsIdx + 1), bulkData, ...items.slice(leadsIdx + 1)]
+}
+
 export function AppHeader() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -83,7 +94,7 @@ export function AppHeader() {
   const { navModules, isLegacyFullAccess, hasAccess: can } = useACL()
   const [menuOpen, setMenuOpen] = useState(false)
 
-  const aclMenuItems = modulesToMenuItems(navModules)
+  const aclMenuItems = withBulkDataItem(modulesToMenuItems(navModules))
   const visibleMenuItems = isLegacyFullAccess ? LEGACY_NAV_MENU_ITEMS : aclMenuItems
 
   useEffect(() => {
@@ -101,7 +112,7 @@ export function AppHeader() {
   }, [menuOpen])
 
   useEffect(() => {
-    const mq = window.matchMedia('(min-width: 901px)')
+    const mq = window.matchMedia('(min-width: 1280px)')
     const onChange = () => {
       if (mq.matches) setMenuOpen(false)
     }
@@ -192,7 +203,7 @@ export function AppHeader() {
           </ul>
         </nav>
 
-        <div className="app-header__user-desktop ml-auto hidden items-center gap-3 lg:flex">
+        <div className="app-header__user-desktop ml-auto hidden items-center gap-3 xl:flex">
               {user ? (
             <>
               <button
