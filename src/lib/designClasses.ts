@@ -35,6 +35,9 @@ export const d = {
   select:
     'w-full rounded-lg border border-[#E8DCCB] bg-white px-3 py-2 text-sm text-[#2E2E2E] focus:border-[#8B7355] focus:outline-none',
   label: 'block text-sm font-medium text-[#8B7355] mb-2',
+  /** Filter-bar select that sizes to its content (d.select is full-width). */
+  selectInline:
+    'w-auto min-w-[150px] rounded-lg border border-[#E8DCCB] bg-white px-3 py-2 text-sm text-[#2E2E2E] focus:border-[#8B7355] focus:outline-none',
 
   gridStats: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8',
   gridStats3: 'grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8',

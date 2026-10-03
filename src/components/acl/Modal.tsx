@@ -7,6 +7,7 @@ export function Modal({
   onClose,
   footer,
   wide,
+  size,
   allowDropdownOverflow,
 }: {
   open: boolean
@@ -15,6 +16,8 @@ export function Modal({
   onClose: () => void
   footer?: ReactNode
   wide?: boolean
+  /** "xl" for two-column editors (form + preview); `wide` stays for existing callers. */
+  size?: 'xl'
   /** Lets custom dropdowns extend outside the panel (e.g. role picker). */
   allowDropdownOverflow?: boolean
 }) {
@@ -24,7 +27,7 @@ export function Modal({
   return (
     <div className="acl-modal-root" role="dialog" aria-modal="true" aria-labelledby="acl-modal-title">
       <button type="button" className="acl-modal-scrim" aria-label="Close" onClick={onClose} />
-      <div className={`acl-modal-panel${wide ? ' acl-modal-panel--wide' : ''}${overflowClass}`}>
+      <div className={`acl-modal-panel${wide ? ' acl-modal-panel--wide' : ''}${size === 'xl' ? ' acl-modal-panel--xl' : ''}${overflowClass}`}>
         <header className="acl-modal-header">
           <h2 id="acl-modal-title">{title}</h2>
           <button type="button" className="acl-modal-close" onClick={onClose} aria-label="Close dialog">
