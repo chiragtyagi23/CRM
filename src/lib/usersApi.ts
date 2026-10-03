@@ -56,3 +56,18 @@ export async function createUser(payload: {
 }): Promise<{ user: CrmUserDTO; message: string }> {
   return await apiSend<{ user: CrmUserDTO; message: string }>('/api/auth/users', 'POST', payload)
 }
+
+export type ProfileSummaryDTO = { summary: string | null; updated_at: string | null }
+
+/** Current user's "About me" summary on the Profile page. */
+export async function fetchMySummary(): Promise<ProfileSummaryDTO> {
+  return await apiGet<ProfileSummaryDTO>('/api/auth/me/summary')
+}
+
+export async function saveMySummary(summary: string): Promise<ProfileSummaryDTO> {
+  return await apiSend<ProfileSummaryDTO>('/api/auth/me/summary', 'PUT', { summary })
+}
+
+export async function deleteMySummary(): Promise<void> {
+  await apiSend<void>('/api/auth/me/summary', 'DELETE')
+}

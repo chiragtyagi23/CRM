@@ -17,7 +17,7 @@ export function getCrmApiBaseUrl(): string {
   return baseUrl()
 }
 
-function authHeader(): Record<string, string> | undefined {
+export function authHeader(): Record<string, string> | undefined {
   try {
     const token = window.localStorage.getItem('crm_token')
     if (!token) return undefined
@@ -64,7 +64,8 @@ export async function apiUploadImage(file: File, opts?: ApiUploadImageOptions): 
   return resolveUploadPublicUrl(data.url)
 }
 
-function resolveUploadPublicUrl(url: string): string {
+/** Turns a stored media URL (absolute S3 URL or relative `/uploads/...`) into one the browser can load. */
+export function resolveUploadPublicUrl(url: string): string {
   const u = url.trim()
   if (/^https?:\/\//i.test(u)) return u
   const path = u.startsWith('/') ? u : `/${u}`

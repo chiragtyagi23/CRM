@@ -125,6 +125,10 @@ export type CaptureLeadDTO = {
   callbackDate: string | null
   /** Local time string from `<input type="time">`, e.g. `14:30` */
   callbackTime: string | null
+  /** Minutes between call-initiate retries (default 30) */
+  callRetryFrequencyMinutes?: number
+  /** Number of call-initiate retries (default 2) */
+  callRetryCount?: number
   activityTimeline?: LeadActivityTimelineEntry[]
   interestedProjects?: LeadInterestedProject[]
   created_at?: string
@@ -186,6 +190,7 @@ export type AuthUserDTO = {
   id: string
   name: string
   email: string
+  avatarUrl?: string | null
   role?: string | AuthRoleDTO | null
 }
 
@@ -246,6 +251,11 @@ export type CrmUserDTO = {
   name: string
   email: string
   role?: string | null
+  avatar_url?: string | null
+  phone?: string | null
+  designation?: string | null
+  location?: string | null
+  is_active?: boolean
   /** Sequelize uses these keys when model timestamps are `createdAt: "created_at"`. */
   created_at?: string
   updated_at?: string

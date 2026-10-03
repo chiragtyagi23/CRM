@@ -28,6 +28,8 @@ export type CaptureLeadCreateInput = {
   buyingStage: NonNullable<CaptureLeadCreatePayload['propertyBuyingStage']>
   callbackDate: string
   callbackTime: string
+  callRetryFrequencyMinutes: string
+  callRetryCount: string
 }
 
 export function buildCaptureLeadCreatePayload(input: CaptureLeadCreateInput): CaptureLeadCreatePayload {
@@ -52,6 +54,8 @@ export function buildCaptureLeadCreatePayload(input: CaptureLeadCreateInput): Ca
     buyingStage,
     callbackDate,
     callbackTime,
+    callRetryFrequencyMinutes,
+    callRetryCount,
   } = input
 
   return {
@@ -77,6 +81,8 @@ export function buildCaptureLeadCreatePayload(input: CaptureLeadCreateInput): Ca
     propertyBuyingStage: buyingStage,
     callbackDate: callbackDate || null,
     callbackTime: callbackTime.trim() || null,
+    callRetryFrequencyMinutes: Number(callRetryFrequencyMinutes) || 30,
+    callRetryCount: callRetryCount.trim() === '' ? 2 : Number(callRetryCount),
   }
 }
 

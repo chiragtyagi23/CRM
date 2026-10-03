@@ -6,6 +6,7 @@ import { useACL } from '../acl/useACL'
 import { defaultAuthedPath } from '../acl/hasAccess'
 import { useAppSelector } from '../store/hooks'
 import type { AclModuleDTO } from '../acl/types'
+import { ProfileAvatar } from './profile/ProfileAvatar'
 
 type NavIcon = 'grid' | 'user' | 'userPlus' | 'pin' | 'chart' | 'shield' | 'message' | 'phone'
 
@@ -238,6 +239,7 @@ export function AppHeader() {
                     navigate('/profile')
                   }}
                 >
+                  <ProfileAvatar name={user.name} url={user.avatarUrl} size={22} className="-ml-2 mr-2" />
                   Profile
                 </button>
               ) : null}

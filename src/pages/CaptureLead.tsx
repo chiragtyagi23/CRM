@@ -96,6 +96,8 @@ export function CaptureLead() {
   const [remarks, setRemarks] = useState('')
   const [callbackDate, setCallbackDate] = useState('')
   const [callbackTime, setCallbackTime] = useState('')
+  const [callRetryFrequencyMinutes, setCallRetryFrequencyMinutes] = useState('30')
+  const [callRetryCount, setCallRetryCount] = useState('2')
   const [preferredDropdownOpen, setPreferredDropdownOpen] = useState(false)
   const preferredDropdownRef = useRef<HTMLDivElement>(null)
   const [receivedByOptions, setReceivedByOptions] = useState<{ id: string; value: string; label: string }[]>([])
@@ -189,11 +191,22 @@ export function CaptureLead() {
     if (!callBy.trim()) missing.push('Lead Received By')
     if (!fullName.trim()) missing.push('Name')
     if (!num.trim()) missing.push('Phone Number')
-    if (!callbackDate.trim()) missing.push('Callback Date')
-    if (!callbackTime.trim()) missing.push('Callback Time')
     if (!hasPreferredLocation) missing.push('Preferred Location')
     if (preferredLocationOtherSelected && !preferredLocationOther.trim()) {
       missing.push('Custom Preferred Location')
+    }
+    // Additional Information is optional — only range-check retry values when filled in.
+    if (callRetryFrequencyMinutes.trim() !== '') {
+      const freq = Number(callRetryFrequencyMinutes)
+      if (!Number.isInteger(freq) || freq < 1 || freq > 1440) {
+        missing.push('Call Retry Frequency (1–1440 minutes)')
+      }
+    }
+    if (callRetryCount.trim() !== '') {
+      const retries = Number(callRetryCount)
+      if (!Number.isInteger(retries) || retries < 0 || retries > 10) {
+        missing.push('Number of Retries (0–10)')
+      }
     }
     return missing
   }
@@ -228,6 +241,8 @@ export function CaptureLead() {
       buyingStage,
       callbackDate,
       callbackTime,
+      callRetryFrequencyMinutes,
+      callRetryCount,
     })
 
     await dispatch(submitCaptureLead(payload)).unwrap()
@@ -655,12 +670,14 @@ export function CaptureLead() {
         </section>
 
         <section className={d.cardP6}>
-          <h2 className={d.sectionTitle}>Additional Information</h2>
+          <h2 className={d.sectionTitle}>
+            Additional Information{' '}
+            <span className="text-[11px] font-medium normal-case tracking-normal text-[#8B7355]/70">(Optional)</span>
+          </h2>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <IconInsetField
               label="CB DATE (Callback Date)"
-              required
               dateTime
               icon={<FaCalendarDays className={fieldIconCls} aria-hidden />}
             >
@@ -669,14 +686,11 @@ export function CaptureLead() {
                 value={callbackDate}
                 onChange={(e) => setCallbackDate(e.target.value)}
                 className={fieldDateTimeInputClass}
-                required
-                aria-required
               />
             </IconInsetField>
 
             <IconInsetField
               label="CB TIME (Callback Time)"
-              required
               dateTime
               icon={<FaClock className={fieldIconCls} aria-hidden />}
             >
@@ -686,8 +700,40 @@ export function CaptureLead() {
                 onChange={(e) => setCallbackTime(e.target.value)}
                 step={60}
                 className={fieldDateTimeInputClass}
-                required
-                aria-required
+              />
+            </IconInsetField>
+
+            <IconInsetField
+              label="CALL RETRY FREQUENCY (Minutes)"
+              icon={<FaClock className={fieldIconCls} aria-hidden />}
+            >
+              <input
+                type="number"
+                min={1}
+                max={1440}
+                step={1}
+                value={callRetryFrequencyMinutes}
+                onChange={(e) => setCallRetryFrequencyMinutes(e.target.value)}
+                placeholder="30"
+                className={fieldInputClass}
+                inputMode="numeric"
+              />
+            </IconInsetField>
+
+            <IconInsetField
+              label="NUMBER OF RETRIES"
+              icon={<FaPhone className={fieldIconCls} aria-hidden />}
+            >
+              <input
+                type="number"
+                min={0}
+                max={10}
+                step={1}
+                value={callRetryCount}
+                onChange={(e) => setCallRetryCount(e.target.value)}
+                placeholder="2"
+                className={fieldInputClass}
+                inputMode="numeric"
               />
             </IconInsetField>
 
