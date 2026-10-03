@@ -7,6 +7,7 @@ import { AppMain } from './components/AppMain'
 import { ToastProvider } from './components/acl/Toast'
 import { AuthenticatedLayout } from './layouts/AuthenticatedLayout'
 import { BulkUploadLeads } from './pages/BulkUploadLeads'
+import { CallHistoryDetail } from './pages/CallHistoryDetail'
 import { CampaignBuilder } from './pages/CampaignBuilder'
 import { CampaignList } from './pages/CampaignList'
 import { CaptureLead } from './pages/CaptureLead'
@@ -24,6 +25,8 @@ import { NinetyNineAcresPage } from './pages/settings/NinetyNineAcresPage'
 import { Reports } from './pages/Reports'
 import { SessionExpired } from './pages/SessionExpired'
 import { SiteVisits } from './pages/SiteVisits'
+import { WhatsApp } from './pages/WhatsApp'
+import { BusinessNumbers } from './pages/BusinessNumbers'
 import { AclManagement } from './pages/admin/AclManagement'
 import { useAppDispatch, useAppSelector } from './store/hooks'
 import { hydrateAuth } from './store/authSlice'
@@ -145,6 +148,14 @@ function App() {
               }
             />
             <Route
+              path="/leads/call-history/:batchId"
+              element={
+                <ProtectedRoute moduleKey="leads">
+                  <AppMain id="call-history"><CallHistoryDetail /></AppMain>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/capture-lead"
               element={
                 <ProtectedRoute moduleKey="capture_lead">
@@ -157,6 +168,22 @@ function App() {
               element={
                 <ProtectedRoute moduleKey="site_visits">
                   <AppMain id="site-visits"><SiteVisits /></AppMain>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/business-numbers"
+              element={
+                <ProtectedRoute moduleKey="business_numbers">
+                  <AppMain id="business-numbers"><BusinessNumbers /></AppMain>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/whatsapp"
+              element={
+                <ProtectedRoute moduleKey="whatsapp">
+                  <AppMain id="whatsapp"><WhatsApp /></AppMain>
                 </ProtectedRoute>
               }
             />

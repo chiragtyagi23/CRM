@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { FiBarChart2, FiGrid, FiMapPin, FiSettings, FiShield, FiUser, FiUserPlus } from 'react-icons/fi'
+import { FiBarChart2, FiGrid, FiMapPin, FiMessageCircle, FiPhone, FiSettings, FiShield, FiUser, FiUserPlus } from 'react-icons/fi'
 import { confirmLeaveFromBulkUploadIfNeeded } from '../lib/bulkUploadNavigation'
 import { useACL } from '../acl/useACL'
 import { defaultAuthedPath } from '../acl/hasAccess'
@@ -8,7 +8,7 @@ import { useAppSelector } from '../store/hooks'
 import type { AclModuleDTO } from '../acl/types'
 import { ProfileAvatar } from './profile/ProfileAvatar'
 
-type NavIcon = 'grid' | 'user' | 'userPlus' | 'pin' | 'chart' | 'shield'
+type NavIcon = 'grid' | 'user' | 'userPlus' | 'pin' | 'chart' | 'shield' | 'message' | 'phone'
 
 type NavMenuItem = { id: string; label: string; link: string; icon: NavIcon }
 
@@ -21,6 +21,8 @@ const LEGACY_NAV_MENU_ITEMS: NavMenuItem[] = [
   { id: 'capture', label: 'Capture Lead', link: '#capture-lead', icon: 'userPlus' },
   { id: 'visits', label: 'Site Visits', link: '#site-visits', icon: 'pin' },
   { id: 'campaign', label: 'Projects', link: '#campaign', icon: 'chart' },
+  { id: 'whatsapp', label: 'WhatsApp', link: '#whatsapp', icon: 'message' },
+  { id: 'business_numbers', label: 'Business Numbers', link: '#business-numbers', icon: 'phone' },
 ]
 
 function NavIconGlyph({ name }: { name: NavIcon }) {
@@ -37,6 +39,10 @@ function NavIconGlyph({ name }: { name: NavIcon }) {
       return <FiBarChart2 className="app-header__nav-icon" aria-hidden />
     case 'shield':
       return <FiShield className="app-header__nav-icon" aria-hidden />
+    case 'message':
+      return <FiMessageCircle className="app-header__nav-icon" aria-hidden />
+    case 'phone':
+      return <FiPhone className="app-header__nav-icon" aria-hidden />
     default:
       return <FiGrid className="app-header__nav-icon" aria-hidden />
   }
@@ -49,6 +55,8 @@ function mapModuleIcon(icon?: string | null): NavIcon {
   if (i === 'pin') return 'pin'
   if (i === 'chart') return 'chart'
   if (i === 'shield') return 'shield'
+  if (i === 'message') return 'message'
+  if (i === 'phone') return 'phone'
   return 'grid'
 }
 
