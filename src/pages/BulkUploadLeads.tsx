@@ -13,7 +13,8 @@ import {
 } from 'react-icons/fi'
 
 import { BulkProjectModal } from '../components/BulkProjectModal'
-import { apiGet } from '../lib/crmApi'
+import { BulkCallResults } from '../components/BulkCallResults'
+import { apiGet, startBulkCall } from '../lib/crmApi'
 import {
   BULK_UPLOAD_LEAVE_MESSAGE,
   registerBulkUploadDirty,
@@ -31,19 +32,63 @@ type UploadedLead = {
   name: string
   phone: string
   email: string
+  additionalInfo: Record<string, unknown>
   isValid: boolean
   errors: string[]
+}
+
+const INFO_SKIP = new Set([
+  'name',
+  'customername',
+  'fullname',
+  'mobileno',
+  'mobile',
+  'phone',
+  'phonenumber',
+  'number',
+  'email',
+  'emailid',
+])
+
+function additionalInfoFromRow(row: Record<string, unknown>) {
+  const info: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(row)) {
+    if (INFO_SKIP.has(headerKey(key))) continue
+    if (value == null || String(value).trim() === '') continue
+    info[key] = value
+  }
+  return info
 }
 
 const PHONE_REGEX = /^[+]?[0-9\s-]{10,18}$/
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+function headerKey(value: string) {
+  return value.toLowerCase().replace(/[\s._-]+/g, '')
+}
+
+function sheetCell(row: Record<string, unknown>, keys: string[]) {
+  const wanted = new Set(keys.map(headerKey))
+  for (const [key, value] of Object.entries(row)) {
+    if (wanted.has(headerKey(key))) return value ?? ''
+  }
+  return ''
+}
+
 /** One sheet row → validated lead (sync). `sheetRowIndex` is 0-based index in `sheet_to_json` (row 1 header → first data row index 0 → Excel row 2). */
 function parseLeadRowFromSheet(row: Record<string, unknown>, sheetRowIndex: number): UploadedLead {
-  const name = row['Name'] ?? row['name'] ?? ''
-  const phone =
-    row['Mobile No.'] ?? row['Mobile No'] ?? row['mobile'] ?? row['Phone'] ?? row['phone'] ?? ''
-  const email = row['Email Id'] ?? row['Email ID'] ?? row['email'] ?? ''
+  const name = sheetCell(row, ['Name', 'name', 'customer_name', 'customer name', 'full_name'])
+  const phone = sheetCell(row, [
+    'Mobile No.',
+    'Mobile No',
+    'mobile',
+    'mobile_no',
+    'mobile no',
+    'Phone',
+    'phone',
+    'phone_number',
+  ])
+  const email = sheetCell(row, ['Email Id', 'Email ID', 'email', 'email_id'])
 
   const errors: string[] = []
 
@@ -60,13 +105,9 @@ function parseLeadRowFromSheet(row: Record<string, unknown>, sheetRowIndex: numb
     }
   }
 
-  if (!email || String(email).trim() === '') {
-    errors.push('Email Id is required')
-  } else {
-    const emailStr = String(email).trim()
-    if (!EMAIL_REGEX.test(emailStr)) {
-      errors.push('Invalid email format')
-    }
+  const emailStr = String(email).trim()
+  if (emailStr && !EMAIL_REGEX.test(emailStr)) {
+    errors.push('Invalid email format')
   }
 
   return {
@@ -74,6 +115,7 @@ function parseLeadRowFromSheet(row: Record<string, unknown>, sheetRowIndex: numb
     name: String(name).trim(),
     phone: String(phone).trim(),
     email: String(email).trim(),
+    additionalInfo: additionalInfoFromRow(row),
     isValid: errors.length === 0,
     errors,
   }
@@ -105,7 +147,9 @@ export function BulkUploadLeads() {
   const [uploadedLeads, setUploadedLeads] = useState<UploadedLead[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [isCalling, setIsCalling] = useState(false)
   const [callQueued, setCallQueued] = useState(false)
+  const [activeBatchId, setActiveBatchId] = useState('')
   const [flash, setFlash] = useState<null | { type: 'ok' | 'err'; message: string }>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dirtyRef = useRef(false)
@@ -173,8 +217,9 @@ export function BulkUploadLeads() {
     setUploadedLeads([])
 
     try {
-      const data = await file.arrayBuffer()
-      const workbook = XLSX.read(data)
+      const isCsv = /\.csv$/i.test(file.name)
+      const data = isCsv ? await file.text() : await file.arrayBuffer()
+      const workbook = XLSX.read(data, isCsv ? { type: 'string' } : undefined)
       const sheetName = workbook.SheetNames[0]
       const worksheet = workbook.Sheets[sheetName]
       const jsonData = XLSX.utils.sheet_to_json(worksheet) as Record<string, unknown>[]
@@ -197,13 +242,15 @@ export function BulkUploadLeads() {
     const okType =
       file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
       file.type === 'application/vnd.ms-excel' ||
-      /\.xlsx?$/i.test(file.name)
+      file.type === 'text/csv' ||
+      file.type === 'application/csv' ||
+      /\.(xlsx?|csv)$/i.test(file.name)
     if (okType) {
       setSelectedFile(file)
       setCallQueued(false)
       void processFile(file)
     } else {
-      setFlash({ type: 'err', message: 'Please select a valid Excel file (.xlsx or .xls).' })
+      setFlash({ type: 'err', message: 'Please select a valid spreadsheet (.xlsx, .xls, or .csv).' })
     }
   }
 
@@ -301,13 +348,36 @@ export function BulkUploadLeads() {
   const validLeadsCount = uploadedLeads.filter((lead) => lead.isValid).length
   const errorLeadsCount = uploadedLeads.filter((lead) => !lead.isValid).length
 
-  const handleBulkCall = () => {
-    if (!selectedCampaignId || uploadedLeads.length === 0 || errorLeadsCount > 0) return
-    setCallQueued(true)
-    setFlash({
-      type: 'ok',
-      message: `Prepared ${validLeadsCount} contact(s) for ${selectedCampaignTitle}. The call action will be connected next.`,
-    })
+  const handleBulkCall = async () => {
+    if (!selectedCampaignId || !selectedFile || uploadedLeads.length === 0 || errorLeadsCount > 0) return
+    setIsCalling(true)
+    setFlash(null)
+    try {
+      const started = await startBulkCall(
+        selectedFile,
+        selectedCampaignId,
+        uploadedLeads
+          .filter((lead) => lead.isValid)
+          .map((lead) => ({
+            name: lead.name,
+            phone: lead.phone,
+            email: lead.email,
+            additionalInfo: lead.additionalInfo,
+          })),
+      )
+      setActiveBatchId(started.batchId)
+      setCallQueued(true)
+      setFlash({
+        type: 'ok',
+        message: `Bulk call started for ${validLeadsCount} contact(s) on ${selectedCampaignTitle}.`,
+      })
+    } catch (e: unknown) {
+      const err = e as { message?: string }
+      setCallQueued(false)
+      setFlash({ type: 'err', message: err.message ? String(err.message) : 'Bulk call failed.' })
+    } finally {
+      setIsCalling(false)
+    }
   }
 
   const selectedCampaign = campaigns.find((c) => c.id === selectedCampaignId)
@@ -384,9 +454,11 @@ export function BulkUploadLeads() {
           <div className="text-[13px] text-[#2E2E2E]">
             <p className="m-0 mb-1 font-semibold">Excel columns</p>
             <p className="m-0 text-[#8B7355]">
-              <strong className="font-semibold text-[#2E2E2E]">Name</strong>,{' '}
-              <strong className="font-semibold text-[#2E2E2E]">Mobile No.</strong>, and{' '}
-              <strong className="font-semibold text-[#2E2E2E]">Email Id</strong> are required on every row.
+              <strong className="font-semibold text-[#2E2E2E]">Name</strong> (
+              <span className="font-semibold text-[#2E2E2E]">customer_name</span>) and{' '}
+              <strong className="font-semibold text-[#2E2E2E]">Mobile No.</strong> (
+              <span className="font-semibold text-[#2E2E2E]">mobile_no</span>) are required.{' '}
+              <strong className="font-semibold text-[#2E2E2E]">Email Id</strong> is optional.
             </p>
           </div>
         </div>
@@ -409,7 +481,7 @@ export function BulkUploadLeads() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                accept=".xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                 onChange={handleFileChange}
                 className="hidden"
                 id="crm-bulk-file-upload"
@@ -435,7 +507,7 @@ export function BulkUploadLeads() {
                 ) : (
                   <div>
                     <p className="m-0 font-semibold text-[#2E2E2E]">Click to select an Excel file</p>
-                    <p className="mt-1 mb-0 text-[13px] text-[#8B7355]">.xlsx or .xls</p>
+                    <p className="mt-1 mb-0 text-[13px] text-[#8B7355]">.xlsx, .xls, or .csv</p>
                   </div>
                 )}
               </label>
@@ -626,8 +698,8 @@ export function BulkUploadLeads() {
             ) : (
               <button
                 type="button"
-                onClick={handleBulkCall}
-                disabled={uploadedLeads.length === 0 || !selectedCampaignId || errorLeadsCount > 0}
+                onClick={() => void handleBulkCall()}
+                disabled={isCalling || uploadedLeads.length === 0 || !selectedCampaignId || errorLeadsCount > 0}
                 title={
                   errorLeadsCount > 0
                     ? 'Fix or remove rows with errors before calling.'
@@ -637,13 +709,23 @@ export function BulkUploadLeads() {
                 }
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#8B7355] py-3 text-[13px] font-semibold text-white hover:bg-[#6d5a43] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <FiPhone className="h-5 w-5" aria-hidden />
-                {callQueued ? 'Call list prepared' : `Bulk call ${validLeadsCount} contact${validLeadsCount === 1 ? '' : 's'}`}
+                {isCalling ? (
+                  <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden />
+                ) : (
+                  <FiPhone className="h-5 w-5" aria-hidden />
+                )}
+                {isCalling
+                  ? 'Starting calls…'
+                  : callQueued
+                    ? 'Bulk call started'
+                    : `Bulk call ${validLeadsCount} contact${validLeadsCount === 1 ? '' : 's'}`}
               </button>
             )}
           </div>
         </>
       ) : null}
+
+      {mode === 'call' ? <BulkCallResults activeBatchId={activeBatchId} /> : null}
 
       <BulkProjectModal
         open={projectModalOpen}
